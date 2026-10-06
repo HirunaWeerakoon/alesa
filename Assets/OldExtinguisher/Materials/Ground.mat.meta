@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 93770993598b56140995e785b362fb04
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 19260
+  packageName: Fire Extinguisher
+  packageVersion: v1.3
+  assetPath: Assets/OldExtinguisher/Materials/Ground.mat
+  uploadId: 520857

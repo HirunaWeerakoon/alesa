@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 9d1581c10ec3d014381cac5f0ad1e2ac
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 19260
+  packageName: Fire Extinguisher
+  packageVersion: v1.3
+  assetPath: Assets/OldExtinguisher/Materials/SKY.mat
+  uploadId: 520857

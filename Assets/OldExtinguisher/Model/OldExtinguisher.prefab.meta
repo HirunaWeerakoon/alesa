@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d9441b8ce74d4f74da075233ad9d3b7d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 19260
+  packageName: Fire Extinguisher
+  packageVersion: v1.3
+  assetPath: Assets/OldExtinguisher/Model/OldExtinguisher.prefab
+  uploadId: 520857
