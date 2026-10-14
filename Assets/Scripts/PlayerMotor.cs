@@ -22,9 +22,12 @@ public class PlayerMotor : MonoBehaviour
     [Header("Jump Setting")]
     public float jumpHeight = 1.5f;
 
-    [Header("Crouch Setting")]
+    [Header("Crouch & View Settings")]
     public float standingHeight = 2f;
     public float crouchHeight = 1f;
+    public float standingCameraY = 1.6f;
+    public float crouchCameraY = 0.8f;
+    public float crouchTransitionSpeed = 10f;
     private bool isCrouching = false;
 
     [Header("Camera Setting")]
@@ -40,6 +43,12 @@ public class PlayerMotor : MonoBehaviour
     void Start()
     {
         controller = GetComponent<CharacterController>(); // to locate and link the character controller
+
+        // auto assign camera from children into inspector
+        if (playerCamera == null)
+        {
+            playerCamera = GetComponentInChildren<Camera>();
+        }
         currentSpeed = walkSpeed;
 
     }
@@ -54,6 +63,20 @@ public class PlayerMotor : MonoBehaviour
             playerVelocity.y = -2f; // when grounded, set downward speed to a small. ensure player remains pinned against slopes
         }
 
+        // adjust heigh and recalculate center
+        float targetHeight = isCrouching ? crouchHeight : standingHeight;
+        controller.height = Mathf.Lerp(controller.height, targetHeight, crouchTransitionSpeed * Time.deltaTime);
+        controller.center = new Vector3(0f, controller.height / 2f, 0f); // Keeps feet on the ground as height shrinks
+
+        // transition of camera eye level
+        if (playerCamera != null)
+        {
+            float targetCameraY = isCrouching ? crouchCameraY : standingCameraY;
+            Vector3 camPos = playerCamera.transform.localPosition;
+            camPos.y = Mathf.Lerp(camPos.y, targetCameraY, crouchTransitionSpeed * Time.deltaTime);
+            playerCamera.transform.localPosition = camPos;
+        }
+        
         // map 2D inputs to 3D local axes: x = left/right (A/D) , z = forward/backward (W/S)
         Vector3 moveDirection = Vector3.zero;
         moveDirection.x = currentInput.x;
@@ -110,11 +133,6 @@ public class PlayerMotor : MonoBehaviour
     public void toggleCrouch()
     {
         isCrouching = !isCrouching;
-
-        // adjust heigh and recalculate center
-        float targetHeight = isCrouching ? crouchHeight : standingHeight;
-        controller.height = targetHeight;
-        controller.center = new Vector3(0f, targetHeight / 2f, 0f);
 
         // drop sprint if crouching
         if (isCrouching)

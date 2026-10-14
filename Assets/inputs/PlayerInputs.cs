@@ -141,6 +141,26 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""initialStateCheck"": false,
                     ""priority"": 0
+                },
+                {
+                    ""name"": ""Flashlight"",
+                    ""type"": ""Button"",
+                    ""id"": ""dc763e2c-5ed2-426a-9beb-585d6d2cbbe1"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""FlashlightFlicker"",
+                    ""type"": ""Button"",
+                    ""id"": ""7f22edf3-fcd5-451c-ac24-29efebd8787f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
                 }
             ],
             ""bindings"": [
@@ -242,6 +262,28 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""action"": ""QuickTurn"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ae9fe164-1303-46a8-a6b0-27e12add1c20"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Flashlight"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""9a4319dd-fc27-4d83-a784-b351aa5409a6"",
+                    ""path"": ""<Keyboard>/t"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FlashlightFlicker"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -255,6 +297,8 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_OnFoot_Crouch = m_OnFoot.FindAction("Crouch", throwIfNotFound: true);
         m_OnFoot_Sprint = m_OnFoot.FindAction("Sprint", throwIfNotFound: true);
         m_OnFoot_QuickTurn = m_OnFoot.FindAction("QuickTurn", throwIfNotFound: true);
+        m_OnFoot_Flashlight = m_OnFoot.FindAction("Flashlight", throwIfNotFound: true);
+        m_OnFoot_FlashlightFlicker = m_OnFoot.FindAction("FlashlightFlicker", throwIfNotFound: true);
     }
 
     ~@PlayerInputs()
@@ -340,6 +384,8 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_OnFoot_Crouch;
     private readonly InputAction m_OnFoot_Sprint;
     private readonly InputAction m_OnFoot_QuickTurn;
+    private readonly InputAction m_OnFoot_Flashlight;
+    private readonly InputAction m_OnFoot_FlashlightFlicker;
     /// <summary>
     /// Provides access to input actions defined in input action map "OnFoot".
     /// </summary>
@@ -371,6 +417,14 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "OnFoot/QuickTurn".
         /// </summary>
         public InputAction @QuickTurn => m_Wrapper.m_OnFoot_QuickTurn;
+        /// <summary>
+        /// Provides access to the underlying input action "OnFoot/Flashlight".
+        /// </summary>
+        public InputAction @Flashlight => m_Wrapper.m_OnFoot_Flashlight;
+        /// <summary>
+        /// Provides access to the underlying input action "OnFoot/FlashlightFlicker".
+        /// </summary>
+        public InputAction @FlashlightFlicker => m_Wrapper.m_OnFoot_FlashlightFlicker;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -412,6 +466,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @QuickTurn.started += instance.OnQuickTurn;
             @QuickTurn.performed += instance.OnQuickTurn;
             @QuickTurn.canceled += instance.OnQuickTurn;
+            @Flashlight.started += instance.OnFlashlight;
+            @Flashlight.performed += instance.OnFlashlight;
+            @Flashlight.canceled += instance.OnFlashlight;
+            @FlashlightFlicker.started += instance.OnFlashlightFlicker;
+            @FlashlightFlicker.performed += instance.OnFlashlightFlicker;
+            @FlashlightFlicker.canceled += instance.OnFlashlightFlicker;
         }
 
         /// <summary>
@@ -438,6 +498,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @QuickTurn.started -= instance.OnQuickTurn;
             @QuickTurn.performed -= instance.OnQuickTurn;
             @QuickTurn.canceled -= instance.OnQuickTurn;
+            @Flashlight.started -= instance.OnFlashlight;
+            @Flashlight.performed -= instance.OnFlashlight;
+            @Flashlight.canceled -= instance.OnFlashlight;
+            @FlashlightFlicker.started -= instance.OnFlashlightFlicker;
+            @FlashlightFlicker.performed -= instance.OnFlashlightFlicker;
+            @FlashlightFlicker.canceled -= instance.OnFlashlightFlicker;
         }
 
         /// <summary>
@@ -513,5 +579,19 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnQuickTurn(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Flashlight" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnFlashlight(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "FlashlightFlicker" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnFlashlightFlicker(InputAction.CallbackContext context);
     }
 }

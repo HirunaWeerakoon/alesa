@@ -55,6 +55,26 @@
                     "interactions": "",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "Flashlight",
+                    "type": "Button",
+                    "id": "dc763e2c-5ed2-426a-9beb-585d6d2cbbe1",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
+                },
+                {
+                    "name": "FlashlightFlicker",
+                    "type": "Button",
+                    "id": "7f22edf3-fcd5-451c-ac24-29efebd8787f",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -154,6 +174,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "QuickTurn",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ae9fe164-1303-46a8-a6b0-27e12add1c20",
+                    "path": "<Keyboard>/f",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Flashlight",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9a4319dd-fc27-4d83-a784-b351aa5409a6",
+                    "path": "<Keyboard>/t",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "FlashlightFlicker",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
