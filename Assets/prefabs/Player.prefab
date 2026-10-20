@@ -8,6 +8,10 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 853000000}
+  - component: {fileID: 852000000}
+  - component: {fileID: 851000001}
+  - component: {fileID: 851000000}
   - component: {fileID: 6089451457887090700}
   - component: {fileID: 1881362551837388885}
   - component: {fileID: 2856921943990077439}
@@ -315,3 +319,88 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &851000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1034858885761068494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb8f3d95bbfb4ecda191bdc11b2f9e5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerGameplay
+  crosshairTexture: {fileID: 2800000, guid: b8e78032f8af0954784d1fe9e5a09187, type: 3}
+--- !u!114 &851000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1034858885761068494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e5f67711e7a4ebf9bf903395e5e1e39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RevolverCombat
+  weaponPrefab: {fileID: 5911397864059165243, guid: d44793864eeeec74d8adce5e5679ffb6, type: 3}
+  weaponMaterial: {fileID: 2100000, guid: 76e6d55bde314517a2c9d9574cf0f61e, type: 2}
+  modelAngles: {x: 0, y: 0, z: 0}
+  loweredPosition: {x: 0.14, y: -0.16, z: 0.28}
+  aimedPosition: {x: 0, y: -0.08, z: 0.24}
+  loweredAngles: {x: 5, y: -8, z: -4}
+  aimedAngles: {x: 0, y: 0, z: 0}
+  reloadPosition: {x: 0.09, y: -0.1, z: 0.29}
+  reloadAngles: {x: -12, y: -55, z: 25}
+  cylinderSwingDistance: 0.055
+--- !u!114 &852000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1034858885761068494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0371a060fbd24179b0f7079cd9110ffd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMovementAudio
+  walkClips:
+  - {fileID: 8300000, guid: 6ad0cf00f050bee41a2dee098475dc78, type: 3}
+  - {fileID: 8300000, guid: 7ca5a9710db4327439c9f8cb8204615e, type: 3}
+  - {fileID: 8300000, guid: 14ae706fef2303e4cb71112dbd5d250b, type: 3}
+  - {fileID: 8300000, guid: b995bc1775ea83b4b8f861763e9a1424, type: 3}
+  runClips:
+  - {fileID: 8300000, guid: ffa5441258224694690169f4bd95b969, type: 3}
+  - {fileID: 8300000, guid: 5a5fe2a543e35ef44980fcf5ac79551a, type: 3}
+  - {fileID: 8300000, guid: 062aac8f0463d7945a5a16732efbea51, type: 3}
+  - {fileID: 8300000, guid: e331a9e83f5b77e49bd9efba1b2c2fd9, type: 3}
+  - {fileID: 8300000, guid: 8c2c6c300bd8fc441878f426377bec64, type: 3}
+  - {fileID: 8300000, guid: f8e559768bed7ed4680ab0449da7ec3a, type: 3}
+  crouchClips:
+  - {fileID: 8300000, guid: d15f7338d693f0343843a6b9096d27f6, type: 3}
+  - {fileID: 8300000, guid: b993df4a93c1d304ab19d8b2eb88c9a5, type: 3}
+  - {fileID: 8300000, guid: 5c9bdbce37b06a24fa6ea793bcfd1907, type: 3}
+  - {fileID: 8300000, guid: 0909de896e9029541b92ae05fe15e4b6, type: 3}
+  jumpClip: {fileID: 8300000, guid: f42760acdd77d6c459020ab0f9db4f30, type: 3}
+  paperClip: {fileID: 8300000, guid: a465f4e2a2f3a354f927f77994a68a08, type: 3}
+  weaponPickupClip: {fileID: 8300000, guid: db2281b9de1863f409d62f9edf69c6cf, type: 3}
+  ammoPickupClip: {fileID: 8300000, guid: db2281b9de1863f409d62f9edf69c6cf, type: 3}
+  landClip: {fileID: 8300000, guid: 304f2bf2228cba94e91cd22803e54bcf, type: 3}
+--- !u!114 &853000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1034858885761068494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b382144bd2c4acdbef448c8b06036b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RevolverAudio
+  emptyClickClip: {fileID: 8300000, guid: e2861d014568ff94093351e9a303dc0e, type: 3}
+  reloadClip: {fileID: 8300000, guid: 2cc965e3fb6979b448dbdac5dc46e64c, type: 3}
+  gunshotClip: {fileID: 8300000, guid: 14ff505a1dfa2ad41aedc196955e0c6f, type: 3}
+  shellFallClip: {fileID: 8300000, guid: fb483f60aeb5a6d45a12fb058f98ae08, type: 3}

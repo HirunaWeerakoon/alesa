@@ -1,12 +1,16 @@
 using System.Collections;
 using UnityEngine;
 
+[RequireComponent(typeof(Light))]
 public class Flashlight : MonoBehaviour
 {
     [Header("Light Component")]
     [SerializeField] private Light flashlightLight; // make variable editable via inspector
     [SerializeField] private float defaultIntensity = 1.0f;
     public bool isOn = true;
+    [SerializeField] private float defaultRange = 12.5f;
+    [SerializeField] private float defaultSpotAngle = 100f;
+    [SerializeField] private Color defaultColor = new Color(1f, 0.96f, 0.88f);
 
     [Header("Audio Settings")]
     [SerializeField] private AudioSource audioSource;
@@ -30,7 +34,32 @@ public class Flashlight : MonoBehaviour
             audioSource = GetComponent<AudioSource>();
         }
 
+        ApplyLightDefaults();
         updateLightState();
+    }
+
+    private void Reset()
+    {
+        flashlightLight = GetComponent<Light>();
+        defaultIntensity = 1f;
+        isOn = true;
+        ApplyLightDefaults();
+        updateLightState();
+    }
+
+    private void ApplyLightDefaults()
+    {
+        if (flashlightLight == null) return;
+        flashlightLight.type = LightType.Spot;
+        flashlightLight.range = defaultRange;
+        flashlightLight.spotAngle = defaultSpotAngle;
+        flashlightLight.color = defaultColor;
+        flashlightLight.lightmapBakeType = LightmapBakeType.Realtime;
+        flashlightLight.bounceIntensity = 0f;
+        flashlightLight.shadows = LightShadows.Soft;
+        flashlightLight.shadowStrength = 1f;
+        flashlightLight.shadowResolution = UnityEngine.Rendering.LightShadowResolution.FromQualitySettings;
+        flashlightLight.shadowBias = 0.02f;
     }
 
     public void toggleFlashlight()

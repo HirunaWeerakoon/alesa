@@ -83653,6 +83653,10 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 853000000}
+  - component: {fileID: 852000000}
+  - component: {fileID: 850000002}
+  - component: {fileID: 850000003}
   - component: {fileID: 421453152}
   - component: {fileID: 421453151}
   - component: {fileID: 421453150}
@@ -198995,11 +198999,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Flashlight
   flashlightLight: {fileID: 998534110}
-  defaultIntensity: 0.45
+  defaultIntensity: 1
   isOn: 1
   audioSource: {fileID: 0}
   toggleSound: {fileID: 0}
   flickerSound: {fileID: 0}
+  defaultRange: 12.5
+  defaultSpotAngle: 100
+  defaultColor: {r: 1, g: 0.96, b: 0.88, a: 1}
 --- !u!108 &998534110
 Light:
   m_ObjectHideFlags: 0
@@ -199011,9 +199018,9 @@ Light:
   serializedVersion: 12
   m_Type: 0
   m_Color: {r: 1, g: 0.96, b: 0.88, a: 1}
-  m_Intensity: 0.45
-  m_Range: 10
-  m_SpotAngle: 58
+  m_Intensity: 1
+  m_Range: 12.5
+  m_SpotAngle: 100
   m_InnerSpotAngle: 18
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
@@ -997033,10 +997040,653 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &850000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 421453149}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb8f3d95bbfb4ecda191bdc11b2f9e5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerGameplay
+  interactionDistance: 2
+  interactionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  crosshairTexture: {fileID: 2800000, guid: b8e78032f8af0954784d1fe9e5a09187, type: 3}
+--- !u!114 &850000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 421453149}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e5f67711e7a4ebf9bf903395e5e1e39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RevolverCombat
+  ammo:
+    capacity: 6
+    loaded: 0
+    spare: 0
+  hasRevolver: 0
+  reloadSeconds: 2
+  shotInterval: 0.35
+  damage: 35
+  range: 60
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  weaponPrefab: {fileID: 5911397864059165243, guid: d44793864eeeec74d8adce5e5679ffb6, type: 3}
+  weaponMaterial: {fileID: 2100000, guid: 76e6d55bde314517a2c9d9574cf0f61e, type: 2}
+  modelAngles: {x: 0, y: 0, z: 0}
+  loweredPosition: {x: 0.14, y: -0.16, z: 0.28}
+  aimedPosition: {x: 0, y: -0.08, z: 0.24}
+  loweredAngles: {x: 5, y: -8, z: -4}
+  aimedAngles: {x: 0, y: 0, z: 0}
+  reloadPosition: {x: 0.09, y: -0.1, z: 0.29}
+  reloadAngles: {x: -12, y: -55, z: 25}
+  cylinderSwingDistance: 0.055
+--- !u!33 &850000006
+MeshFilter:
+  m_GameObject: {fileID: 850000004}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &850000007
+MeshRenderer:
+  m_GameObject: {fileID: 850000004}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!65 &850000008
+BoxCollider:
+  m_GameObject: {fileID: 850000004}
+  m_Enabled: 1
+  m_IsTrigger: 0
+  serializedVersion: 3
+  m_Size: {x: 0.34, y: 0.22, z: 0.22}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &850000009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9761a9ecb4a944dbbf05cfab371bb0af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractablePickup
+  kind: 0
+  rounds: 6
+--- !u!1 &850000004
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 851000000}
+  - component: {fileID: 850000005}
+  - component: {fileID: 850000006}
+  - component: {fileID: 850000007}
+  - component: {fileID: 850000008}
+  - component: {fileID: 850000009}
+  m_Layer: 0
+  m_Name: Revolver pickup
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &850000005
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000004}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 81.7, y: 25.85, z: -2.18}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 850000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &850000012
+MeshFilter:
+  m_GameObject: {fileID: 850000010}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &850000013
+MeshRenderer:
+  m_GameObject: {fileID: 850000010}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!65 &850000014
+BoxCollider:
+  m_GameObject: {fileID: 850000010}
+  m_Enabled: 1
+  m_IsTrigger: 0
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &850000015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9761a9ecb4a944dbbf05cfab371bb0af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractablePickup
+  kind: 1
+  rounds: 12
+--- !u!1 &850000010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 850000011}
+  - component: {fileID: 850000012}
+  - component: {fileID: 850000013}
+  - component: {fileID: 850000014}
+  - component: {fileID: 850000015}
+  m_Layer: 0
+  m_Name: Ammo box (12 rounds)
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &850000011
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 82, y: 25.15, z: -0.7}
+  m_LocalScale: {x: 0.3, y: 0.22, z: 0.22}
+  m_Children: []
+  m_Father: {fileID: 850000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &850000018
+MeshFilter:
+  m_GameObject: {fileID: 850000016}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &850000019
+MeshRenderer:
+  m_GameObject: {fileID: 850000016}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!65 &850000020
+BoxCollider:
+  m_GameObject: {fileID: 850000016}
+  m_Enabled: 1
+  m_IsTrigger: 0
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &850000021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9761a9ecb4a944dbbf05cfab371bb0af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractablePickup
+  kind: 2
+  rounds: 0
+  noteTitle: Maintenance access
+  noteText: "Restore the maintenance breaker first. The access code is 1950. Use the keypad to release Alesa."
+--- !u!1 &850000016
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 850000017}
+  - component: {fileID: 850000018}
+  - component: {fileID: 850000019}
+  - component: {fileID: 850000020}
+  - component: {fileID: 850000021}
+  m_Layer: 0
+  m_Name: Note - maintenance access clue
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &850000017
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000016}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 83.5, y: 25.15, z: 0.5}
+  m_LocalScale: {x: 0.35, y: 0.03, z: 0.26}
+  m_Children: []
+  m_Father: {fileID: 850000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!108 &850000024
+Light:
+  m_GameObject: {fileID: 850000022}
+  m_Enabled: 0
+  serializedVersion: 12
+  m_Type: 2
+  m_Color: {r: 1, g: 0.86, b: 0.65, a: 1}
+  m_Intensity: 1
+  m_Range: 8
+  m_Shadows:
+    m_Type: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingLayerMask: 1
+  m_Lightmapping: 4
+--- !u!1 &850000022
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 850000023}
+  - component: {fileID: 850000024}
+  m_Layer: 0
+  m_Name: Restored waiting-area light
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &850000023
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000022}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 85.5, y: 28, z: 1.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 850000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &850000027
+MeshFilter:
+  m_GameObject: {fileID: 850000025}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &850000028
+MeshRenderer:
+  m_GameObject: {fileID: 850000025}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!65 &850000029
+BoxCollider:
+  m_GameObject: {fileID: 850000025}
+  m_Enabled: 1
+  m_IsTrigger: 0
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &850000030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b10734ae8426476d97e3b02ac9cb1829, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaintenanceBreaker
+  restoredLights:
+  - {fileID: 850000024}
+  poweredObjects: []
+--- !u!1 &850000025
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 850000026}
+  - component: {fileID: 850000027}
+  - component: {fileID: 850000028}
+  - component: {fileID: 850000029}
+  - component: {fileID: 850000030}
+  m_Layer: 0
+  m_Name: Maintenance breaker (prototype)
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &850000026
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000025}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 85, y: 25.9, z: 3}
+  m_LocalScale: {x: 0.4, y: 0.6, z: 0.2}
+  m_Children: []
+  m_Father: {fileID: 850000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &850000033
+MeshFilter:
+  m_GameObject: {fileID: 850000031}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &850000034
+MeshRenderer:
+  m_GameObject: {fileID: 850000031}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!65 &850000035
+BoxCollider:
+  m_GameObject: {fileID: 850000031}
+  m_Enabled: 1
+  m_IsTrigger: 0
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &850000031
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 850000032}
+  - component: {fileID: 850000033}
+  - component: {fileID: 850000034}
+  - component: {fileID: 850000035}
+  m_Layer: 0
+  m_Name: Alesa access barrier (prototype)
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &850000032
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000031}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 89, y: 25.62, z: 1}
+  m_LocalScale: {x: 0.15, y: 2, z: 1}
+  m_Children: []
+  m_Father: {fileID: 850000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &850000038
+MeshFilter:
+  m_GameObject: {fileID: 850000036}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &850000039
+MeshRenderer:
+  m_GameObject: {fileID: 850000036}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!65 &850000040
+BoxCollider:
+  m_GameObject: {fileID: 850000036}
+  m_Enabled: 1
+  m_IsTrigger: 0
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!20 &850000043
+Camera:
+  m_GameObject: {fileID: 850000041}
+  m_Enabled: 0
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.02, g: 0.02, b: 0.02, a: 1}
+  near clip plane: 0.03
+  far clip plane: 1000
+  field of view: 50
+  orthographic: 0
+  m_Depth: 1
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_TargetDisplay: 0
+  m_HDR: 1
+  m_AllowMSAA: 1
+--- !u!1 &850000041
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 850000042}
+  - component: {fileID: 850000043}
+  m_Layer: 0
+  m_Name: Keypad stationary camera
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &850000042
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000041}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 87, y: 26, z: 1.7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 850000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &850000044
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bb273c1a9d64a478cb83f3e140c2244, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialpadKeypad
+  accessCode: 1950
+  stationaryCamera: {fileID: 850000043}
+  requiredBreaker: {fileID: 850000030}
+  lockedBarrier: {fileID: 850000031}
+--- !u!1 &850000036
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 850000037}
+  - component: {fileID: 850000038}
+  - component: {fileID: 850000039}
+  - component: {fileID: 850000040}
+  - component: {fileID: 850000044}
+  m_Layer: 0
+  m_Name: Alesa access keypad (prototype)
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &850000037
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000036}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 87, y: 25.9, z: 3}
+  m_LocalScale: {x: 0.35, y: 0.45, z: 0.15}
+  m_Children: []
+  m_Father: {fileID: 850000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &850000047
+MeshFilter:
+  m_GameObject: {fileID: 850000045}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &850000048
+MeshRenderer:
+  m_GameObject: {fileID: 850000045}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!65 &850000049
+BoxCollider:
+  m_GameObject: {fileID: 850000045}
+  m_Enabled: 1
+  m_IsTrigger: 0
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &850000050
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000045}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c8674035a8e4515978737c4f5ec2a59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DamageableTarget
+  health: 100
+--- !u!1 &850000045
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 850000046}
+  - component: {fileID: 850000047}
+  - component: {fileID: 850000048}
+  - component: {fileID: 850000049}
+  - component: {fileID: 850000050}
+  m_Layer: 0
+  m_Name: Combat target (prototype)
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &850000046
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000045}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 90, y: 25.65, z: -3}
+  m_LocalScale: {x: 0.5, y: 1.3, z: 0.4}
+  m_Children: []
+  m_Father: {fileID: 850000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &850000000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 850000001}
+  m_Layer: 0
+  m_Name: Player mechanics prototype
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &850000001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: 
+  - {fileID: 850000005}
+  - {fileID: 850000011}
+  - {fileID: 850000017}
+  - {fileID: 850000023}
+  - {fileID: 850000026}
+  - {fileID: 850000032}
+  - {fileID: 850000037}
+  - {fileID: 850000042}
+  - {fileID: 850000046}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 850000001}
   - {fileID: 421453152}
   - {fileID: 7710440867425807838}
   - {fileID: 1145424300}
@@ -997103,3 +997753,68 @@ SceneRoots:
   - {fileID: 1757146342}
   - {fileID: 976433074}
   - {fileID: 1629819947}
+--- !u!114 &851000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43dcd4df6c3749eab55267c0e2b25051, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RevolverPickupVisual
+  modelPrefab: {fileID: 5911397864059165243, guid: d44793864eeeec74d8adce5e5679ffb6, type: 3}
+  modelMaterial: {fileID: 2100000, guid: 76e6d55bde314517a2c9d9574cf0f61e, type: 2}
+  modelAngles: {x: 0, y: 0, z: 0}
+--- !u!114 &852000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 421453149}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0371a060fbd24179b0f7079cd9110ffd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMovementAudio
+  walkClips:
+  - {fileID: 8300000, guid: 6ad0cf00f050bee41a2dee098475dc78, type: 3}
+  - {fileID: 8300000, guid: 7ca5a9710db4327439c9f8cb8204615e, type: 3}
+  - {fileID: 8300000, guid: 14ae706fef2303e4cb71112dbd5d250b, type: 3}
+  - {fileID: 8300000, guid: b995bc1775ea83b4b8f861763e9a1424, type: 3}
+  runClips:
+  - {fileID: 8300000, guid: ffa5441258224694690169f4bd95b969, type: 3}
+  - {fileID: 8300000, guid: 5a5fe2a543e35ef44980fcf5ac79551a, type: 3}
+  - {fileID: 8300000, guid: 062aac8f0463d7945a5a16732efbea51, type: 3}
+  - {fileID: 8300000, guid: e331a9e83f5b77e49bd9efba1b2c2fd9, type: 3}
+  - {fileID: 8300000, guid: 8c2c6c300bd8fc441878f426377bec64, type: 3}
+  - {fileID: 8300000, guid: f8e559768bed7ed4680ab0449da7ec3a, type: 3}
+  crouchClips:
+  - {fileID: 8300000, guid: d15f7338d693f0343843a6b9096d27f6, type: 3}
+  - {fileID: 8300000, guid: b993df4a93c1d304ab19d8b2eb88c9a5, type: 3}
+  - {fileID: 8300000, guid: 5c9bdbce37b06a24fa6ea793bcfd1907, type: 3}
+  - {fileID: 8300000, guid: 0909de896e9029541b92ae05fe15e4b6, type: 3}
+  jumpClip: {fileID: 8300000, guid: f42760acdd77d6c459020ab0f9db4f30, type: 3}
+  paperClip: {fileID: 8300000, guid: a465f4e2a2f3a354f927f77994a68a08, type: 3}
+  weaponPickupClip: {fileID: 8300000, guid: db2281b9de1863f409d62f9edf69c6cf, type: 3}
+  ammoPickupClip: {fileID: 8300000, guid: db2281b9de1863f409d62f9edf69c6cf, type: 3}
+  landClip: {fileID: 8300000, guid: 304f2bf2228cba94e91cd22803e54bcf, type: 3}
+--- !u!114 &853000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 421453149}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b382144bd2c4acdbef448c8b06036b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RevolverAudio
+  emptyClickClip: {fileID: 8300000, guid: e2861d014568ff94093351e9a303dc0e, type: 3}
+  reloadClip: {fileID: 8300000, guid: 2cc965e3fb6979b448dbdac5dc46e64c, type: 3}
+  gunshotClip: {fileID: 8300000, guid: 14ff505a1dfa2ad41aedc196955e0c6f, type: 3}
+  shellFallClip: {fileID: 8300000, guid: fb483f60aeb5a6d45a12fb058f98ae08, type: 3}
