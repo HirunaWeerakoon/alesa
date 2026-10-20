@@ -15,8 +15,10 @@ public class InputManager : MonoBehaviour
     [Header("flashligh refenrece")]
     [SerializeField] private Flashlight flashlight;
     // Awake it called before first frame update
-    void Awake()
+    
+        void Awake()
     {
+        if (playerInput != null) return;
         
         playerInput = new PlayerInputs();
         onFoot = playerInput.OnFoot;
@@ -75,13 +77,14 @@ public class InputManager : MonoBehaviour
 
     }
 
-    private void OnEnable()
+private void OnEnable()
     {
-        onFoot.Enable(); // Enables all actions in the OnFoot map
+        if (playerInput == null) Awake();
+        onFoot.Enable();
     }
-    private void OnDisable()
+private void OnDisable()
     {
-        onFoot.Disable();
+        if (playerInput != null) onFoot.Disable();
     }
 
 }
