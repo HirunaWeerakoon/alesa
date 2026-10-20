@@ -81825,13 +81825,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 2
-  m_Radius: 0.5
+  m_Height: 1.95
+  m_Radius: 0.32500002
   m_SlopeLimit: 45
   m_StepOffset: 0.3
-  m_SkinWidth: 0.08
+  m_SkinWidth: 0.03
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 0.975, z: 0}
 --- !u!4 &421453152
 Transform:
   m_ObjectHideFlags: 0
@@ -81841,7 +81841,7 @@ Transform:
   m_GameObject: {fileID: 421453149}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 82.79, y: 25.6, z: -2.18}
+  m_LocalPosition: {x: 82.79, y: 24.626638, z: -2.18}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -81866,9 +81866,9 @@ MonoBehaviour:
   crouchSpeed: 3
   gravity: -9.8
   jumpHeight: 1.5
-  standingHeight: 2
+  standingHeight: 1.95
   crouchHeight: 1
-  standingCameraY: 1.6
+  standingCameraY: 1.82
   crouchCameraY: 0.8
   crouchTransitionSpeed: 10
   playerCamera: {fileID: 963194227}
@@ -141722,8 +141722,8 @@ Transform:
   m_GameObject: {fileID: 653486156}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0.975, z: 0}
+  m_LocalScale: {x: 0.65000004, y: 0.975, z: 0.65000004}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 421453152}
@@ -141745,7 +141745,7 @@ CapsuleCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Radius: 0.5
   m_Height: 2
@@ -141758,8 +141758,8 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 653486156}
-  m_Enabled: 0
-  m_CastShadows: 1
+  m_Enabled: 1
+  m_CastShadows: 3
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -194501,7 +194501,7 @@ Transform:
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.6, z: 0}
+  m_LocalPosition: {x: 0, y: 1.82, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -194728,7 +194728,7 @@ Transform:
   m_GameObject: {fileID: 998534107}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.2, y: -0.2, z: 0.3}
+  m_LocalPosition: {x: 0.32500002, y: -0.46583337, z: 0.43333337}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -194747,7 +194747,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Flashlight
   flashlightLight: {fileID: 998534110}
-  defaultIntensity: 1
+  defaultIntensity: 0.6
   isOn: 1
   audioSource: {fileID: 0}
   toggleSound: {fileID: 0}
@@ -194765,7 +194765,7 @@ Light:
   m_Color: {r: 1, g: 0.972549, b: 0.90588236, a: 1}
   m_Intensity: 0.6
   m_Range: 15
-  m_SpotAngle: 88
+  m_SpotAngle: 84.54548
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
@@ -194775,7 +194775,7 @@ Light:
     m_Strength: 1
     m_Bias: 0.05
     m_NormalBias: 0.4
-    m_NearPlane: 0.2
+    m_NearPlane: 5.84
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
@@ -194794,7 +194794,7 @@ Light:
       e32: 0
       e33: 1
     m_UseCullingMatrixOverride: 0
-  m_Cookie: {fileID: 0}
+  m_Cookie: {fileID: 2800000, guid: ebf46548795c237499ed1e6a6c2a9b22, type: 3}
   m_DrawHalo: 0
   m_Flare: {fileID: 0}
   m_RenderMode: 0
@@ -987771,7 +987771,7 @@ Transform:
   m_GameObject: {fileID: 4686394049100643921}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 81.93703, y: 24.617533, z: -4.620267}
+  m_LocalPosition: {x: 81.94, y: 24.61, z: -4.620267}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
