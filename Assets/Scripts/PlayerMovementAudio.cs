@@ -73,8 +73,8 @@ public class PlayerMovementAudio : MonoBehaviour
         if (blocked) { StopSteps(); jumpSource.Stop(); return; }
         // Observe actual airborne movement before accepting ground contact. A jump
         // event can arrive after CharacterController.Move in the takeoff frame.
-        if (waitingForLanding && !controller.isGrounded) observedAirborne = true;
-        if (waitingForLanding && observedAirborne && controller.isGrounded)
+        if (waitingForLanding && !motor.IsGrounded) observedAirborne = true;
+        if (waitingForLanding && observedAirborne && motor.IsGrounded)
         {
             waitingForLanding = false; observedAirborne = false;
             if (landClip != null) jumpSource.PlayOneShot(landClip, jumpVolume);
@@ -83,7 +83,7 @@ public class PlayerMovementAudio : MonoBehaviour
         Vector3 velocity = controller.velocity;
         velocity.y = 0f;
         float speed = velocity.magnitude;
-        if (!controller.isGrounded || !motor.HasMovementInput || speed < 0.1f || Time.time < landingQuietUntil) { StopSteps(); return; }
+        if (!motor.IsGrounded || !motor.HasMovementInput || speed < 0.1f || Time.time < landingQuietUntil) { StopSteps(); return; }
         int gait = motor.IsCrouching ? 2 : motor.IsSprinting ? 1 : 0;
         if (gait != previousGait) { remainingDistance = 0; previousGait = gait; footstepSource.Stop(); }
         remainingDistance -= speed * Time.deltaTime;

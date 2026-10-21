@@ -26,6 +26,12 @@ public class RevolverCombat : MonoBehaviour
     public float cylinderSwingDistance = 0.055f;
     [Tooltip("Optional existing camera-child view; otherwise instantiated from the prefab.")]
     public Transform weaponView;
+    [Header("Weapon obstruction")]
+    public LayerMask obstructionMask = ~0;
+    [Min(0.01f)] public float obstructionRadius = 0.045f;
+    [Min(0)] public float obstructionPadding = 0.08f;
+    public Vector3 muzzleOffset = new Vector3(0, 0.045f, 0.17f);
+    public Vector3 obstructedOffset = new Vector3(0, -0.12f, -0.1f);
     public UnityEvent onShot = new UnityEvent();
     public UnityEvent onReloaded = new UnityEvent();
     public UnityEvent onEmptyClick = new UnityEvent();
@@ -36,15 +42,19 @@ public class RevolverCombat : MonoBehaviour
     public int LoadedAmmo => ammo.loaded;
     public int SpareAmmo => ammo.spare;
     public bool HasRevolver => hasRevolver;
-    public bool IsAiming { get; private set; }
-    public bool IsReloading { get; private set; }
+    public bool IsAiming => player != null && player.State.CurrentAction == PlayerState.Action.Aiming;
+    public bool IsReloading => player != null && player.State.CurrentAction == PlayerState.Action.Reloading;
+    public bool IsObstructed => player != null && player.State.WeaponObstructed;
     public float AimBlend => aimBlend;
-    public bool ReadyToFire => IsAiming && aimBlend >= 0.95f && !IsReloading;
+    public bool ReadyToFire => player != null && player.State.CanShoot && aimBlend >= 0.95f && obstructionBlend <= 0.05f;
     private PlayerGameplay player;
     private float aimBlend, nextShot, reloadProgress;
     private Coroutine reloadRoutine;
     private Transform cylinderPivot;
     private Vector3 cylinderClosedPosition;
+    private float obstructionBlend;
+    private readonly RaycastHit[] obstructionHits = new RaycastHit[32];
+    private readonly Collider[] obstructionOverlaps = new Collider[32];
 
     private void Awake()
     {
@@ -55,7 +65,9 @@ public class RevolverCombat : MonoBehaviour
 
     private void Update()
     {
+        RefreshObstruction();
         aimBlend = Mathf.MoveTowards(aimBlend, IsAiming ? 1f : 0f, Time.deltaTime * 7f);
+        obstructionBlend = Mathf.MoveTowards(obstructionBlend, IsObstructed ? 1f : 0f, Time.deltaTime * 12f);
         if (weaponView != null)
         {
             weaponView.gameObject.SetActive(hasRevolver && !player.BlocksControls);
@@ -64,6 +76,8 @@ public class RevolverCombat : MonoBehaviour
             Quaternion rotation = Quaternion.Slerp(Quaternion.Euler(loweredAngles), Quaternion.Euler(aimedAngles), aimBlend);
             weaponView.localPosition = Vector3.Lerp(position, reloadPosition, reloadBlend);
             weaponView.localRotation = Quaternion.Slerp(rotation, Quaternion.Euler(reloadAngles), reloadBlend);
+            weaponView.localPosition += obstructedOffset * obstructionBlend;
+            weaponView.localRotation *= Quaternion.Euler(30f * obstructionBlend, 0, 0);
             if (cylinderPivot != null)
             {
                 float open = IsReloading ? ReloadCylinderBlend(reloadProgress) : 0f;
@@ -90,16 +104,24 @@ public class RevolverCombat : MonoBehaviour
 
     public void SetAim(bool held)
     {
-        IsAiming = held && hasRevolver && !IsReloading && !player.BlocksControls;
+        if (player == null) return;
+        player.State.SetAiming(held && hasRevolver);
         if (player != null && player.Motor != null) player.Motor.SetAiming(IsAiming);
     }
 
     public bool TryShoot()
     {
+        RefreshObstruction();
         if (!ReadyToFire || player.BlocksControls || Time.time < nextShot) return false;
         nextShot = Time.time + shotInterval;
         if (!ammo.TryConsume()) { onEmptyClick.Invoke(); player.Notify("Cylinder empty. Press R to reload."); return false; }
-        if (player.RaycastFromView(range, hitMask, out RaycastHit hit))
+        Vector3 aimPoint = player.View.transform.position + player.View.transform.forward * range;
+        if (player.RaycastFromView(range, hitMask, out RaycastHit aimedHit)) aimPoint = aimedHit.point;
+        Vector3 muzzle = weaponView != null ? weaponView.TransformPoint(muzzleOffset) : player.View.transform.position;
+        Vector3 trajectory = aimPoint - muzzle;
+        // Resolve the shot from the actual muzzle towards the crosshair target so
+        // a wall beside the camera still blocks the projectile path.
+        if (player.RaycastFromPoint(muzzle, trajectory.normalized, Mathf.Min(range, trajectory.magnitude) + 0.01f, hitMask, out RaycastHit hit))
         {
             var boss = hit.collider.GetComponentInParent<PossessedBoss>();
             if (boss != null) boss.HitBySilverBullet();
@@ -113,14 +135,13 @@ public class RevolverCombat : MonoBehaviour
 
     public bool TryReload()
     {
-        if (!hasRevolver || IsReloading || player.BlocksControls || ammo.loaded >= ammo.capacity || ammo.spare == 0) return false;
+        if (!hasRevolver || ammo.loaded >= ammo.capacity || ammo.spare == 0 || !player.State.TryStartReload()) return false;
         reloadRoutine = StartCoroutine(Reload());
         return true;
     }
 
     private IEnumerator Reload()
     {
-        IsReloading = true;
         reloadProgress = 0f;
         SetAim(false);
         onReloadStarted.Invoke();
@@ -134,21 +155,50 @@ public class RevolverCombat : MonoBehaviour
         }
         ammo.Reload();
         reloadProgress = 1f;
-        IsReloading = false; reloadRoutine = null;
+        player.State.EndReload(); reloadRoutine = null;
         onReloaded.Invoke();
     }
 
     public void CancelReload()
     {
-        bool wasReloading = IsReloading;
+        bool wasReloading = IsReloading || reloadRoutine != null;
         if (reloadRoutine != null) StopCoroutine(reloadRoutine);
-        reloadRoutine = null; IsReloading = false; reloadProgress = 0f;
+        reloadRoutine = null; player?.State.EndReload(); reloadProgress = 0f;
         if (cylinderPivot != null)
         {
             cylinderPivot.localPosition = cylinderClosedPosition;
             cylinderPivot.localRotation = Quaternion.identity;
         }
         if (wasReloading) onReloadCanceled.Invoke();
+    }
+
+    private bool ForeignOverlap(Vector3 point)
+    {
+        int count = Physics.OverlapSphereNonAlloc(point, obstructionRadius, obstructionOverlaps, obstructionMask, QueryTriggerInteraction.Ignore);
+        if (count == obstructionOverlaps.Length) return true;
+        for (int i = 0; i < count; i++) if (!obstructionOverlaps[i].transform.IsChildOf(transform)) return true;
+        return false;
+    }
+
+    private void RefreshObstruction()
+    {
+        if (player == null || player.View == null) return;
+        if (!hasRevolver || player.BlocksControls) { player.State.SetWeaponObstructed(false); return; }
+        var camera = player.View.transform;
+        // Probe the intended pose, not the retracted pose, to avoid oscillating.
+        var position = Vector3.Lerp(loweredPosition, aimedPosition, aimBlend);
+        var rotation = Quaternion.Slerp(Quaternion.Euler(loweredAngles), Quaternion.Euler(aimedAngles), aimBlend);
+        Vector3 intendedMuzzle = camera.TransformPoint(position + rotation * muzzleOffset);
+        Vector3 path = intendedMuzzle - camera.position;
+        bool blocked = ForeignOverlap(camera.position) || ForeignOverlap(intendedMuzzle);
+        if (!blocked)
+        {
+            int count = Physics.SphereCastNonAlloc(camera.position, obstructionRadius, path.normalized,
+                obstructionHits, path.magnitude + obstructionPadding, obstructionMask, QueryTriggerInteraction.Ignore);
+            blocked = count == obstructionHits.Length;
+            for (int i = 0; i < count && !blocked; i++) blocked = !obstructionHits[i].collider.transform.IsChildOf(transform);
+        }
+        player.State.SetWeaponObstructed(blocked);
     }
 
     private static float ReloadPoseBlend(float progress)

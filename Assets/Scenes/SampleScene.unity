@@ -83653,6 +83653,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 855000000}
   - component: {fileID: 853000000}
   - component: {fileID: 852000000}
   - component: {fileID: 850000002}
@@ -83758,6 +83759,8 @@ MonoBehaviour:
   playerCamera: {fileID: 963194227}
   mouseSensivity: 25
   maxLookAngle: 80
+  groundProbeDistance: 0.12
+  groundStickSpeed: 2
 --- !u!114 &421453154
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -997091,6 +997094,10 @@ MonoBehaviour:
   reloadPosition: {x: 0.09, y: -0.1, z: 0.29}
   reloadAngles: {x: -12, y: -55, z: 25}
   cylinderSwingDistance: 0.055
+  obstructionRadius: 0.045
+  obstructionPadding: 0.08
+  muzzleOffset: {x: 0, y: 0.045, z: 0.17}
+  obstructedOffset: {x: 0, y: -0.12, z: -0.1}
 --- !u!33 &850000006
 MeshFilter:
   m_GameObject: {fileID: 850000004}
@@ -997135,6 +997142,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 854000001}
   - component: {fileID: 851000000}
   - component: {fileID: 850000005}
   - component: {fileID: 850000006}
@@ -997153,12 +997161,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 850000004}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 81.7, y: 25.85, z: -2.18}
+  m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
+  m_LocalPosition: {x: 92.21, y: 26.65, z: -5.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 850000001}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
 --- !u!33 &850000012
 MeshFilter:
   m_GameObject: {fileID: 850000010}
@@ -997203,6 +997211,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 854000002}
   - component: {fileID: 850000011}
   - component: {fileID: 850000012}
   - component: {fileID: 850000013}
@@ -997221,7 +997230,7 @@ Transform:
   m_GameObject: {fileID: 850000010}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 82, y: 25.15, z: -0.7}
+  m_LocalPosition: {x: 92.21, y: 26.73, z: -5.02}
   m_LocalScale: {x: 0.3, y: 0.22, z: 0.22}
   m_Children: []
   m_Father: {fileID: 850000001}
@@ -997818,3 +997827,56 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: 2cc965e3fb6979b448dbdac5dc46e64c, type: 3}
   gunshotClip: {fileID: 8300000, guid: 14ff505a1dfa2ad41aedc196955e0c6f, type: 3}
   shellFallClip: {fileID: 8300000, guid: fb483f60aeb5a6d45a12fb058f98ae08, type: 3}
+  gunshotVolume: 1
+--- !u!4 &854000000 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400000, guid: 525e42c8aa5e52e4ea137bc78720fcfc, type: 3}
+  m_PrefabInstance: {fileID: 919192316}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &854000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42e7af7f665c4864b71f6c165470f182, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PickupCabinetPlacement
+  cabinet: {fileID: 854000000}
+  shelfName: SheetRack
+  restingAngles: {x: 0, y: 0, z: 90}
+  surfaceOffset: {x: -0.06, y: 0, z: -0.24}
+--- !u!114 &854000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42e7af7f665c4864b71f6c165470f182, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PickupCabinetPlacement
+  cabinet: {fileID: 854000000}
+  shelfName: SheetRack
+  restingAngles: {x: 0, y: 0, z: 0}
+  surfaceOffset: {x: -0.06, y: 0, z: 0.24}
+--- !u!114 &855000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 421453149}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfadfb3c2bfb45d29cad8944956ded3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLightingBudget
+  nearbyShadowLights: 4
+  shadowRadius: 28
+  maximumCustomShadowResolution: 1024

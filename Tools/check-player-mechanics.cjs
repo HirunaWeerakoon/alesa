@@ -32,13 +32,27 @@ for(const d of docs.filter(m=>+m[2]>=850000000&&+m[2]<852000000)){
  }
 }
 console.log('Passed input bindings, component wiring, unique scene IDs and prototype reference checks.');
+if(fs.existsSync('Assets/Audio/SFX/Revolver_CloseShot.wav')){
+ const wav=fs.readFileSync('Assets/Audio/SFX/Revolver_CloseShot.wav');
+ assert(wav.toString('ascii',0,4)==='RIFF'&&wav.toString('ascii',8,12)==='WAVE','Generated gunshot must be a WAV');
+ let peak=0,energy=0;for(let i=44;i<wav.length;i+=2){const value=wav.readInt16LE(i)/32768;peak=Math.max(peak,Math.abs(value));if(i<44+24000)energy+=value*value;}
+ assert(peak>0.9&&peak<0.999,'Generated gunshot must use headroom without clipping');
+ assert(Math.sqrt(energy/12000)>0.2,'Close gunshot needs a strong initial report');
+ const placements=docs.filter(d=>d[3].includes('Assembly-CSharp::PickupCabinetPlacement\n'));
+ assert.equal(placements.length,2,'Revolver and ammo need cabinet placement');
+ assert(placements.every(d=>d[3].includes('shelfName: SheetRack\n')),'Pickups must use the cabinet top');
+ assert(placements.some(d=>d[3].includes('z: -0.24}'))&&placements.some(d=>d[3].includes('z: 0.24}')),'Pickups need separate positions on the cabinet top');
+ for(const d of placements){const cabinet=d[3].match(/cabinet: \{fileID: (\d+)\}/)[1];assert(ids.has(cabinet),'Cabinet reference missing');}
+ assert(scene.includes('Assembly-CSharp::PlayerLightingBudget\n'),'Shadow budget missing');
+ console.log('Passed generated gunshot peak/RMS, adjacent cabinet shelf bindings and lighting-budget checks.');
+}
 if(fs.existsSync('Assets/Scripts/RevolverAudio.cs.meta')){
  for(const file of ['Assets/Scenes/SampleScene.unity','Assets/prefabs/Player.prefab']){
   const s=fs.readFileSync(file,'utf8');
   const audio=[...s.matchAll(/^--- !u!114 &[^\n]+\n([\s\S]*?)(?=^--- |$(?![\s\S]))/gm)].find(m=>m[1].includes('Assembly-CSharp::RevolverAudio\n'))?.[1];
   assert(audio,'Missing revolver audio in '+file);
-  for(const [field,name]of Object.entries({emptyClickClip:'Revolver-22-Smith No-Amo_3.wav',reloadClip:'Revolver_Spin.wav',gunshotClip:'Revolver-22-Smith Shot Far_1.wav',shellFallClip:'Small Gun Shell_2.wav'})){
-   const guid=fs.readFileSync('Assets/MaGuns/'+name+'.meta','utf8').match(/^guid: (\w+)/m)[1];
+  for(const [field,name]of Object.entries({emptyClickClip:'Assets/MaGuns/Revolver-22-Smith No-Amo_3.wav',reloadClip:'Assets/MaGuns/Revolver_Spin.wav',gunshotClip:'Assets/MaGuns/Revolver-22-Smith Shot Far_1.wav',shellFallClip:'Assets/MaGuns/Small Gun Shell_2.wav'})){
+   const guid=fs.readFileSync(name+'.meta','utf8').match(/^guid: (\w+)/m)[1];
    assert(audio.includes(`${field}: {fileID: 8300000, guid: ${guid}, type: 3}`),'Wrong revolver '+field);
   }
  }
