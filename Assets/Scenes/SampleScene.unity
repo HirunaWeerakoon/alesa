@@ -84207,11 +84207,12 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 421453152}
+  - component: {fileID: 855000000}
   - component: {fileID: 853000000}
   - component: {fileID: 852000000}
   - component: {fileID: 850000002}
   - component: {fileID: 850000003}
+  - component: {fileID: 421453152}
   - component: {fileID: 421453151}
   - component: {fileID: 421453150}
   - component: {fileID: 421453154}
@@ -84313,6 +84314,8 @@ MonoBehaviour:
   mouseSensivity: 25
   maxLookAngle: 80
   aimSpeed: 2
+  groundProbeDistance: 0.12
+  groundStickSpeed: 2
 --- !u!114 &421453154
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -184055,6 +184058,10 @@ MonoBehaviour:
   onReloadCanceled:
     m_PersistentCalls:
       m_Calls: []
+  obstructionRadius: 0.045
+  obstructionPadding: 0.08
+  muzzleOffset: {x: 0, y: 0.045, z: 0.17}
+  obstructedOffset: {x: 0, y: -0.12, z: -0.1}
 --- !u!1 &850000004
 GameObject:
   m_ObjectHideFlags: 0
@@ -184069,6 +184076,7 @@ GameObject:
   - component: {fileID: 850000007}
   - component: {fileID: 850000008}
   - component: {fileID: 850000009}
+  - component: {fileID: 854000001}
   m_Layer: 0
   m_Name: Revolver pickup
   m_TagString: Untagged
@@ -184084,13 +184092,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 850000004}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 81.7, y: 25.85, z: -2.18}
+  m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
+  m_LocalPosition: {x: 92.21, y: 26.65, z: -5.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 850000001}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
 --- !u!33 &850000006
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -184198,6 +184206,7 @@ GameObject:
   - component: {fileID: 850000013}
   - component: {fileID: 850000014}
   - component: {fileID: 850000015}
+  - component: {fileID: 854000002}
   m_Layer: 0
   m_Name: Ammo box (12 rounds)
   m_TagString: Untagged
@@ -184214,7 +184223,7 @@ Transform:
   m_GameObject: {fileID: 850000010}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 82, y: 25.15, z: -0.7}
+  m_LocalPosition: {x: 92.21, y: 26.73, z: -5.02}
   m_LocalScale: {x: 0.3, y: 0.22, z: 0.22}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1001168,3 +1001177,55 @@ SceneRoots:
   - {fileID: 976433074}
   - {fileID: 1629819947}
   - {fileID: 1449851991}
+--- !u!4 &854000000 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400000, guid: 525e42c8aa5e52e4ea137bc78720fcfc, type: 3}
+  m_PrefabInstance: {fileID: 919192316}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &854000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42e7af7f665c4864b71f6c165470f182, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PickupCabinetPlacement
+  cabinet: {fileID: 854000000}
+  shelfName: SheetRack
+  restingAngles: {x: 0, y: 0, z: 90}
+  surfaceOffset: {x: -0.06, y: 0, z: -0.24}
+--- !u!114 &854000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 850000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42e7af7f665c4864b71f6c165470f182, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PickupCabinetPlacement
+  cabinet: {fileID: 854000000}
+  shelfName: SheetRack
+  restingAngles: {x: 0, y: 0, z: 0}
+  surfaceOffset: {x: -0.06, y: 0, z: 0.24}
+--- !u!114 &855000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 421453149}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfadfb3c2bfb45d29cad8944956ded3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLightingBudget
+  nearbyShadowLights: 4
+  shadowRadius: 28
+  maximumCustomShadowResolution: 1024

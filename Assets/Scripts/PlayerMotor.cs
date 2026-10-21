@@ -1,173 +1,167 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+[DefaultExecutionOrder(-50)]
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMotor : MonoBehaviour
 {
-    private CharacterController controller; // create internal variable to hold reference to physical movement controller
-
-    [Header("Speed Settings")]
-    public float walkSpeed = 5f;
-    public float sprintSpeed = 8.5f;
-    public float crouchSpeed = 3f;
-    private float currentSpeed; // keep track of current active
-    private bool isSprinting = false;
-
-    [Header("Physics Setting")]
+    [Header("Speed")]
+    public float walkSpeed = 5f, sprintSpeed = 8.5f, crouchSpeed = 3f, aimSpeed = 2f;
+    [Header("Grounding")]
     public float gravity = -9.8f;
-    private Vector3 playerVelocity;
-    private bool isGrounded;
-
-    [Header("Jump Setting")]
     public float jumpHeight = 1.5f;
-
-    [Header("Crouch & View Settings")]
-    public float standingHeight = 2f;
-    public float crouchHeight = 1f;
-    public float standingCameraY = 1.6f;
-    public float crouchCameraY = 0.8f;
+    [Min(0.01f)] public float groundProbeDistance = 0.12f;
+    [Min(0.1f)] public float groundStickSpeed = 2f;
+    public LayerMask collisionMask = ~0;
+    [Header("Crouch and view")]
+    public float standingHeight = 1.95f, crouchHeight = 1f;
+    public float standingCameraY = 1.82f, crouchCameraY = 0.8f;
     public float crouchTransitionSpeed = 10f;
-    private bool isCrouching = false;
-
-    [Header("Camera Setting")]
     public Camera playerCamera;
-    public float mouseSensivity = 25f;
-    public float maxLookAngle = 80f; // set angle to prevent player to see too far up/down
-    private float xRotation = 0f;  // track camera/mouse tilt/rotation
+    public float mouseSensivity = 25f, maxLookAngle = 80f;
+    public bool IsCrouching => crouching;
+    public bool IsGrounded { get; private set; }
+    public bool IsSprinting => sprinting && !crouching && !aiming && (gameplay == null || gameplay.State.CanSprint);
+    public bool ControlsEnabled => controlsEnabled && (gameplay == null || gameplay.State.CanMove);
+    public bool HasMovementInput => input.sqrMagnitude > 0.01f;
+    public event System.Action Jumped;
 
-    private Vector2 currentInput;
+    private CharacterController controller;
+    private PlayerGameplay gameplay;
+    private Vector2 input;
+    private bool crouching, sprinting, aiming, controlsEnabled = true, jumpRequested;
+    private float verticalSpeed, xRotation, originalStepOffset;
+    private Vector3 groundNormal = Vector3.up;
+    private Transform capsuleVisual;
+    private Vector3 visualScale;
+    private readonly Collider[] overlaps = new Collider[32];
+    private readonly RaycastHit[] groundHits = new RaycastHit[32];
 
-
-    // start is called before first frame update
-    void Start()
+    private void Awake()
     {
-        controller = GetComponent<CharacterController>(); // to locate and link the character controller
-
-        // auto assign camera from children into inspector
-        if (playerCamera == null)
-        {
-            playerCamera = GetComponentInChildren<Camera>();
-        }
-        currentSpeed = walkSpeed;
-
-    }
-    
-    // update is called once per frame
-    void Update()
-    {
-        isGrounded = controller.isGrounded; // build in check. return true when bottom of the capsule touch the ground
-
-        if(isGrounded && playerVelocity.y < 0)
-        {
-            playerVelocity.y = -2f; // when grounded, set downward speed to a small. ensure player remains pinned against slopes
-        }
-
-        // adjust heigh and recalculate center
-        float targetHeight = isCrouching ? crouchHeight : standingHeight;
-        controller.height = Mathf.Lerp(controller.height, targetHeight, crouchTransitionSpeed * Time.deltaTime);
-        controller.center = new Vector3(0f, controller.height / 2f, 0f); // Keeps feet on the ground as height shrinks
-
-        // transition of camera eye level
-        if (playerCamera != null)
-        {
-            float targetCameraY = isCrouching ? crouchCameraY : standingCameraY;
-            Vector3 camPos = playerCamera.transform.localPosition;
-            camPos.y = Mathf.Lerp(camPos.y, targetCameraY, crouchTransitionSpeed * Time.deltaTime);
-            playerCamera.transform.localPosition = camPos;
-        }
-        
-        // map 2D inputs to 3D local axes: x = left/right (A/D) , z = forward/backward (W/S)
-        Vector3 moveDirection = Vector3.zero;
-        moveDirection.x = currentInput.x;
-        moveDirection.z = currentInput.y;
-
-        // Apply speed strictly capped by currentSpeed
-        Vector3 worldMove = transform.TransformDirection(moveDirection) * currentSpeed;
-
-        // accelerate downward over time with gravity
-        playerVelocity.y += gravity * Time.deltaTime;
-
-        // Combined move drive both horizontal and vertical movements simultaniously
-        Vector3 finalMovement = worldMove + playerVelocity;
-        // apply combined movement to character controller
-        controller.Move(finalMovement * Time.deltaTime);
+        controller = GetComponent<CharacterController>();
+        gameplay = GetComponent<PlayerGameplay>();
+        originalStepOffset = controller.stepOffset;
+        capsuleVisual = transform.Find("Capsule");
+        if (capsuleVisual != null) visualScale = capsuleVisual.localScale;
+        if (playerCamera == null) playerCamera = GetComponentInChildren<Camera>();
     }
 
-    // prevent jumping while crouching
-    public void Jump()
+    public void SetControlsEnabled(bool value)
     {
-        if(isGrounded && !isCrouching)
-        {
-            playerVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity );
-        }
+        controlsEnabled = value;
+        if (!value) { input = Vector2.zero; sprinting = false; jumpRequested = false; }
+    }
+    public void SetAiming(bool value) { aiming = value; }
+    public void setSprint(bool value) { sprinting = value; }
+    public void updateSpeed() { } // Retained for existing Inspector event bindings.
+    public void ProcessMove(Vector2 value) { input = ControlsEnabled ? Vector2.ClampMagnitude(value, 1f) : Vector2.zero; }
+    public void Jump() { if (ControlsEnabled && !crouching) jumpRequested = true; }
+
+    private Vector3 Feet => transform.TransformPoint(controller.center - Vector3.up * controller.height * 0.5f);
+    private float HorizontalScale => Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.z));
+
+    public bool CanStand() { return CanFitHeight(standingHeight); }
+
+    private bool CanFitHeight(float height)
+    {
+        float radius = Mathf.Max(0.02f, controller.radius * HorizontalScale - 0.015f);
+        float worldHeight = Mathf.Max(radius * 2f, height * Mathf.Abs(transform.lossyScale.y));
+        Vector3 bottom = Feet + Vector3.up * (radius + 0.02f);
+        Vector3 top = Feet + Vector3.up * (worldHeight - radius);
+        int count = Physics.OverlapCapsuleNonAlloc(bottom, top, radius, overlaps, collisionMask, QueryTriggerInteraction.Ignore);
+        if (count == overlaps.Length) return false;
+        for (int i = 0; i < count; i++) if (!overlaps[i].transform.IsChildOf(transform)) return false;
+        return true;
     }
 
-    public void setSprint(bool Sprinting)
-    {
-        isSprinting = Sprinting;
-        updateSpeed();
-
-    }
-
-    public void updateSpeed()
-    {
-        if (isCrouching)
-        {
-            currentSpeed = crouchSpeed; // cannot override by ssprint
-        }
-        else if (isSprinting)
-        {
-            currentSpeed = sprintSpeed;
-        }
-        else
-        {
-            currentSpeed = walkSpeed;
-        }
-    }
-
-    public void quickTurn()
-    {
-        transform.Rotate(0f,180f,0f);
-    }
     public void toggleCrouch()
     {
-        isCrouching = !isCrouching;
-
-        // drop sprint if crouching
-        if (isCrouching)
-        {
-            isSprinting = false;
-        }
-
-        // apply crouching speed
-        updateSpeed();
+        if (!ControlsEnabled) return;
+        if (crouching && !CanStand()) { gameplay?.Notify("Not enough room to stand."); return; }
+        crouching = !crouching;
+        if (crouching) { sprinting = false; jumpRequested = false; }
     }
-    // recieve raw WASD inputs from InputManager.cs
-    public void ProcessMove(Vector2 input)
+
+    private bool ProbeGround()
     {
-        // clamping dioganal movement vector
-        // w+d does not exeed max speed
-        currentInput = Vector2.ClampMagnitude(input,1f);
-    }
-
-    // handle mouse movement
-    public void ProcessLook(Vector2 input)
-    {
-        /*
-            multiply input from sensivity for smoothness and delta time for keep it frame rate independant
-        */
-        float mouseX = input.x * mouseSensivity * Time.deltaTime; // horizontal (left/right)
-        float mouseY = input.y * mouseSensivity * Time.deltaTime; // vertical (up/down)
-
-        xRotation -= mouseY; // tilt camera based on mouse rotation
-        xRotation = Mathf.Clamp(xRotation, -maxLookAngle, maxLookAngle); // lmit tilt at -/+max angle
-        if(playerCamera != null)
+        if (verticalSpeed > 0.01f) return false;
+        float radius = controller.radius * HorizontalScale;
+        float inset = Mathf.Min(controller.skinWidth * HorizontalScale, radius * 0.25f);
+        Vector3 origin = Feet + Vector3.up * (radius + 0.04f);
+        int count = Physics.SphereCastNonAlloc(origin, Mathf.Max(0.01f, radius - inset), Vector3.down,
+            groundHits, groundProbeDistance + inset + 0.04f, collisionMask, QueryTriggerInteraction.Ignore);
+        if (count == groundHits.Length) return false;
+        float nearest = float.PositiveInfinity;
+        float minimumY = Mathf.Cos(controller.slopeLimit * Mathf.Deg2Rad);
+        groundNormal = Vector3.up;
+        for (int i = 0; i < count; i++)
         {
-            playerCamera.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f); // actually rotate camera on x axis
+            var hit = groundHits[i];
+            if (hit.collider.transform.IsChildOf(transform) || hit.normal.y < minimumY || hit.distance >= nearest) continue;
+            nearest = hit.distance; groundNormal = hit.normal;
         }
-        // yaw(left/right) rotate player body
-        transform.Rotate(Vector3.up * mouseX); // Spins the whole player object left/right when move the mouse horizontally
+        return nearest < float.PositiveInfinity;
     }
 
+    private void Update()
+    {
+        if (!ControlsEnabled || !controller.enabled || Time.deltaTime <= 0f) { jumpRequested = false; return; }
+        IsGrounded = ProbeGround();
+        if (IsGrounded) verticalSpeed = -groundStickSpeed;
+
+        float target = crouching ? crouchHeight : standingHeight;
+        float height = Mathf.Lerp(controller.height, target, 1f - Mathf.Exp(-crouchTransitionSpeed * Time.deltaTime));
+        if (height > controller.height && !CanFitHeight(height))
+        {
+            crouching = true; sprinting = false; jumpRequested = false;
+            height = controller.height;
+        }
+        Vector3 feet = Feet;
+        controller.height = Mathf.Max(controller.radius * 2f, height);
+        controller.center = transform.InverseTransformPoint(feet) + Vector3.up * (controller.height * 0.5f);
+        controller.stepOffset = IsGrounded ? Mathf.Max(0f, Mathf.Min(originalStepOffset, controller.height - controller.radius * 2f)) : 0f;
+        UpdateViewAndBody();
+
+        if (jumpRequested && IsGrounded && !crouching && controller.height >= standingHeight - 0.05f)
+        {
+            verticalSpeed = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            IsGrounded = false; Jumped?.Invoke();
+        }
+        jumpRequested = false;
+        float speed = crouching ? crouchSpeed : IsSprinting ? sprintSpeed : walkSpeed;
+        if (aiming) speed = Mathf.Min(speed, aimSpeed);
+        Vector3 direction = transform.TransformDirection(new Vector3(input.x, 0, input.y));
+        if (IsGrounded) direction = Vector3.ProjectOnPlane(direction, groundNormal).normalized * input.magnitude;
+        verticalSpeed += gravity * Time.deltaTime;
+        var flags = controller.Move((direction * speed + Vector3.up * verticalSpeed) * Time.deltaTime);
+        if ((flags & CollisionFlags.Above) != 0 && verticalSpeed > 0f) verticalSpeed = 0f;
+        IsGrounded = verticalSpeed <= 0f && ProbeGround();
+        if (IsGrounded) verticalSpeed = -groundStickSpeed;
+    }
+
+    private void UpdateViewAndBody()
+    {
+        float fraction = Mathf.InverseLerp(crouchHeight, standingHeight, controller.height);
+        if (playerCamera != null)
+        {
+            var position = playerCamera.transform.localPosition;
+            position.y = Mathf.Min(controller.height - 0.1f, Mathf.Lerp(crouchCameraY, standingCameraY, fraction));
+            playerCamera.transform.localPosition = position;
+        }
+        if (capsuleVisual != null)
+        {
+            var position = capsuleVisual.localPosition; position.y = controller.center.y;
+            capsuleVisual.localPosition = position;
+            capsuleVisual.localScale = new Vector3(visualScale.x, visualScale.y * controller.height / standingHeight, visualScale.z);
+        }
+    }
+
+    public void quickTurn() { if (ControlsEnabled) transform.Rotate(0, 180, 0); }
+    public void ProcessLook(Vector2 delta)
+    {
+        if (!ControlsEnabled) return;
+        xRotation = Mathf.Clamp(xRotation - delta.y * mouseSensivity * 0.01f, -maxLookAngle, maxLookAngle);
+        if (playerCamera != null) playerCamera.transform.localRotation = Quaternion.Euler(xRotation, 0, 0);
+        transform.Rotate(0, delta.x * mouseSensivity * 0.01f, 0);
+    }
 }
