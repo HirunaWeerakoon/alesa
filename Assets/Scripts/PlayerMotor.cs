@@ -37,6 +37,23 @@ public class PlayerMotor : MonoBehaviour
     private float xRotation = 0f;  // track camera/mouse tilt/rotation
 
     private Vector2 currentInput;
+    private bool controlsEnabled = true;
+    private bool aiming;
+    public float aimSpeed = 2f;
+    public bool IsCrouching => isCrouching;
+    public bool IsSprinting => isSprinting && !isCrouching && !aiming;
+    public bool ControlsEnabled => controlsEnabled;
+    public bool HasMovementInput => currentInput.sqrMagnitude > 0.01f;
+    public event System.Action Jumped;
+
+    public void SetControlsEnabled(bool enabled)
+    {
+        controlsEnabled = enabled;
+        if (!enabled) { currentInput = Vector2.zero; isSprinting = false; }
+        updateSpeed();
+    }
+
+    public void SetAiming(bool value) { aiming = value; updateSpeed(); }
 
 
     // start is called before first frame update
@@ -56,6 +73,7 @@ public class PlayerMotor : MonoBehaviour
     // update is called once per frame
     void Update()
     {
+        if (!controlsEnabled) return;
         isGrounded = controller.isGrounded; // build in check. return true when bottom of the capsule touch the ground
 
         if(isGrounded && playerVelocity.y < 0)
@@ -97,9 +115,10 @@ public class PlayerMotor : MonoBehaviour
     // prevent jumping while crouching
     public void Jump()
     {
-        if(isGrounded && !isCrouching)
+        if(controlsEnabled && isGrounded && !isCrouching)
         {
             playerVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity );
+            Jumped?.Invoke();
         }
     }
 
@@ -116,7 +135,7 @@ public class PlayerMotor : MonoBehaviour
         {
             currentSpeed = crouchSpeed; // cannot override by ssprint
         }
-        else if (isSprinting)
+        else if (isSprinting && !aiming)
         {
             currentSpeed = sprintSpeed;
         }
@@ -124,10 +143,12 @@ public class PlayerMotor : MonoBehaviour
         {
             currentSpeed = walkSpeed;
         }
+        if (aiming) currentSpeed = Mathf.Min(currentSpeed, aimSpeed);
     }
 
     public void quickTurn()
     {
+        if (!controlsEnabled) return;
         transform.Rotate(0f,180f,0f);
     }
     public void toggleCrouch()
@@ -154,6 +175,7 @@ public class PlayerMotor : MonoBehaviour
     // handle mouse movement
     public void ProcessLook(Vector2 input)
     {
+        if (!controlsEnabled) return;
         /*
             multiply input from sensivity for smoothness and delta time for keep it frame rate independant
         */
