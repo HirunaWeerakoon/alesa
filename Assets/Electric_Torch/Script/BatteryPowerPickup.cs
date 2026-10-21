@@ -12,7 +12,7 @@ public class BatteryPowerPickup : MonoBehaviour
 
     private void Awake()
     {
-        _torchOnOff = FindObjectOfType<ElectricTorchOnOff>();
+        _torchOnOff = FindFirstObjectByType<ElectricTorchOnOff>();
     }
     void OnTriggerEnter(Collider other)
     {
