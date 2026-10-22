@@ -8,6 +8,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 855000000}
   - component: {fileID: 853000000}
   - component: {fileID: 852000000}
   - component: {fileID: 851000001}
@@ -101,6 +102,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMotor
   speed: 5
+  groundProbeDistance: 0.12
+  groundStickSpeed: 2
 --- !u!114 &665839387317329437
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -354,6 +357,10 @@ MonoBehaviour:
   reloadPosition: {x: 0.09, y: -0.1, z: 0.29}
   reloadAngles: {x: -12, y: -55, z: 25}
   cylinderSwingDistance: 0.055
+  obstructionRadius: 0.045
+  obstructionPadding: 0.08
+  muzzleOffset: {x: 0, y: 0.045, z: 0.17}
+  obstructedOffset: {x: 0, y: -0.12, z: -0.1}
 --- !u!114 &852000000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -404,3 +411,19 @@ MonoBehaviour:
   reloadClip: {fileID: 8300000, guid: 2cc965e3fb6979b448dbdac5dc46e64c, type: 3}
   gunshotClip: {fileID: 8300000, guid: 14ff505a1dfa2ad41aedc196955e0c6f, type: 3}
   shellFallClip: {fileID: 8300000, guid: fb483f60aeb5a6d45a12fb058f98ae08, type: 3}
+  gunshotVolume: 1
+--- !u!114 &855000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1034858885761068494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfadfb3c2bfb45d29cad8944956ded3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLightingBudget
+  nearbyShadowLights: 4
+  shadowRadius: 28
+  maximumCustomShadowResolution: 1024

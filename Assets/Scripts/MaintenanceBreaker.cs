@@ -13,7 +13,7 @@ public class MaintenanceBreaker : MonoBehaviour, IInteractable
     public UnityEvent onPowerRestored = new UnityEvent();
     public bool HasPower { get; private set; }
     public string Prompt => "Flip maintenance breaker";
-    public bool CanInteract(PlayerGameplay player) => !HasPower;
+    public bool CanInteract(PlayerGameplay player) => !HasPower && player.State.CanInteract;
 
     private void Start() { ApplyPower(false); }
 
@@ -26,7 +26,7 @@ public class MaintenanceBreaker : MonoBehaviour, IInteractable
 
     public void Interact(PlayerGameplay player)
     {
-        if (HasPower || player.BlocksControls) return;
+        if (HasPower || !player.State.CanInteract) return;
         HasPower = true; ApplyPower(true);
         player.Notify("Partial hospital power restored.");
         onPowerRestored.Invoke();

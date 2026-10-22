@@ -10,11 +10,11 @@ public class InteractablePickup : MonoBehaviour, IInteractable
     [TextArea(3, 12)] public string noteText;
     private bool collected;
     public string Prompt => kind == PickupKind.Note ? "Read " + noteTitle : "Pick up " + kind;
-    public bool CanInteract(PlayerGameplay player) => !collected;
+    public bool CanInteract(PlayerGameplay player) => !collected && player.State.CanInteract;
 
     public void Interact(PlayerGameplay player)
     {
-        if (collected || player.BlocksControls) return;
+        if (collected || !player.State.CanInteract) return;
         collected = true;
         player.GetComponent<PlayerMovementAudio>()?.PlayPickup(kind);
         if (kind == PickupKind.Revolver) player.Combat.Equip(rounds);

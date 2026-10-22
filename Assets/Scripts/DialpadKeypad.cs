@@ -12,13 +12,13 @@ public class DialpadKeypad : MonoBehaviour, IInteractable
     public UnityEvent onAlesaFreed = new UnityEvent();
     public bool IsUnlocked { get; private set; }
     public string Prompt => requiredBreaker != null && !requiredBreaker.HasPower ? "Keypad has no power" : "Use access keypad";
-    public bool CanInteract(PlayerGameplay player) => !IsUnlocked;
+    public bool CanInteract(PlayerGameplay player) => !IsUnlocked && player.State.CanInteract;
 
     private void Awake() { if (stationaryCamera != null) stationaryCamera.enabled = false; }
 
     public void Interact(PlayerGameplay player)
     {
-        if (IsUnlocked || player.BlocksControls) return;
+        if (IsUnlocked || !player.State.CanInteract) return;
         if (requiredBreaker != null && !requiredBreaker.HasPower) { player.Notify("Restore maintenance power first."); return; }
         if (stationaryCamera == null) { player.Notify("Keypad camera is not configured."); return; }
         player.OpenKeypad(this);

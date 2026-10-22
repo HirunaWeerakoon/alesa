@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[DefaultExecutionOrder(-100)]
 [RequireComponent(typeof(PlayerMotor), typeof(PlayerGameplay), typeof(PlayerMovementAudio))]
 public class InputManager : MonoBehaviour
 {
@@ -8,6 +9,7 @@ public class InputManager : MonoBehaviour
     private PlayerInputs playerInput;
     private InputActionMap onFoot;
     private InputAction interact, aim, shoot, reload, pause;
+    private InputAction movement, jump, crouch, quickTurn, sprint, flashlightToggle, flashlightFlicker;
     private PlayerMotor motor;
     private PlayerGameplay gameplay;
 
@@ -25,6 +27,13 @@ public class InputManager : MonoBehaviour
         aim = Action("Aim", "<Mouse>/rightButton");
         shoot = Action("Shoot", "<Mouse>/leftButton");
         reload = Action("Reload", "<Keyboard>/r");
+        movement = onFoot.FindAction("Movement", true);
+        jump = onFoot.FindAction("Jump", true);
+        crouch = onFoot.FindAction("Crouch", true);
+        quickTurn = onFoot.FindAction("QuickTurn", true);
+        sprint = onFoot.FindAction("Sprint", true);
+        flashlightToggle = onFoot.FindAction("Flashlight", true);
+        flashlightFlicker = onFoot.FindAction("FlashlightFlicker", true);
         pause = new InputAction("Pause", InputActionType.Button, "<Keyboard>/escape");
     }
 
@@ -44,23 +53,23 @@ public class InputManager : MonoBehaviour
             return;
         }
         if (!onFoot.enabled) onFoot.Enable();
+        motor.ProcessLook(Mouse.current != null ? Mouse.current.delta.ReadValue() : Vector2.zero);
         gameplay.Combat.SetTriggerHeld(shoot.IsPressed());
         gameplay.Combat.SetAim(aim.IsPressed());
         if (interact.WasPressedThisFrame()) gameplay.TryInteract();
         if (gameplay.BlocksControls) return;
         if (reload.WasPressedThisFrame()) gameplay.Combat.TryReload();
         if (shoot.WasPressedThisFrame()) gameplay.Combat.TryShoot();
-        if (onFoot.FindAction("Jump").WasPressedThisFrame()) motor.Jump();
-        if (onFoot.FindAction("Crouch").WasPressedThisFrame()) motor.toggleCrouch();
-        if (onFoot.FindAction("QuickTurn").WasPressedThisFrame()) motor.quickTurn();
-        motor.setSprint(onFoot.FindAction("Sprint").IsPressed());
+        if (jump.WasPressedThisFrame()) motor.Jump();
+        if (crouch.WasPressedThisFrame()) motor.toggleCrouch();
+        if (quickTurn.WasPressedThisFrame()) motor.quickTurn();
+        motor.setSprint(sprint.IsPressed() && gameplay.State.CanSprint);
         if (flashlight != null)
         {
-            if (onFoot.FindAction("Flashlight").WasPressedThisFrame()) flashlight.toggleFlashlight();
-            if (onFoot.FindAction("FlashlightFlicker").WasPressedThisFrame()) flashlight.triggerFlicker();
+            if (flashlightToggle.WasPressedThisFrame()) flashlight.toggleFlashlight();
+            if (flashlightFlicker.WasPressedThisFrame()) flashlight.triggerFlicker();
         }
-        motor.ProcessMove(onFoot.FindAction("Movement").ReadValue<Vector2>());
-        motor.ProcessLook(Mouse.current != null ? Mouse.current.delta.ReadValue() : Vector2.zero);
+        motor.ProcessMove(movement.ReadValue<Vector2>());
     }
 
     private void OnDisable()

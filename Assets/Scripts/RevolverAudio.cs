@@ -9,7 +9,7 @@ public class RevolverAudio : MonoBehaviour
     public AudioClip shellFallClip;
     [Tooltip("One shell sound after this much quiet time since the final actual shot, with the trigger released.")]
     [Min(0.01f)] public float firingStopDelay = 0.55f;
-    [Range(0f, 1f)] public float gunshotVolume = 0.9f;
+    [Range(0f, 1f)] public float gunshotVolume = 1f;
     [Range(0f, 1f)] public float mechanismVolume = 0.7f;
     public AudioSource shotSource;
     public AudioSource reloadSource;
@@ -23,6 +23,7 @@ public class RevolverAudio : MonoBehaviour
         combat = GetComponent<RevolverCombat>();
         gameplay = GetComponent<PlayerGameplay>();
         shotSource = Prepare(shotSource);
+        shotSource.priority = 32;
         reloadSource = Prepare(reloadSource);
         mechanismSource = Prepare(mechanismSource);
     }

@@ -11,7 +11,8 @@ $output=Join-Path (Get-Location) Temp/PlayerMechanicsChecks
 New-Item -ItemType Directory -Force -Path $output | Out-Null
 $arguments=@('/nologo','/target:library','/langversion:9','/nostdlib+',"/out:$output/PlayerMechanics.dll")
 $arguments+=@($references | ForEach-Object {'/reference:"'+$_+'"'})
-$arguments+=@(Get-ChildItem -LiteralPath Assets/Scripts -Filter '*.cs' | ForEach-Object {'"'+$_.FullName+'"'})
+$arguments+=@(Get-ChildItem -LiteralPath Assets/Scripts -Recurse -Filter '*.cs' | ForEach-Object {'"'+$_.FullName+'"'})
+$arguments+=@(Get-ChildItem -LiteralPath Assets/Electric_Torch/Script -Filter '*.cs' | ForEach-Object {'"'+$_.FullName+'"'})
 $arguments+='Assets/inputs/PlayerInputs.cs'
 $compileResponse=Join-Path $output compile.rsp
 [System.IO.File]::WriteAllLines($compileResponse,$arguments)
@@ -21,6 +22,8 @@ $testArguments=@('/nologo','/target:exe','/nostdlib+',"/out:$output/AmmoChecks.e
 $testResponse=Join-Path $output ammo.rsp
 [System.IO.File]::WriteAllLines($testResponse,$testArguments)
 Add-Content -LiteralPath $testResponse -Value 'Assets/Scripts/FiringStopSoundGate.cs'
+Add-Content -LiteralPath $testResponse -Value 'Assets/Scripts/PlayerState.cs'
+Add-Content -LiteralPath $testResponse -Value 'Tests/PlayerStateChecks.cs'
 & $runtime $compiler "@$testResponse"
 if($LASTEXITCODE -ne 0){throw 'Ammo check compilation failed'}
 & (Join-Path $editorData MonoBleedingEdge/bin/mono.exe) (Join-Path $output AmmoChecks.exe)

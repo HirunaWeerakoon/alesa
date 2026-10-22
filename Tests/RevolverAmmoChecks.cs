@@ -9,6 +9,7 @@ public static class RevolverAmmoChecks
 
     public static void Main()
     {
+        PlayerStateChecks.Run();
         var ammo = new RevolverAmmo();
         ammo.LoadPickup(10);
         Check(ammo.loaded == 6 && ammo.spare == 4, "Pickup overflow must go to spare ammo");

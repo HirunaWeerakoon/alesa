@@ -21,8 +21,9 @@ public class PlayerGameplay : MonoBehaviour
     public PlayerMotor Motor { get; private set; }
     public Camera View { get; private set; }
     public RevolverCombat Combat { get; private set; }
-    public ScreenMode Mode { get; private set; }
-    public bool BlocksControls => Mode != ScreenMode.Playing;
+    public PlayerState State { get; } = new PlayerState();
+    public ScreenMode Mode => (ScreenMode)State.CurrentMode;
+    public bool BlocksControls => !State.CanMove;
     public bool AlesaFreed { get; private set; }
     public readonly List<string> NoteTitles = new List<string>();
     private readonly List<string> noteTexts = new List<string>();
@@ -33,6 +34,15 @@ public class PlayerGameplay : MonoBehaviour
     private DialpadKeypad keypad;
     private string code = "", keypadMessage = "";
     private Vector2 noteScroll;
+    private readonly RaycastHit[] rayHits = new RaycastHit[64];
+    private readonly List<MonoBehaviour> interactionComponents = new List<MonoBehaviour>(8);
+    private Collider targetCollider;
+    private IInteractable cachedTarget;
+    private string interactionPrompt, ammoLabel;
+    private float nextInteractionCheck;
+    private int displayedLoaded = -1, displayedSpare = -1;
+    private bool displayedReloading;
+    private GUIStyle noteStyle;
 
     private void Awake()
     {
@@ -61,32 +71,61 @@ public class PlayerGameplay : MonoBehaviour
         float size = Mathf.Lerp(idleCrosshairSize, movingCrosshairSize, movement);
         size = Mathf.Lerp(size, aimedCrosshairSize + movement * aimedMovementExpansion, Combat.AimBlend);
         crosshairSize = Mathf.Lerp(crosshairSize, size, 1f - Mathf.Exp(-crosshairResponse * Time.deltaTime));
+        if (Time.unscaledTime >= nextInteractionCheck)
+        {
+            var target = Target();
+            interactionPrompt = target != null ? "[E] " + target.Prompt : null;
+            nextInteractionCheck = Time.unscaledTime + 0.08f;
+        }
+        if (displayedLoaded != Combat.LoadedAmmo || displayedSpare != Combat.SpareAmmo || displayedReloading != Combat.IsReloading || ammoLabel == null)
+        {
+            displayedLoaded = Combat.LoadedAmmo; displayedSpare = Combat.SpareAmmo; displayedReloading = Combat.IsReloading;
+            ammoLabel = displayedReloading ? "Reloading..." : $"Revolver  {displayedLoaded} / {displayedSpare}";
+        }
     }
 
     public bool RaycastFromView(float distance, LayerMask mask, out RaycastHit closest)
     {
+        if (View == null) { closest = default; return false; }
+        var ray = View.ViewportPointToRay(new Vector3(0.5f, 0.5f));
+        return RaycastFromPoint(ray.origin, ray.direction, distance, mask, out closest);
+    }
+
+    public bool RaycastFromPoint(Vector3 origin, Vector3 direction, float distance, LayerMask mask, out RaycastHit closest)
+    {
         closest = default;
-        if (View == null) return false;
-        var hits = Physics.RaycastAll(View.ViewportPointToRay(new Vector3(0.5f, 0.5f)), distance, mask, QueryTriggerInteraction.Ignore);
-        Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-        foreach (var hit in hits)
+        int count = Physics.RaycastNonAlloc(origin, direction, rayHits, distance, mask, QueryTriggerInteraction.Ignore);
+        // A full buffer has unspecified omissions. Fail closed instead of allowing
+        // an interaction or bullet through a potentially omitted blocking wall.
+        if (count == rayHits.Length) return false;
+        float nearest = float.PositiveInfinity;
+        for (int i = 0; i < count; i++)
         {
+            var hit = rayHits[i];
             if (hit.collider.transform.IsChildOf(transform)) continue;
+            if (hit.distance >= nearest) continue;
+            nearest = hit.distance;
             closest = hit;
-            return true; // The first non-player obstacle blocks everything behind it.
         }
-        return false;
+        return nearest < float.PositiveInfinity;
     }
 
     private IInteractable Target()
     {
-        if (BlocksControls || !RaycastFromView(interactionDistance, interactionMask, out RaycastHit hit)) return null;
-        foreach (var component in hit.collider.GetComponentsInParent<MonoBehaviour>())
-            if (component.isActiveAndEnabled && component is IInteractable target && target.CanInteract(this)) return target;
+        if (!State.CanInteract || !RaycastFromView(interactionDistance, interactionMask, out RaycastHit hit)) return null;
+        if (targetCollider != hit.collider || (cachedTarget is MonoBehaviour previous && previous == null))
+        {
+            targetCollider = hit.collider; cachedTarget = null;
+            interactionComponents.Clear();
+            hit.collider.GetComponentsInParent(false, interactionComponents);
+            foreach (var component in interactionComponents)
+                if (component.isActiveAndEnabled && component is IInteractable target) { cachedTarget = target; break; }
+        }
+        if (cachedTarget is MonoBehaviour behaviour && behaviour != null && behaviour.isActiveAndEnabled && cachedTarget.CanInteract(this)) return cachedTarget;
         return null;
     }
 
-    public void TryInteract() { Target()?.Interact(this); }
+    public void TryInteract() { Target()?.Interact(this); nextInteractionCheck = 0f; }
     public void Notify(string message, float seconds = 3f) { notification = message; notificationUntil = Time.unscaledTime + seconds; }
 
     public void HandleEscape()
@@ -104,9 +143,10 @@ public class PlayerGameplay : MonoBehaviour
             previousCursorVisible = Cursor.visible;
             ownsModal = true;
         }
-        Mode = mode;
-        Combat.SetAim(false);
         Combat.CancelReload();
+        State.SetMode((PlayerState.Mode)mode);
+        Combat.SetAim(false);
+        Combat.SetTriggerHeld(false);
         Motor.SetControlsEnabled(false);
         Time.timeScale = 0f;
         Cursor.lockState = CursorLockMode.None;
@@ -121,7 +161,7 @@ public class PlayerGameplay : MonoBehaviour
             if (View != null) View.enabled = previousViewEnabled;
             keypad = null;
         }
-        Mode = ScreenMode.Playing;
+        State.SetMode(PlayerState.Mode.Playing);
         if (ownsModal)
         {
             Time.timeScale = previousTimeScale;
@@ -134,6 +174,7 @@ public class PlayerGameplay : MonoBehaviour
 
     public void ReadNote(string title, string text)
     {
+        if (!State.CanInteract) return;
         NoteTitles.Add(title); noteTexts.Add(text);
         ShowNote(NoteTitles.Count - 1);
     }
@@ -146,7 +187,7 @@ public class PlayerGameplay : MonoBehaviour
 
     public void OpenKeypad(DialpadKeypad target)
     {
-        if (BlocksControls || target.stationaryCamera == null || target.stationaryCamera == View) return;
+        if (!State.CanInteract || target.stationaryCamera == null || target.stationaryCamera == View) return;
         keypad = target; code = ""; keypadMessage = "Enter the access code";
         previousViewEnabled = View.enabled;
         OpenScreen(ScreenMode.Keypad);
@@ -180,6 +221,7 @@ public class PlayerGameplay : MonoBehaviour
     private void OnGUI()
     {
         if (Combat == null) return;
+        if (!BlocksControls && Event.current.type != EventType.Repaint) return;
         var oldMatrix = GUI.matrix;
         GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(Screen.width / 1280f, Screen.height / 720f, 1));
         if (!BlocksControls)
@@ -193,9 +235,9 @@ public class PlayerGameplay : MonoBehaviour
                 GUI.DrawTexture(new Rect((Screen.width - size) / 2, (Screen.height - size) / 2, size, size), crosshairTexture, ScaleMode.ScaleToFit, true);
                 GUI.matrix = hudMatrix;
             }
-            var target = Target();
-            if (target != null) GUI.Box(new Rect(440, 420, 400, 35), "[E] " + target.Prompt);
-            if (Combat.HasRevolver) GUI.Box(new Rect(1020, 650, 230, 42), Combat.IsReloading ? "Reloading..." : $"Revolver  {Combat.LoadedAmmo} / {Combat.SpareAmmo}");
+            if (interactionPrompt != null) GUI.Box(new Rect(440, 420, 400, 35), interactionPrompt);
+            if (Combat.IsObstructed) GUI.Label(new Rect(580, 390, 180, 25), "Weapon blocked");
+            if (Combat.HasRevolver) GUI.Box(new Rect(1020, 650, 230, 42), ammoLabel ?? "Revolver");
             GUI.Label(new Rect(25, 670, 500, 30), "E Interact   |   RMB Aim   LMB Fire   R Reload   |   Esc Pause");
         }
         if (Time.unscaledTime < notificationUntil) GUI.Box(new Rect(300, 35, 680, 38), notification);
@@ -219,7 +261,8 @@ public class PlayerGameplay : MonoBehaviour
             {
                 GUILayout.Label(noteTitle);
                 noteScroll = GUILayout.BeginScrollView(noteScroll);
-                GUILayout.Label(noteText, new GUIStyle(GUI.skin.label) { wordWrap = true });
+                if (noteStyle == null) noteStyle = new GUIStyle(GUI.skin.label) { wordWrap = true };
+                GUILayout.Label(noteText, noteStyle);
                 GUILayout.EndScrollView();
                 if (GUILayout.Button("Close note", GUILayout.Height(40))) CloseScreen();
             }

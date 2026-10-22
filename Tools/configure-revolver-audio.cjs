@@ -1,7 +1,7 @@
 const fs=require('fs'),crypto=require('crypto');
 function guid(p){return fs.readFileSync(p+'.meta','utf8').match(/^guid: (\w+)/m)[1];}
 for(const name of ['RevolverAudio','FiringStopSoundGate']){const p=`Assets/Scripts/${name}.cs`;if(!fs.existsSync(p+'.meta'))fs.writeFileSync(p+'.meta',`fileFormatVersion: 2\nguid: ${crypto.randomUUID().replaceAll('-','')}\n`);}
-const clips={emptyClickClip:'Revolver-22-Smith No-Amo_3.wav',reloadClip:'Revolver_Spin.wav',gunshotClip:'Revolver-22-Smith Shot Far_1.wav',shellFallClip:'Small Gun Shell_2.wav'};
+const clips={emptyClickClip:'Revolver-22-Smith No-Amo_3.wav',reloadClip:'Revolver_Spin.wav',gunshotClip:'Assets/MaGuns/Revolver-22-Smith Shot Far_1.wav',shellFallClip:'Small Gun Shell_2.wav'};
 for(const file of ['Assets/Scenes/SampleScene.unity','Assets/prefabs/Player.prefab']){
  let scene=fs.readFileSync(file,'utf8');
  const docs=()=>[...scene.matchAll(/^--- !u!(\d+) &(-?\d+)[^\n]*\n([\s\S]*?)(?=^--- |$(?![\s\S]))/gm)];
@@ -14,10 +14,12 @@ for(const file of ['Assets/Scenes/SampleScene.unity','Assets/prefabs/Player.pref
  }
  let body=audio[3];
  for(const [field,name]of Object.entries(clips)){
-  const path=`Assets/MaGuns/${name}`;if(!fs.existsSync(path))throw Error('Missing '+path);
+  const path=name.startsWith('Assets/')?name:`Assets/MaGuns/${name}`;if(!fs.existsSync(path))throw Error('Missing '+path);
   const line=`  ${field}: {fileID: 8300000, guid: ${guid(path)}, type: 3}\n`;
   const pattern=new RegExp('^  '+field+':[^\\n]*\\n','m');body=pattern.test(body)?body.replace(pattern,line):body+line;
  }
+ const volume=/^  gunshotVolume:[^\n]*\n/m;
+ body=volume.test(body)?body.replace(volume,'  gunshotVolume: 1\n'):body+'  gunshotVolume: 1\n';
  scene=scene.replace(audio[0],audio[0].slice(0,audio[0].length-audio[3].length)+body);
  fs.writeFileSync(file,scene);
 }
