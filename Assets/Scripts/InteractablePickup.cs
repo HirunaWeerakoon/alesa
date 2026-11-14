@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider))]
 public class InteractablePickup : MonoBehaviour, IInteractable
 {
-    public enum PickupKind { Revolver, Ammo, Note }
+    public enum PickupKind { Revolver, Ammo, Note, SilverAmmo }
     public PickupKind kind;
     [Min(0)] public int rounds = 6;
     public string noteTitle = "Written clue";
@@ -19,6 +19,7 @@ public class InteractablePickup : MonoBehaviour, IInteractable
         player.GetComponent<PlayerMovementAudio>()?.PlayPickup(kind);
         if (kind == PickupKind.Revolver) player.Combat.Equip(rounds);
         else if (kind == PickupKind.Ammo) { player.Combat.AddAmmo(rounds); player.Notify($"Picked up {rounds} spare rounds."); }
+        else if (kind == PickupKind.SilverAmmo) { player.Combat.AddSilverAmmo(rounds); player.Notify($"Picked up {rounds} silver rounds. V to switch; R to reload.", 4f); }
         else player.ReadNote(noteTitle, noteText);
         gameObject.SetActive(false);
     }
