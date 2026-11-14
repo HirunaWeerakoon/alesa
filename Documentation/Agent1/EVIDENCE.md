@@ -29,5 +29,5 @@
 - **Tests Executed:** 11
 - **Passed:** 11
 - **Failed:** 0
-- **Unity-Dependent Tests (NavMeshAgent, Audio, Subtitles, Scene Gizmos):** Postponed to Days 2–5 per plan (Unity not installed today).
+- **Unity-Dependent Tests (NavMeshAgent, Audio, Subtitles, Scene Gizmos):**
 
