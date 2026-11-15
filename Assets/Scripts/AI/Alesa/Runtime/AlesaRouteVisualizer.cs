@@ -33,6 +33,7 @@ namespace Alesa.Runtime
         public float pathElevation = 0.35f;
 
         private AlesaWaypointNetwork _network;
+        private readonly HashSet<(int, int)> _drawnPairs = new HashSet<(int, int)>();
 
         private void OnEnable()
         {
@@ -46,6 +47,12 @@ namespace Alesa.Runtime
 
             var waypoints = _network.waypoints;
             if (waypoints == null || waypoints.Count == 0) return;
+
+            // Auto-request initial route if not yet calculated
+            if (_network.LastRoute == null && _network.startWaypoint != null && _network.exitWaypoint != null)
+            {
+                _network.RequestRoute();
+            }
 
             // 1. Draw Graph Connections
             if (showConnections)
@@ -68,7 +75,7 @@ namespace Alesa.Runtime
 
         private void DrawCorridorConnections(List<AlesaWaypoint> waypoints)
         {
-            var drawnPairs = new HashSet<(int, int)>();
+            _drawnPairs.Clear();
 
             for (int i = 0; i < waypoints.Count; i++)
             {
@@ -89,8 +96,8 @@ namespace Alesa.Runtime
                     int idB = toWp.GetInstanceID();
                     var pairKey = idA < idB ? (idA, idB) : (idB, idA);
 
-                    if (drawnPairs.Contains(pairKey)) continue;
-                    drawnPairs.Add(pairKey);
+                    if (_drawnPairs.Contains(pairKey)) continue;
+                    _drawnPairs.Add(pairKey);
 
                     if (conn.isBlocked)
                     {

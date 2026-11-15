@@ -32,9 +32,10 @@ namespace Alesa.Logic.Checks
             Test09_CyclicGraphTerminationAndLoopAvoidance();
             Test10_RiskPenaltyInfluencesPathSelection();
             Test11_TemporaryExclusionsWithoutGraphMutation();
+            Test12_SceneWaypointTopologyAndRouteVerification();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 11 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 12 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -358,6 +359,76 @@ namespace Alesa.Logic.Checks
             Assert(result.IsValid, "Route must be valid via B.");
             Assert(result.NodeIds[1] == "B", "Must use alternate corridor B.");
             Assert(graph.Version == versionBefore, "Graph version must not change when using temporary exclusions.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test12_SceneWaypointTopologyAndRouteVerification()
+        {
+            Console.Write("Test 12: Scene waypoint topology & dynamic detour verification... ");
+
+            // Mirror exact 10-node layout authored in AlesaAgentTest.unity
+            var graph = new WaypointGraph();
+            graph.AddNode("WP_Start", new NodePosition(0f, 0.5f, -14f));
+            graph.AddNode("WP_T_Junction", new NodePosition(0f, 0.5f, -4f), isJunction: true);
+
+            // West Corridor (Shorter)
+            graph.AddNode("WP_West_Entry", new NodePosition(-4.5f, 0.5f, -4f));
+            graph.AddNode("WP_West_Mid", new NodePosition(-4.5f, 0.5f, 2f));
+            graph.AddNode("WP_West_Exit", new NodePosition(-4.5f, 0.5f, 8f));
+
+            // East Corridor (Longer detour)
+            graph.AddNode("WP_East_Entry", new NodePosition(6f, 0.5f, -4f));
+            graph.AddNode("WP_East_Mid", new NodePosition(6f, 0.5f, 2f));
+            graph.AddNode("WP_East_Exit", new NodePosition(6f, 0.5f, 8f));
+
+            // North Junction & Exit
+            graph.AddNode("WP_North_Junction", new NodePosition(0f, 0.5f, 8f), isJunction: true);
+            graph.AddNode("WP_Exit", new NodePosition(0f, 0.5f, 15f));
+
+            // Wire identical corridor connections
+            graph.AddEdge("WP_Start", "WP_T_Junction", bidirectional: true);
+            graph.AddEdge("WP_T_Junction", "WP_West_Entry", bidirectional: true);
+            graph.AddEdge("WP_T_Junction", "WP_East_Entry", bidirectional: true);
+
+            graph.AddEdge("WP_West_Entry", "WP_West_Mid", bidirectional: true);
+            graph.AddEdge("WP_West_Mid", "WP_West_Exit", bidirectional: true);
+            graph.AddEdge("WP_West_Exit", "WP_North_Junction", bidirectional: true);
+
+            graph.AddEdge("WP_East_Entry", "WP_East_Mid", bidirectional: true);
+            graph.AddEdge("WP_East_Mid", "WP_East_Exit", bidirectional: true);
+            graph.AddEdge("WP_East_Exit", "WP_North_Junction", bidirectional: true);
+
+            graph.AddEdge("WP_North_Junction", "WP_Exit", bidirectional: true);
+
+            var pathfinder = new AStarPathfinder();
+
+            // 1. Initial State: West corridor must be chosen because 38.0m < 41.0m
+            var initialRoute = pathfinder.FindPath(graph, "WP_Start", "WP_Exit");
+            Assert(initialRoute.IsValid, "Initial route must be valid.");
+            Assert(Math.Abs(initialRoute.TotalCost - 38.0f) < 0.1f, $"Expected West route cost ~38.0m, got {initialRoute.TotalCost:F2}");
+            Assert(initialRoute.NodeIds.Contains("WP_West_Mid"), "Initial route must traverse West corridor.");
+
+            // 2. Simulate Boss/Hazard blocking West Corridor
+            graph.SetEdgeBlocked("WP_West_Mid", "WP_West_Exit", true, "Boss Ambush");
+            var detouredRoute = pathfinder.FindPath(graph, "WP_Start", "WP_Exit");
+            Assert(detouredRoute.IsValid, "Detour route must be valid.");
+            Assert(Math.Abs(detouredRoute.TotalCost - 41.0f) < 0.1f, $"Expected East route cost ~41.0m, got {detouredRoute.TotalCost:F2}");
+            Assert(detouredRoute.NodeIds.Contains("WP_East_Mid"), "Route must divert through East corridor.");
+
+            // 3. Block both corridors -> NoPath safe return
+            graph.SetEdgeBlocked("WP_East_Mid", "WP_East_Exit", true, "Secondary Hazard");
+            var blockedRoute = pathfinder.FindPath(graph, "WP_Start", "WP_Exit");
+            Assert(!blockedRoute.IsValid, "Blocked route must report invalid.");
+            Assert(blockedRoute.Status == RouteStatus.NoPath, "Status must be NoPath.");
+            Assert(float.IsPositiveInfinity(blockedRoute.TotalCost), "Cost must be infinity.");
+
+            // 4. Restore corridors -> returns to optimal West route
+            graph.SetEdgeBlocked("WP_West_Mid", "WP_West_Exit", false);
+            graph.SetEdgeBlocked("WP_East_Mid", "WP_East_Exit", false);
+            var restoredRoute = pathfinder.FindPath(graph, "WP_Start", "WP_Exit");
+            Assert(restoredRoute.IsValid, "Restored route must be valid.");
+            Assert(restoredRoute.NodeIds.Contains("WP_West_Mid"), "Restored route must use West corridor again.");
 
             Console.WriteLine("PASS");
         }
