@@ -104,7 +104,51 @@ namespace Alesa.Editor
             exitDest.transform.position = new Vector3(0f, 0.2f, 15f);
             exitDest.transform.localScale = new Vector3(3f, 0.2f, 3f);
 
-            // 8. Save the scene
+            // 8. Navigation Waypoint Network
+            var network = navRoot.AddComponent<Alesa.Runtime.AlesaWaypointNetwork>();
+
+            var wpStart = CreateWaypoint(navRoot, "WP_Start", new Vector3(0f, 0.5f, -14f));
+            var wpTJunction = CreateWaypoint(navRoot, "WP_T_Junction", new Vector3(0f, 0.5f, -4f), isJunction: true);
+
+            // West corridor (Shorter route: ~38m total)
+            var wpWestEntry = CreateWaypoint(navRoot, "WP_West_Entry", new Vector3(-4.5f, 0.5f, -4f));
+            var wpWestMid = CreateWaypoint(navRoot, "WP_West_Mid", new Vector3(-4.5f, 0.5f, 2f));
+            var wpWestExit = CreateWaypoint(navRoot, "WP_West_Exit", new Vector3(-4.5f, 0.5f, 8f));
+
+            // East corridor (Longer detour route: ~41m total)
+            var wpEastEntry = CreateWaypoint(navRoot, "WP_East_Entry", new Vector3(6f, 0.5f, -4f));
+            var wpEastMid = CreateWaypoint(navRoot, "WP_East_Mid", new Vector3(6f, 0.5f, 2f));
+            var wpEastExit = CreateWaypoint(navRoot, "WP_East_Exit", new Vector3(6f, 0.5f, 8f));
+
+            // North Junction & Exit
+            var wpNorthJunction = CreateWaypoint(navRoot, "WP_North_Junction", new Vector3(0f, 0.5f, 8f), isJunction: true);
+            var wpExit = CreateWaypoint(navRoot, "WP_Exit", new Vector3(0f, 0.5f, 15f));
+
+            // Wire connections
+            wpStart.AddConnection(wpTJunction, bidirectional: true);
+            wpTJunction.AddConnection(wpWestEntry, bidirectional: true);
+            wpTJunction.AddConnection(wpEastEntry, bidirectional: true);
+
+            // West chain
+            wpWestEntry.AddConnection(wpWestMid, bidirectional: true);
+            wpWestMid.AddConnection(wpWestExit, bidirectional: true);
+            wpWestExit.AddConnection(wpNorthJunction, bidirectional: true);
+
+            // East chain
+            wpEastEntry.AddConnection(wpEastMid, bidirectional: true);
+            wpEastMid.AddConnection(wpEastExit, bidirectional: true);
+            wpEastExit.AddConnection(wpNorthJunction, bidirectional: true);
+
+            // Exit connection
+            wpNorthJunction.AddConnection(wpExit, bidirectional: true);
+
+            // Configure network defaults
+            network.startWaypoint = wpStart;
+            network.exitWaypoint = wpExit;
+            network.CollectWaypoints();
+            network.BuildGraph();
+
+            // 9. Save the scene
             bool saved = EditorSceneManager.SaveScene(scene, ScenePath);
             if (saved)
             {
@@ -115,6 +159,16 @@ namespace Alesa.Editor
             {
                 Debug.LogError($"[ALESA] Failed to save scene to {ScenePath}");
             }
+        }
+
+        private static Alesa.Runtime.AlesaWaypoint CreateWaypoint(GameObject parent, string name, Vector3 position, bool isJunction = false)
+        {
+            var go = new GameObject(name);
+            go.transform.parent = parent.transform;
+            go.transform.position = position;
+            var wp = go.AddComponent<Alesa.Runtime.AlesaWaypoint>();
+            wp.isJunction = isJunction;
+            return wp;
         }
 
         private static GameObject CreateWall(GameObject parent, string name, Vector3 position, Vector3 scale)
