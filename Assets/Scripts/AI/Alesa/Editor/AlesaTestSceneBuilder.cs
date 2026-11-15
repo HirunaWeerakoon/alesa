@@ -45,6 +45,8 @@ namespace Alesa.Editor
             floor.transform.parent = envRoot.transform;
             floor.transform.position = Vector3.zero;
             floor.transform.localScale = new Vector3(4f, 1f, 4f); // 40m x 40m
+            GameObjectUtility.SetStaticEditorFlags(floor, StaticEditorFlags.NavigationStatic);
+            GameObjectUtility.SetNavMeshArea(floor, 0); // 0 = Walkable
 
             // 5. Walls Container
             var wallsRoot = new GameObject("Maze_Walls");
@@ -81,6 +83,9 @@ namespace Alesa.Editor
             blockedDebris.transform.parent = obstacleRoot.transform;
             blockedDebris.transform.position = new Vector3(-4.5f, 1.5f, 2f);
             blockedDebris.transform.localScale = new Vector3(4f, 3f, 2f);
+            var navObstacle = blockedDebris.AddComponent<UnityEngine.AI.NavMeshObstacle>();
+            navObstacle.carving = true;
+            navObstacle.size = new Vector3(4f, 3f, 2f);
             // By default inactive, so both routes are initially open for basic tests
             blockedDebris.SetActive(false);
 
@@ -91,11 +96,20 @@ namespace Alesa.Editor
             nathan.transform.parent = actorsRoot.transform;
             nathan.transform.position = new Vector3(0f, 1f, -14f);
 
-            // Alesa (Companion)
+            // Alesa (Companion) with NavMeshAgent configured
             var alesa = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             alesa.name = "Companion_Alesa";
             alesa.transform.parent = actorsRoot.transform;
             alesa.transform.position = new Vector3(0f, 1f, -16f); // trailing behind Nathan
+
+            var agent = alesa.AddComponent<UnityEngine.AI.NavMeshAgent>();
+            agent.speed = 4.5f;             // Balanced companion walking/jogging speed
+            agent.angularSpeed = 360f;      // Responsive turns
+            agent.acceleration = 12f;       // Smooth acceleration
+            agent.stoppingDistance = 1.8f;  // Keep natural ~1.5 - 2.0m distance behind player
+            agent.radius = 0.4f;            // Standard humanoid radius
+            agent.height = 1.8f;            // Standing height
+            agent.baseOffset = 1.0f;        // Capsule center offset so feet align with ground
 
             // Exit Destination
             var exitDest = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -148,7 +162,10 @@ namespace Alesa.Editor
             network.CollectWaypoints();
             network.BuildGraph();
 
-            // 9. Save the scene
+            // 9. Bake NavMesh
+            UnityEditor.AI.NavMeshBuilder.BuildNavMesh();
+
+            // 10. Save the scene
             bool saved = EditorSceneManager.SaveScene(scene, ScenePath);
             if (saved)
             {
@@ -178,6 +195,8 @@ namespace Alesa.Editor
             wall.transform.parent = parent.transform;
             wall.transform.position = position;
             wall.transform.localScale = scale;
+            GameObjectUtility.SetStaticEditorFlags(wall, StaticEditorFlags.NavigationStatic);
+            GameObjectUtility.SetNavMeshArea(wall, 1); // 1 = Not Walkable
             return wall;
         }
     }
