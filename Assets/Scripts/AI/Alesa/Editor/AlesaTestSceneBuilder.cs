@@ -120,6 +120,7 @@ namespace Alesa.Editor
 
             // 8. Navigation Waypoint Network
             var network = navRoot.AddComponent<Alesa.Runtime.AlesaWaypointNetwork>();
+            var visualizer = navRoot.AddComponent<Alesa.Runtime.AlesaRouteVisualizer>();
 
             var wpStart = CreateWaypoint(navRoot, "WP_Start", new Vector3(0f, 0.5f, -14f));
             var wpTJunction = CreateWaypoint(navRoot, "WP_T_Junction", new Vector3(0f, 0.5f, -4f), isJunction: true);
@@ -161,6 +162,7 @@ namespace Alesa.Editor
             network.exitWaypoint = wpExit;
             network.CollectWaypoints();
             network.BuildGraph();
+            network.RequestRoute();
 
             // 9. Bake NavMesh
             UnityEditor.AI.NavMeshBuilder.BuildNavMesh();
