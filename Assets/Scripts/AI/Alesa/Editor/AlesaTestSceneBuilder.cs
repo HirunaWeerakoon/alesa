@@ -76,18 +76,27 @@ namespace Alesa.Editor
             CreateWall(wallsRoot, "Wall_North_Funnel_Left", new Vector3(-4f, 1.5f, 11f), new Vector3(7f, 3f, 1f));
             CreateWall(wallsRoot, "Wall_North_Funnel_Right", new Vector3(4f, 1.5f, 11f), new Vector3(7f, 3f, 1f));
 
-            // 6. Blocked Corridor Demonstration Obstacle
+            // 6. Blocked Corridor Demonstration Obstacles
             var obstacleRoot = new GameObject("--- HAZARDS & OBSTACLES ---");
             var blockedDebris = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            blockedDebris.name = "Blocked_Corridor_Obstacle";
+            blockedDebris.name = "Blocked_Corridor_Obstacle_West";
             blockedDebris.transform.parent = obstacleRoot.transform;
             blockedDebris.transform.position = new Vector3(-4.5f, 1.5f, 2f);
             blockedDebris.transform.localScale = new Vector3(4f, 3f, 2f);
             var navObstacle = blockedDebris.AddComponent<UnityEngine.AI.NavMeshObstacle>();
             navObstacle.carving = true;
             navObstacle.size = new Vector3(4f, 3f, 2f);
-            // By default inactive, so both routes are initially open for basic tests
             blockedDebris.SetActive(false);
+
+            var blockedDebrisEast = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            blockedDebrisEast.name = "Blocked_Corridor_Obstacle_East";
+            blockedDebrisEast.transform.parent = obstacleRoot.transform;
+            blockedDebrisEast.transform.position = new Vector3(6f, 1.5f, 2f);
+            blockedDebrisEast.transform.localScale = new Vector3(4f, 3f, 2f);
+            var navObstacleEast = blockedDebrisEast.AddComponent<UnityEngine.AI.NavMeshObstacle>();
+            navObstacleEast.carving = true;
+            navObstacleEast.size = new Vector3(4f, 3f, 2f);
+            blockedDebrisEast.SetActive(false);
 
             // 7. Actors (Placeholders)
             // Nathan (Player)
@@ -118,8 +127,9 @@ namespace Alesa.Editor
             exitDest.transform.position = new Vector3(0f, 0.2f, 15f);
             exitDest.transform.localScale = new Vector3(3f, 0.2f, 3f);
 
-            // 8. Navigation Waypoint Network
+            // 8. Navigation Waypoint Network and Navigator
             var network = navRoot.AddComponent<Alesa.Runtime.AlesaWaypointNetwork>();
+            var navigator = navRoot.AddComponent<Alesa.Runtime.AlesaNavigator>();
             var visualizer = navRoot.AddComponent<Alesa.Runtime.AlesaRouteVisualizer>();
 
             var wpStart = CreateWaypoint(navRoot, "WP_Start", new Vector3(0f, 0.5f, -14f));
@@ -157,12 +167,24 @@ namespace Alesa.Editor
             // Exit connection
             wpNorthJunction.AddConnection(wpExit, bidirectional: true);
 
+            // Wire physical corridor blockers to waypoints
+            var westBlocker = blockedDebris.AddComponent<Alesa.Runtime.AlesaCorridorBlocker>();
+            westBlocker.nodeA = wpWestMid;
+            westBlocker.nodeB = wpWestExit;
+            westBlocker.blockReason = "West Hallway Debris Obstacle";
+
+            var eastBlocker = blockedDebrisEast.AddComponent<Alesa.Runtime.AlesaCorridorBlocker>();
+            eastBlocker.nodeA = wpEastMid;
+            eastBlocker.nodeB = wpEastExit;
+            eastBlocker.blockReason = "East Hallway Boss Barricade";
+
             // Configure network defaults
             network.startWaypoint = wpStart;
             network.exitWaypoint = wpExit;
             network.CollectWaypoints();
             network.BuildGraph();
-            network.RequestRoute();
+            navigator.InitializePlanner();
+            navigator.ReplanRoute();
 
             // 9. Bake NavMesh
             UnityEditor.AI.NavMeshBuilder.BuildNavMesh();

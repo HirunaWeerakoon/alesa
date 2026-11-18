@@ -33,16 +33,19 @@ namespace Alesa.Runtime
         public float pathElevation = 0.35f;
 
         private AlesaWaypointNetwork _network;
+        private AlesaNavigator _navigator;
         private readonly HashSet<(int, int)> _drawnPairs = new HashSet<(int, int)>();
 
         private void OnEnable()
         {
             _network = GetComponent<AlesaWaypointNetwork>();
+            _navigator = GetComponent<AlesaNavigator>();
         }
 
         private void OnDrawGizmos()
         {
             if (_network == null) _network = GetComponent<AlesaWaypointNetwork>();
+            if (_navigator == null) _navigator = GetComponent<AlesaNavigator>();
             if (_network == null) return;
 
             var waypoints = _network.waypoints;
@@ -51,7 +54,10 @@ namespace Alesa.Runtime
             // Auto-request initial route if not yet calculated
             if (_network.LastRoute == null && _network.startWaypoint != null && _network.exitWaypoint != null)
             {
-                _network.RequestRoute();
+                if (_navigator != null)
+                    _navigator.ReplanRoute();
+                else
+                    _network.RequestRoute();
             }
 
             // 1. Draw Graph Connections
@@ -155,7 +161,7 @@ namespace Alesa.Runtime
 
         private void DrawActiveRoute()
         {
-            var route = _network.LastRoute;
+            var route = (_navigator != null && _navigator.ActiveRoute != null) ? _navigator.ActiveRoute : _network.LastRoute;
             if (route == null || !route.IsValid || route.NodeIds.Count < 2) return;
 
             var graph = _network.ActiveGraph;
