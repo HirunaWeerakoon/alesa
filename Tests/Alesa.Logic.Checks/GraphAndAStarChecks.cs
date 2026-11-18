@@ -36,9 +36,11 @@ namespace Alesa.Logic.Checks
             Test13_DynamicEdgeManagementAndSafetyChecks();
             Test14_YenKShortestPathsComprehensiveScenarios();
             Test15_AlesaRoutePlannerDynamicReplanningAndEvents();
+            Test16_YenAlgorithmExhaustiveReferenceComparison();
+            Test17_PerformanceAndScalabilityBenchmark();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 15 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 17 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -730,6 +732,156 @@ namespace Alesa.Logic.Checks
             Assert(blockedAll.Status == RouteStatus.NoPath, "Status must be NoPath.");
 
             Console.WriteLine("PASS");
+        }
+
+        private static void Test16_YenAlgorithmExhaustiveReferenceComparison()
+        {
+            Console.Write("Test 16: Exhaustive DFS ground-truth comparison with Yen's algorithm... ");
+
+            // Graph with multiple interconnecting paths:
+            // S connects to A (cost 4), B (cost 6)
+            // A connects to C (cost 3), D (cost 7)
+            // B connects to C (cost 5), D (cost 2)
+            // C connects to Exit (cost 4)
+            // D connects to Exit (cost 3)
+            var graph = new WaypointGraph();
+            graph.AddNode("S", new NodePosition(0, 0, 0));
+            graph.AddNode("A", new NodePosition(5, 0, 4));
+            graph.AddNode("B", new NodePosition(5, 0, -4));
+            graph.AddNode("C", new NodePosition(10, 0, 4));
+            graph.AddNode("D", new NodePosition(10, 0, -4));
+            graph.AddNode("Exit", new NodePosition(15, 0, 0));
+
+            graph.AddEdge("S", "A", 4f);
+            graph.AddEdge("S", "B", 6f);
+            graph.AddEdge("A", "C", 3f);
+            graph.AddEdge("A", "D", 7f);
+            graph.AddEdge("B", "C", 5f);
+            graph.AddEdge("B", "D", 2f);
+            graph.AddEdge("C", "Exit", 4f);
+            graph.AddEdge("D", "Exit", 3f);
+
+            // Exhaustively find all simple paths via recursive DFS
+            var allPaths = new List<(List<string> Nodes, float Cost)>();
+            EnumerateAllSimplePaths(graph, "S", "Exit", new HashSet<string>(), new List<string>(), 0f, allPaths);
+
+            // Sort ground truth paths by cost ascending
+            allPaths.Sort((p1, p2) => p1.Cost.CompareTo(p2.Cost));
+            Assert(allPaths.Count >= 3, $"Expected at least 3 paths in ground truth, got {allPaths.Count}");
+
+            // Run Yen's algorithm
+            var yen = new YenKShortestPaths();
+            var result = yen.FindKShortestPaths(graph, "S", "Exit", k: 3);
+
+            Assert(result.HasRoutes && result.Count == 3, "Yen must return top 3 paths.");
+
+            for (int k = 0; k < 3; k++)
+            {
+                var yenRoute = result.Routes[k];
+                var groundTruth = allPaths[k];
+
+                Assert(Math.Abs(yenRoute.TotalCost - groundTruth.Cost) < 1e-4f,
+                    $"Path #{k + 1} cost mismatch: Yen={yenRoute.TotalCost:F2}, GroundTruth={groundTruth.Cost:F2}");
+
+                string yenSig = string.Join("->", yenRoute.NodeIds);
+                string groundTruthSig = string.Join("->", groundTruth.Nodes);
+                Assert(yenSig == groundTruthSig,
+                    $"Path #{k + 1} node mismatch: Yen=[{yenSig}], GroundTruth=[{groundTruthSig}]");
+            }
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void EnumerateAllSimplePaths(
+            WaypointGraph graph,
+            string current,
+            string goal,
+            HashSet<string> visited,
+            List<string> path,
+            float currentCost,
+            List<(List<string> Nodes, float Cost)> allPaths)
+        {
+            visited.Add(current);
+            path.Add(current);
+
+            if (current == goal)
+            {
+                allPaths.Add((new List<string>(path), currentCost));
+            }
+            else
+            {
+                foreach (var edge in graph.GetOutgoingEdges(current))
+                {
+                    if (edge.IsTraversable && !visited.Contains(edge.ToNodeId))
+                    {
+                        EnumerateAllSimplePaths(graph, edge.ToNodeId, goal, visited, path, currentCost + edge.TraversalCost, allPaths);
+                    }
+                }
+            }
+
+            path.RemoveAt(path.Count - 1);
+            visited.Remove(current);
+        }
+
+        private static void Test17_PerformanceAndScalabilityBenchmark()
+        {
+            Console.Write("Test 17: Performance benchmark on 50-node hospital maze... ");
+
+            // Build realistic 50-node maze grid (5 rows x 10 cols)
+            var graph = new WaypointGraph();
+            int rows = 5;
+            int cols = 10;
+
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < cols; c++)
+                {
+                    string id = $"N_{r}_{c}";
+                    graph.AddNode(id, new NodePosition(c * 5f, 0f, r * 5f));
+                }
+            }
+
+            // Connect horizontal corridors
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < cols - 1; c++)
+                {
+                    graph.AddEdge($"N_{r}_{c}", $"N_{r}_{c + 1}", 5f, bidirectional: true);
+                }
+            }
+
+            // Connect vertical corridors
+            for (int r = 0; r < rows - 1; r++)
+            {
+                for (int c = 0; c < cols; c++)
+                {
+                    graph.AddEdge($"N_{r}_{c}", $"N_{r + 1}_{c}", 5f, bidirectional: true);
+                }
+            }
+
+            string startId = "N_0_0";
+            string exitId = $"N_{rows - 1}_{cols - 1}";
+
+            var yen = new YenKShortestPaths();
+
+            // Warm-up run
+            var warmup = yen.FindKShortestPaths(graph, startId, exitId, k: 3);
+            Assert(warmup.HasRoutes && warmup.Count == 3, "Warmup search must succeed.");
+
+            // Timed execution across 50 repeated queries
+            const int iterations = 50;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            for (int i = 0; i < iterations; i++)
+            {
+                var res = yen.FindKShortestPaths(graph, startId, exitId, k: 3);
+                if (!res.HasRoutes) throw new InvalidOperationException("Benchmark run failed.");
+            }
+            sw.Stop();
+
+            double avgMs = (double)sw.ElapsedMilliseconds / iterations;
+            Assert(avgMs < 5.0, $"Average search time ({avgMs:F3} ms) exceeds 5.0 ms threshold.");
+
+            Console.WriteLine($"PASS ({avgMs:F3} ms/query across {iterations} runs)");
         }
     }
 }
