@@ -35,9 +35,10 @@ namespace Alesa.Logic.Checks
             Test12_SceneWaypointTopologyAndRouteVerification();
             Test13_DynamicEdgeManagementAndSafetyChecks();
             Test14_YenKShortestPathsComprehensiveScenarios();
+            Test15_AlesaRoutePlannerDynamicReplanningAndEvents();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 14 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 15 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -623,6 +624,110 @@ namespace Alesa.Logic.Checks
 
             var noPathResult = yen.FindKShortestPaths(disconnectedGraph, "S", "Exit", k: 3);
             Assert(!noPathResult.HasRoutes && noPathResult.Status == RouteStatus.NoPath, "Disconnected exit must report NoPath safely.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test15_AlesaRoutePlannerDynamicReplanningAndEvents()
+        {
+            Console.Write("Test 15: AlesaRoutePlanner dynamic replanning, caching & events... ");
+
+            // Graph topology:
+            // S -> W1 -> W2 -> Exit (West: 5 + 5 + 5 = 15m)
+            // S -> E1 -> E2 -> Exit (East: 7 + 7 + 7 = 21m)
+            var graph = new WaypointGraph();
+            graph.AddNode("S", new NodePosition(0, 0, 0));
+            graph.AddNode("W1", new NodePosition(-5, 0, 5));
+            graph.AddNode("W2", new NodePosition(-5, 0, 10));
+            graph.AddNode("E1", new NodePosition(5, 0, 5));
+            graph.AddNode("E2", new NodePosition(5, 0, 10));
+            graph.AddNode("Exit", new NodePosition(0, 0, 15));
+
+            graph.AddEdge("S", "W1", 5f, bidirectional: true);
+            graph.AddEdge("W1", "W2", 5f, bidirectional: true);
+            graph.AddEdge("W2", "Exit", 5f, bidirectional: true);
+
+            graph.AddEdge("S", "E1", 7f, bidirectional: true);
+            graph.AddEdge("E1", "E2", 7f, bidirectional: true);
+            graph.AddEdge("E2", "Exit", 7f, bidirectional: true);
+
+            var planner = new AlesaRoutePlanner(graph, maxAlternatives: 3);
+
+            // Track events fired
+            int routeChangedCount = 0;
+            RouteChangeReason lastReason = RouteChangeReason.ManualRequest;
+            bool routeBlockedFired = false;
+            bool noPathFired = false;
+
+            planner.OnRouteChanged += (route, reason) =>
+            {
+                routeChangedCount++;
+                lastReason = reason;
+            };
+
+            planner.OnActiveRouteBlocked += reason =>
+            {
+                routeBlockedFired = true;
+            };
+
+            planner.OnNoPathAvailable += () =>
+            {
+                noPathFired = true;
+            };
+
+            // 1. Initial plan
+            planner.SetEndpoints("S", "Exit", replanImmediately: true);
+            Assert(planner.HasValidRoute, "Planner must have a valid initial route.");
+            Assert(Math.Abs(planner.ActiveRoute.TotalCost - 15f) < 1e-4f, "Initial best route must be West corridor (15m).");
+            Assert(routeChangedCount == 1, "OnRouteChanged should have fired once.");
+            Assert(lastReason == RouteChangeReason.DestinationChanged, "Reason should be DestinationChanged.");
+            Assert(planner.IsActiveRouteTraversable(), "Active route must be traversable initially.");
+
+            // 2. Unchanged graph returns cached route without recalculating
+            int vBefore = planner.CachedGraphVersion;
+            var cached = planner.Replan();
+            Assert(planner.CachedGraphVersion == vBefore, "Version must remain identical when cached.");
+            Assert(routeChangedCount == 1, "OnRouteChanged should NOT fire when returning cached route.");
+
+            // 3. Dynamic Corridor Block -> Triggers automatic replan to East route (21m)
+            graph.SetEdgeBlocked("W1", "W2", true, "Boss Ambush");
+            Assert(!planner.IsActiveRouteTraversable(), "Active route must report NOT traversable after edge blocked.");
+
+            bool replanned = planner.CheckAndReplanIfInvalid(out var newRoute);
+            Assert(replanned, "CheckAndReplanIfInvalid must return true when route is blocked.");
+            Assert(routeBlockedFired, "OnActiveRouteBlocked event must have fired.");
+            Assert(Math.Abs(newRoute.TotalCost - 21f) < 1e-4f, $"Expected detoured cost 21.0m, got {newRoute.TotalCost:F1}m.");
+            Assert(newRoute.NodeIds.Contains("E1"), "Detour must use East corridor.");
+            Assert(lastReason == RouteChangeReason.CorridorBlocked, "Reason must be CorridorBlocked.");
+
+            // 4. Reopening corridor restores optimal West route
+            graph.SetEdgeBlocked("W1", "W2", false);
+            bool restored = planner.CheckAndReplanIfInvalid(out var restoredRoute);
+            Assert(restored, "CheckAndReplanIfInvalid must return true when graph version changes.");
+            Assert(Math.Abs(restoredRoute.TotalCost - 15f) < 1e-4f, "West route (15m) must be restored.");
+            Assert(lastReason == RouteChangeReason.CorridorReopened, "Reason must be CorridorReopened.");
+
+            // 5. Player progresses along active route (normal movement)
+            int routeChangedBeforeProgression = routeChangedCount;
+            bool deviated1 = planner.UpdatePlayerNode("W1");
+            Assert(!deviated1, "Moving to W1 along the active path should not trigger replan.");
+            Assert(routeChangedCount == routeChangedBeforeProgression, "Route change event should not fire for normal progression.");
+            Assert(planner.StartNodeId == "W1", "StartNodeId should advance to W1.");
+
+            // 6. Player deviates to another corridor (Nathan enters E1 instead of continuing to W2)
+            bool deviated2 = planner.UpdatePlayerNode("E1");
+            Assert(deviated2, "Deviating to E1 must trigger replanning from new node.");
+            Assert(lastReason == RouteChangeReason.PlayerDeviated, "Reason must be PlayerDeviated.");
+            Assert(planner.StartNodeId == "E1", "StartNodeId must update to E1.");
+            Assert(planner.ActiveRoute.NodeIds[0] == "E1", "Active route must now originate from E1.");
+
+            // 7. Complete maze block -> NoPathAvailable event
+            graph.SetEdgeBlocked("W2", "Exit", true);
+            graph.SetEdgeBlocked("E2", "Exit", true);
+            planner.CheckAndReplanIfInvalid(out var blockedAll);
+            Assert(!planner.HasValidRoute, "Must report no valid route when both exits blocked.");
+            Assert(noPathFired, "OnNoPathAvailable event must have fired.");
+            Assert(blockedAll.Status == RouteStatus.NoPath, "Status must be NoPath.");
 
             Console.WriteLine("PASS");
         }
