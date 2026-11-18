@@ -39,9 +39,10 @@ namespace Alesa.Logic.Checks
             Test16_YenAlgorithmExhaustiveReferenceComparison();
             Test17_PerformanceAndScalabilityBenchmark();
             Test18_CompanionLocomotionStateMachineTransitions();
+            Test19_FollowAnchorCalculationsAndSmoothing();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 18 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 19 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -992,6 +993,57 @@ namespace Alesa.Logic.Checks
             ctx.HasPlayerMovementInput = true;
             fsm.EvaluateState(ctx);
             Assert(fsm.CurrentState == CompanionState.Following, "Resolving recovery conditions returns to Following.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test19_FollowAnchorCalculationsAndSmoothing()
+        {
+            Console.Write("Test 19: Follow anchor trailing distance, personal space & smoothing... ");
+
+            var calc = new FollowAnchorCalculator(preferredDistance: 1.75f, minSeparation: 1.0f);
+            var playerPos = new NodePosition(10f, 0f, 10f);
+
+            // 1. Facing North (0, 0, 1) -> Anchor should be 1.75m South (10, 0, 8.25)
+            var fwdNorth = new NodePosition(0f, 0f, 1f);
+            var anchorNorth = calc.CalculateIdealAnchor(playerPos, fwdNorth);
+            Assert(Math.Abs(anchorNorth.X - 10f) < 1e-4f, "X should remain 10.");
+            Assert(Math.Abs(anchorNorth.Z - 8.25f) < 1e-4f, $"Z should be 8.25 (10 - 1.75), got {anchorNorth.Z}");
+            Assert(Math.Abs(playerPos.FlatDistanceTo(anchorNorth) - 1.75f) < 1e-4f, "Distance should be exactly 1.75m.");
+
+            // 2. Facing East (1, 0, 0) -> Anchor should be 1.75m West (8.25, 0, 10)
+            var fwdEast = new NodePosition(1f, 0f, 0f);
+            var anchorEast = calc.CalculateIdealAnchor(playerPos, fwdEast);
+            Assert(Math.Abs(anchorEast.X - 8.25f) < 1e-4f, "X should be 8.25.");
+            Assert(Math.Abs(anchorEast.Z - 10f) < 1e-4f, "Z should be 10.");
+
+            // 3. 180-degree turn: Facing South (0, 0, -1) -> Anchor should be North (10, 0, 11.75)
+            var fwdSouth = new NodePosition(0f, 0f, -1f);
+            var anchorSouth = calc.CalculateIdealAnchor(playerPos, fwdSouth);
+            Assert(Math.Abs(anchorSouth.Z - 11.75f) < 1e-4f, "Z should be 11.75.");
+
+            // 4. Personal space clamping
+            var crowdedCandidate = new NodePosition(10f, 0f, 9.5f); // 0.5m away (< 1.0m min)
+            var clamped = calc.ClampPersonalSpace(playerPos, crowdedCandidate);
+            float clampedDist = playerPos.FlatDistanceTo(clamped);
+            Assert(Math.Abs(clampedDist - 1.0f) < 1e-4f, $"Crowded anchor must be clamped to min separation 1.0m, got {clampedDist}");
+
+            // 5. Lateral offset
+            calc.LateralOffset = 0.5f; // 0.5m right flank
+            var flankAnchor = calc.CalculateIdealAnchor(playerPos, fwdNorth);
+            Assert(Math.Abs(flankAnchor.X - 10.5f) < 1e-4f, $"Flank anchor X should be 10.5, got {flankAnchor.X}");
+
+            // 6. Exponential smoothing on sudden turn
+            calc.LateralOffset = 0.0f;
+            var currentAnchor = anchorNorth; // at (10, 0, 8.25)
+            var suddenTarget = anchorSouth;  // player spun 180 deg to (10, 0, 11.75)
+            var smoothed = calc.SmoothAnchor(currentAnchor, suddenTarget, deltaTime: 0.1f, smoothSpeed: 8.0f);
+            Assert(smoothed.Z > currentAnchor.Z && smoothed.Z < suddenTarget.Z, "Smoothed position must interpolate smoothly toward target.");
+
+            // 7. Zero vector fallback
+            var zeroFwd = new NodePosition(0f, 0f, 0f);
+            var fallback = calc.CalculateIdealAnchor(playerPos, zeroFwd);
+            Assert(Math.Abs(playerPos.FlatDistanceTo(fallback) - 1.75f) < 1e-4f, "Zero forward must fallback safely without division by zero.");
 
             Console.WriteLine("PASS");
         }
