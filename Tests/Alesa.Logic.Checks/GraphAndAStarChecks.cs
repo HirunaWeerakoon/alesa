@@ -41,9 +41,10 @@ namespace Alesa.Logic.Checks
             Test18_CompanionLocomotionStateMachineTransitions();
             Test19_FollowAnchorCalculationsAndSmoothing();
             Test20_ArrivalSteeringSpeedModulationAndSmoothDeceleration();
+            Test21_StateSynchronizedSpeedAndSafeWaiting();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 20 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 21 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -1106,6 +1107,77 @@ namespace Alesa.Logic.Checks
             // 7. Steering velocity inside stopping distance
             var (vxStop, vzStop) = steering.CalculateSteeringVelocity(currentPos, new NodePosition(0f, 0f, 0.2f), currentSpeed: 1f, maxSpeed: maxWalk, deltaTime: 0.1f);
             Assert(vxStop == 0f && vzStop == 0f, "Steering velocity inside stopping distance must be exactly (0, 0)");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test21_StateSynchronizedSpeedAndSafeWaiting()
+        {
+            Console.Write("Test 21: State-synchronized speed & safe waiting behaviors... ");
+
+            var fsm = new CompanionStateMachine(CompanionState.Following);
+            fsm.WalkSpeed = 5.0f;
+            fsm.SprintSpeed = 8.5f;
+
+            var ctx = new CompanionContext
+            {
+                IsAlesaRescued = true,
+                IsPlayerControlsEnabled = true,
+                IsPlayerAiming = false,
+                IsPlayerSprinting = false,
+                HasPlayerMovementInput = true,
+                DistanceToPlayer = 3.0f,
+                DistanceToFollowAnchor = 2.0f,
+                HasValidNavPath = true,
+                IsStuck = false
+            };
+
+            // 1. Walking input -> Following at WalkSpeed (5.0 m/s)
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Following, "Walking input should be in Following state.");
+            Assert(fsm.GetTargetSpeed() == 5.0f, $"Walking speed must be 5.0, got {fsm.GetTargetSpeed()}");
+
+            // 2. Sprint input -> Sprinting at SprintSpeed (8.5 m/s)
+            ctx.IsPlayerSprinting = true;
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Sprinting, "Sprinting input should be in Sprinting state.");
+            Assert(fsm.GetTargetSpeed() == 8.5f, $"Sprint speed must be 8.5, got {fsm.GetTargetSpeed()}");
+
+            // 3. Aiming input while sprinting -> Immediate preemption to WaitingAim (0.0 m/s)
+            ctx.IsPlayerAiming = true;
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.WaitingAim, "Aiming must immediately preempt sprinting.");
+            Assert(fsm.GetTargetSpeed() == 0.0f, $"Aiming target speed must immediately be 0.0, got {fsm.GetTargetSpeed()}");
+
+            // 4. Safe formation during aim: anchor remains strictly behind Nathan
+            var calc = new FollowAnchorCalculator(preferredDistance: 1.75f, minSeparation: 1.0f);
+            var playerPos = new NodePosition(50f, 0f, 50f);
+            var aimFwd = new NodePosition(0f, 0f, 1f); // Aiming North
+            var anchor = calc.CalculateIdealAnchor(playerPos, aimFwd);
+
+            // Verify Alesa's anchor is South of Nathan (behind him, never crossing into firing line)
+            Assert(anchor.Z < playerPos.Z, "Anchor during aiming must remain strictly behind the player's firing cone.");
+            Assert(Math.Abs(playerPos.FlatDistanceTo(anchor) - 1.75f) < 1e-4f, "Anchor distance behind Nathan must be maintained.");
+
+            // 5. Aim released -> restores Sprinting if player still sprinting
+            ctx.IsPlayerAiming = false;
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Sprinting, "Releasing aim while sprinting resumes Sprinting state.");
+            Assert(fsm.GetTargetSpeed() == 8.5f, "Speed restores to sprint speed.");
+
+            // 6. Sprint stopped, player stationary -> transition to Idle
+            ctx.IsPlayerSprinting = false;
+            ctx.HasPlayerMovementInput = false;
+            ctx.DistanceToFollowAnchor = 0.2f;
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Idle, "Arriving at anchor with stationary player transitions to Idle.");
+            Assert(fsm.GetTargetSpeed() == 0.0f, "Idle speed must be 0.0.");
+
+            // 7. Modal or controls disabled (e.g. reading note or solving keypad) -> Idle
+            ctx.HasPlayerMovementInput = true;
+            ctx.IsPlayerControlsEnabled = false;
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Idle, "Modal or disabled controls must force Idle state.");
 
             Console.WriteLine("PASS");
         }

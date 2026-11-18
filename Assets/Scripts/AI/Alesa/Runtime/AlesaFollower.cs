@@ -63,6 +63,10 @@ namespace Alesa.Runtime
         [Tooltip("Deceleration rate (m/s^2).")]
         public float deceleration = 12.0f;
 
+        [Header("State Synchronization Settings")]
+        [Tooltip("When enabled, treats Alesa as freed for isolated test scenes where dialpad puzzle is not present.")]
+        public bool autoFreeInTestScene = true;
+
         [Header("Debug Status (Read-Only)")]
         [SerializeField] private CompanionState currentState = CompanionState.Dormant;
         [SerializeField] private Vector3 currentAnchorPosition;
@@ -76,7 +80,7 @@ namespace Alesa.Runtime
         private PlayerMotor _playerMotor;
         private PlayerGameplay _playerGameplay;
 
-        public CompanionStateMachine StateMachine => _stateMachine ??= new CompanionStateMachine(CompanionState.Following);
+        public CompanionStateMachine StateMachine => _stateMachine ??= new CompanionStateMachine(autoFreeInTestScene ? CompanionState.Following : CompanionState.Dormant);
         public ArrivalSteeringCalculator SteeringCalculator => _steeringCalculator ??= new ArrivalSteeringCalculator(stoppingDistance, slowingRadius, acceleration, deceleration);
         public Vector3 CurrentAnchorPosition => currentAnchorPosition;
         public bool HasValidAnchor => hasValidAnchor;
@@ -88,7 +92,10 @@ namespace Alesa.Runtime
             InitializeReferences();
             _calculator = new FollowAnchorCalculator(followDistance, minPersonalSpace, lateralOffset);
             _steeringCalculator = new ArrivalSteeringCalculator(stoppingDistance, slowingRadius, acceleration, deceleration);
-            _stateMachine = new CompanionStateMachine(CompanionState.Following);
+            _stateMachine = new CompanionStateMachine(autoFreeInTestScene ? CompanionState.Following : CompanionState.Dormant);
+            _stateMachine.WalkSpeed = maxWalkSpeed;
+            _stateMachine.SprintSpeed = maxSprintSpeed;
+            _stateMachine.StopDistanceThreshold = stoppingDistance;
             _stateMachine.OnStateChanged += (prev, next) => currentState = next;
         }
 
@@ -113,6 +120,7 @@ namespace Alesa.Runtime
 
             if (Application.isPlaying)
             {
+                UpdateCompanionState();
                 ApplySteering(Time.deltaTime);
             }
         }
@@ -235,6 +243,49 @@ namespace Alesa.Runtime
         }
 
         /// <summary>
+        /// Gathers live player motor, gameplay, and spatial signals and feeds them into the CompanionStateMachine.
+        /// </summary>
+        public void UpdateCompanionState()
+        {
+            if (_stateMachine == null) return;
+
+            bool isRescued = autoFreeInTestScene || (_playerGameplay != null && _playerGameplay.AlesaFreed);
+            bool controlsEnabled = _playerMotor == null || _playerMotor.ControlsEnabled;
+            bool isAiming = _playerGameplay != null && _playerGameplay.State.CurrentAction == PlayerState.Action.Aiming;
+            bool isSprinting = _playerMotor != null && _playerMotor.IsSprinting;
+            bool hasMoveInput = _playerMotor != null && _playerMotor.HasMovementInput;
+
+            float distToPlayer = Vector3.Distance(transform.position, playerTransform.position);
+            float distToAnchor = Vector3.Distance(transform.position, currentAnchorPosition);
+
+            bool hasValidPath = true;
+            if (agent != null && agent.isOnNavMesh && agent.hasPath)
+            {
+                hasValidPath = agent.pathStatus != NavMeshPathStatus.PathInvalid;
+            }
+
+            CompanionContext context = new CompanionContext
+            {
+                IsAlesaRescued = isRescued,
+                IsPlayerControlsEnabled = controlsEnabled,
+                IsPlayerAiming = isAiming,
+                IsPlayerSprinting = isSprinting,
+                HasPlayerMovementInput = hasMoveInput,
+                DistanceToPlayer = distToPlayer,
+                DistanceToFollowAnchor = distToAnchor,
+                HasValidNavPath = hasValidPath,
+                IsStuck = false
+            };
+
+            _stateMachine.WalkSpeed = maxWalkSpeed;
+            _stateMachine.SprintSpeed = maxSprintSpeed;
+            _stateMachine.StopDistanceThreshold = stoppingDistance;
+
+            _stateMachine.EvaluateState(in context);
+            currentState = _stateMachine.CurrentState;
+        }
+
+        /// <summary>
         /// Applies Craig Reynolds Arrival steering: smoothly slows down within slowingRadius
         /// and comes to a complete halt at stoppingDistance to eliminate jitter and overshooting.
         /// </summary>
@@ -251,7 +302,7 @@ namespace Alesa.Runtime
             _steeringCalculator.Deceleration = deceleration;
 
             // Determine target speed depending on companion state
-            float maxSpeed = (currentState == CompanionState.Sprinting) ? maxSprintSpeed : maxWalkSpeed;
+            float maxSpeed = _stateMachine != null ? _stateMachine.GetTargetSpeed() : ((currentState == CompanionState.Sprinting) ? maxSprintSpeed : maxWalkSpeed);
 
             if (currentState == CompanionState.WaitingAim || currentState == CompanionState.Idle || currentState == CompanionState.Dormant)
             {
@@ -300,6 +351,13 @@ namespace Alesa.Runtime
                 // Complete stop ring (light red)
                 Gizmos.color = new Color(1f, 0.3f, 0.3f, 0.35f);
                 Gizmos.DrawWireSphere(currentAnchorPosition + Vector3.up * 0.1f, stoppingDistance);
+            }
+
+            // Draw WaitingAim protective aura
+            if (currentState == CompanionState.WaitingAim)
+            {
+                Gizmos.color = new Color(1f, 0.6f, 0f, 0.9f);
+                Gizmos.DrawWireSphere(transform.position + Vector3.up * 1f, 0.6f);
             }
         }
     }
