@@ -38,9 +38,10 @@ namespace Alesa.Logic.Checks
             Test15_AlesaRoutePlannerDynamicReplanningAndEvents();
             Test16_YenAlgorithmExhaustiveReferenceComparison();
             Test17_PerformanceAndScalabilityBenchmark();
+            Test18_CompanionLocomotionStateMachineTransitions();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 17 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 18 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -882,6 +883,117 @@ namespace Alesa.Logic.Checks
             Assert(avgMs < 5.0, $"Average search time ({avgMs:F3} ms) exceeds 5.0 ms threshold.");
 
             Console.WriteLine($"PASS ({avgMs:F3} ms/query across {iterations} runs)");
+        }
+
+        private static void Test18_CompanionLocomotionStateMachineTransitions()
+        {
+            Console.Write("Test 18: Companion FSM transitions, speed matching & priority... ");
+
+            var fsm = new CompanionStateMachine();
+            Assert(fsm.CurrentState == CompanionState.Dormant, "Initial state must be Dormant.");
+            Assert(fsm.GetTargetSpeed() == 0f, "Dormant speed must be 0.");
+
+            int stateChangeCount = 0;
+            CompanionState lastPrev = CompanionState.Dormant;
+            CompanionState lastNext = CompanionState.Dormant;
+
+            fsm.OnStateChanged += (prev, next) =>
+            {
+                stateChangeCount++;
+                lastPrev = prev;
+                lastNext = next;
+            };
+
+            // Context builder helper
+            var ctx = new CompanionContext
+            {
+                IsAlesaRescued = false,
+                IsPlayerControlsEnabled = true,
+                IsPlayerAiming = false,
+                IsPlayerSprinting = false,
+                HasPlayerMovementInput = false,
+                DistanceToPlayer = 2f,
+                DistanceToFollowAnchor = 0.1f,
+                HasValidNavPath = true,
+                IsStuck = false
+            };
+
+            // 1. Unrescued remains Dormant
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Dormant, "Unrescued must remain Dormant.");
+
+            // 2. Rescued with player stationary -> Idle
+            ctx.IsAlesaRescued = true;
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Idle, "Rescued stationary player must transition to Idle.");
+            Assert(fsm.GetTargetSpeed() == 0f, "Idle speed must be 0.");
+            Assert(stateChangeCount == 1 && lastPrev == CompanionState.Dormant && lastNext == CompanionState.Idle, "Event must fire Dormant -> Idle.");
+
+            // 3. Nathan begins walking (movement input or distance > stopDistanceThreshold) -> Following
+            ctx.HasPlayerMovementInput = true;
+            ctx.DistanceToFollowAnchor = 1.5f;
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Following, "Walking player must transition to Following.");
+            Assert(fsm.GetTargetSpeed() == 5.0f, "Following speed must match walk speed (5.0 m/s).");
+
+            // 4. Nathan sprints -> Sprinting
+            ctx.IsPlayerSprinting = true;
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Sprinting, "Sprinting player must transition to Sprinting.");
+            Assert(fsm.GetTargetSpeed() == 8.5f, "Sprinting speed must match sprint speed (8.5 m/s).");
+
+            // 5. Nathan stops sprinting and aims weapon -> WaitingAim (High priority!)
+            ctx.IsPlayerSprinting = false;
+            ctx.IsPlayerAiming = true;
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.WaitingAim, "Aiming player must transition to WaitingAim.");
+            Assert(fsm.GetTargetSpeed() == 0f, "WaitingAim speed must be 0 (holds safely behind Nathan).");
+
+            // 6. Nathan stops aiming and resumes walking -> Following
+            ctx.IsPlayerAiming = false;
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Following, "Resuming walk after aim must return to Following.");
+
+            // 7. Nathan stops walking, Alesa arrives at anchor -> Idle
+            ctx.HasPlayerMovementInput = false;
+            ctx.DistanceToFollowAnchor = 0.2f; // within stop threshold (0.35f)
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Idle, "Arriving at anchor with stationary player must transition to Idle.");
+
+            // 8. Game paused / controls disabled -> Idle (modal safety)
+            ctx.HasPlayerMovementInput = true;
+            ctx.DistanceToFollowAnchor = 3f;
+            ctx.IsPlayerControlsEnabled = false; // Player opened pause menu or dialpad
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Idle, "Disabled player controls must force Idle state.");
+
+            // 9. Recovery conditions: Invalid NavMesh path
+            ctx.IsPlayerControlsEnabled = true;
+            ctx.HasValidNavPath = false; // corridor blocked or off navmesh
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Recovering, "Invalid NavMesh path must transition to Recovering.");
+            Assert(fsm.GetTargetSpeed() == 8.5f, "Recovery uses sprint speed to catch up / navigate around.");
+
+            // 10. Recovery condition: Agent is stuck
+            ctx.HasValidNavPath = true;
+            ctx.IsStuck = true;
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Recovering, "Stuck agent must remain in Recovering.");
+
+            // 11. Recovery condition: Extreme distance separation (>18m)
+            ctx.IsStuck = false;
+            ctx.DistanceToPlayer = 25f; // way too far away
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Recovering, "Extreme distance separation (>18m) must trigger Recovering.");
+
+            // 12. Recovery resolved -> returns to Following
+            ctx.DistanceToPlayer = 4f;
+            ctx.DistanceToFollowAnchor = 2.5f;
+            ctx.HasPlayerMovementInput = true;
+            fsm.EvaluateState(ctx);
+            Assert(fsm.CurrentState == CompanionState.Following, "Resolving recovery conditions returns to Following.");
+
+            Console.WriteLine("PASS");
         }
     }
 }
