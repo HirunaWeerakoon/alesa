@@ -34,9 +34,10 @@ namespace Alesa.Logic.Checks
             Test11_TemporaryExclusionsWithoutGraphMutation();
             Test12_SceneWaypointTopologyAndRouteVerification();
             Test13_DynamicEdgeManagementAndSafetyChecks();
+            Test14_YenKShortestPathsComprehensiveScenarios();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 13 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 14 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -498,6 +499,130 @@ namespace Alesa.Logic.Checks
             Assert(graph.RemoveEdge("N1", "N2", bidirectional: true), "Removing edge must return true.");
             Assert(!graph.TryGetEdge("N1", "N2", out _), "Removed edge must not exist.");
             Assert(!graph.TryGetEdge("N2", "N1", out _), "Removed reverse edge must not exist.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test14_YenKShortestPathsComprehensiveScenarios()
+        {
+            Console.Write("Test 14: Yen's K-Shortest Paths (K=3, ordering, loops & edge cases)... ");
+
+            var yen = new YenKShortestPaths();
+
+            // 1. Single valid route graph
+            var singleGraph = new WaypointGraph();
+            singleGraph.AddNode("S", new NodePosition(0, 0, 0));
+            singleGraph.AddNode("A", new NodePosition(10, 0, 0));
+            singleGraph.AddNode("Exit", new NodePosition(20, 0, 0));
+            singleGraph.AddEdge("S", "A", 10f);
+            singleGraph.AddEdge("A", "Exit", 10f);
+
+            var singleResult = yen.FindKShortestPaths(singleGraph, "S", "Exit", k: 3);
+            Assert(singleResult.HasRoutes && singleResult.Count == 1, "Graph with only 1 route must return exactly 1 route.");
+            Assert(Math.Abs(singleResult.BestRoute.TotalCost - 20f) < 1e-4f, "Cost must be 20.0.");
+
+            // 2. Multi-path graph with 4 distinct paths of known costs:
+            // S -> Path 1 (via P1): 5 + 5 = 10
+            // S -> Path 2 (via P2): 7 + 7 = 14
+            // S -> Path 3 (via P3): 9 + 9 = 18
+            // S -> Path 4 (via P4): 12 + 12 = 24
+            var multiGraph = new WaypointGraph();
+            multiGraph.AddNode("S", new NodePosition(0, 0, 0));
+            multiGraph.AddNode("P1", new NodePosition(5, 0, 0));
+            multiGraph.AddNode("P2", new NodePosition(5, 0, 5));
+            multiGraph.AddNode("P3", new NodePosition(5, 0, -5));
+            multiGraph.AddNode("P4", new NodePosition(5, 0, 10));
+            multiGraph.AddNode("Exit", new NodePosition(10, 0, 0));
+
+            multiGraph.AddEdge("S", "P1", 5f);
+            multiGraph.AddEdge("P1", "Exit", 5f);
+
+            multiGraph.AddEdge("S", "P2", 7f);
+            multiGraph.AddEdge("P2", "Exit", 7f);
+
+            multiGraph.AddEdge("S", "P3", 9f);
+            multiGraph.AddEdge("P3", "Exit", 9f);
+
+            multiGraph.AddEdge("S", "P4", 12f);
+            multiGraph.AddEdge("P4", "Exit", 12f);
+
+            int versionBefore = multiGraph.Version;
+
+            // Request top K=3 paths
+            var k3Result = yen.FindKShortestPaths(multiGraph, "S", "Exit", k: 3);
+            Assert(k3Result.HasRoutes && k3Result.Count == 3, "Must return exactly 3 shortest routes.");
+            Assert(multiGraph.Version == versionBefore, "Graph version must remain strictly untouched by Yen's algorithm.");
+
+            // Verify strict ordering and correct costs
+            Assert(Math.Abs(k3Result.Routes[0].TotalCost - 10f) < 1e-4f, $"Route 1 cost should be 10.0, got {k3Result.Routes[0].TotalCost}");
+            Assert(Math.Abs(k3Result.Routes[1].TotalCost - 14f) < 1e-4f, $"Route 2 cost should be 14.0, got {k3Result.Routes[1].TotalCost}");
+            Assert(Math.Abs(k3Result.Routes[2].TotalCost - 18f) < 1e-4f, $"Route 3 cost should be 18.0, got {k3Result.Routes[2].TotalCost}");
+
+            // Verify paths are distinct (no duplicate candidate routes)
+            var signatures = new HashSet<string>();
+            for (int r = 0; r < k3Result.Count; r++)
+            {
+                string sig = string.Join("->", k3Result.Routes[r].NodeIds);
+                Assert(signatures.Add(sig), $"Duplicate path signature detected: {sig}");
+            }
+
+            // 3. Request fewer paths than available (e.g. K=2)
+            var k2Result = yen.FindKShortestPaths(multiGraph, "S", "Exit", k: 2);
+            Assert(k2Result.Count == 2, "K=2 must return exactly 2 routes.");
+            Assert(k2Result.Routes[0].TotalCost <= k2Result.Routes[1].TotalCost, "Routes must be in ascending cost order.");
+
+            // 4. Request more paths than exist (K=10 on graph with 4 routes)
+            var k10Result = yen.FindKShortestPaths(multiGraph, "S", "Exit", k: 10);
+            Assert(k10Result.Count == 4, $"Should gracefully return all 4 available routes without error, got {k10Result.Count}.");
+            Assert(Math.Abs(k10Result.Routes[3].TotalCost - 24f) < 1e-4f, "4th route cost must be 24.0.");
+
+            // 5. Cyclic graph with complex cross-connections
+            var cyclicGraph = new WaypointGraph();
+            cyclicGraph.AddNode("S", new NodePosition(0, 0, 0));
+            cyclicGraph.AddNode("C1", new NodePosition(5, 0, 2));
+            cyclicGraph.AddNode("C2", new NodePosition(10, 0, 0));
+            cyclicGraph.AddNode("C3", new NodePosition(15, 0, -2));
+            cyclicGraph.AddNode("Exit", new NodePosition(20, 0, 0));
+
+            cyclicGraph.AddEdge("S", "C1", 6f, bidirectional: true);
+            cyclicGraph.AddEdge("C1", "C2", 6f, bidirectional: true);
+            cyclicGraph.AddEdge("C2", "S", 10f, bidirectional: true); // Cycle back to S
+            cyclicGraph.AddEdge("C2", "C3", 5f, bidirectional: true);
+            cyclicGraph.AddEdge("C3", "Exit", 5f, bidirectional: true);
+            cyclicGraph.AddEdge("C3", "C1", 12f, bidirectional: true); // Another cycle
+            cyclicGraph.AddEdge("S", "C3", 16f, bidirectional: true);  // Direct branch
+
+            var cyclicResult = yen.FindKShortestPaths(cyclicGraph, "S", "Exit", k: 3);
+            Assert(cyclicResult.HasRoutes, "Must find paths in cyclic graph.");
+            for (int r = 0; r < cyclicResult.Count; r++)
+            {
+                var pathNodes = cyclicResult.Routes[r].NodeIds;
+                var set = new HashSet<string>(pathNodes);
+                Assert(set.Count == pathNodes.Count, $"Candidate path {r + 1} contains cycles: [{string.Join(", ", pathNodes)}]");
+            }
+
+            // 6. Dynamic blockage interaction with Yen's algorithm
+            multiGraph.SetEdgeBlocked("S", "P1", true, "Boss Blocking Path 1");
+            var resultAfterBlock = yen.FindKShortestPaths(multiGraph, "S", "Exit", k: 3);
+            Assert(resultAfterBlock.Count == 3, "Should return next 3 shortest remaining routes.");
+            Assert(!resultAfterBlock.Routes.Any(r => r.NodeIds.Contains("P1")), "Blocked corridor P1 must be completely excluded from all alternatives.");
+            Assert(Math.Abs(resultAfterBlock.Routes[0].TotalCost - 14f) < 1e-4f, "Path 2 (cost 14) is now the 1st shortest route.");
+            Assert(Math.Abs(resultAfterBlock.Routes[1].TotalCost - 18f) < 1e-4f, "Path 3 (cost 18) is now the 2nd shortest route.");
+            Assert(Math.Abs(resultAfterBlock.Routes[2].TotalCost - 24f) < 1e-4f, "Path 4 (cost 24) is now the 3rd shortest route.");
+
+            // 7. Trivial case: Start == Goal
+            var trivial = yen.FindKShortestPaths(multiGraph, "S", "S", k: 3);
+            Assert(trivial.HasRoutes && trivial.Count == 1 && trivial.BestRoute.TotalCost == 0f, "Start equals goal must return 1-node path of cost 0.");
+
+            // 8. Disconnected destination
+            var disconnectedGraph = new WaypointGraph();
+            disconnectedGraph.AddNode("S", new NodePosition(0, 0, 0));
+            disconnectedGraph.AddNode("Island", new NodePosition(10, 0, 0));
+            disconnectedGraph.AddNode("Exit", new NodePosition(50, 0, 0));
+            disconnectedGraph.AddEdge("S", "Island", 10f);
+
+            var noPathResult = yen.FindKShortestPaths(disconnectedGraph, "S", "Exit", k: 3);
+            Assert(!noPathResult.HasRoutes && noPathResult.Status == RouteStatus.NoPath, "Disconnected exit must report NoPath safely.");
 
             Console.WriteLine("PASS");
         }
