@@ -5,8 +5,8 @@ using Alesa.Core;
 namespace Alesa.Runtime
 {
     /// <summary>
-    /// Visualizes the waypoint graph, connections, blocked hazards, and A* shortest path
-    /// directly in the Unity Scene View using Gizmos.
+    /// Visualizes the waypoint graph, corridor connections, dynamic hazards,
+    /// and Yen's K-Shortest ranked alternative escape routes directly in the Scene View.
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(AlesaWaypointNetwork))]
@@ -15,22 +15,37 @@ namespace Alesa.Runtime
         [Header("Display Toggles")]
         public bool showNodes = true;
         public bool showConnections = true;
-        public bool showOptimalPath = true;
+        public bool showActiveRoute = true;
+        public bool showAlternativeRoutes = true;
         public bool showBlockedEdges = true;
 
-        [Header("Gizmo Colors")]
-        public Color normalNodeColor = new Color(0.2f, 0.85f, 1f, 0.85f);    // Cyan
-        public Color junctionNodeColor = new Color(1f, 0.85f, 0.2f, 0.95f);  // Yellow
-        public Color startNodeColor = new Color(0.1f, 0.5f, 1f, 1f);         // Blue
-        public Color exitNodeColor = new Color(0.2f, 1f, 0.3f, 1f);          // Green
-        public Color edgeColor = new Color(0.6f, 0.65f, 0.7f, 0.5f);         // Soft Grey
-        public Color pathColor = new Color(0.1f, 1f, 0.4f, 1f);              // Bright Path Green
-        public Color blockedColor = new Color(1f, 0.15f, 0.15f, 1f);         // Bright Hazard Red
+        [Header("Route Colors")]
+        [Tooltip("Primary (1st shortest) recommended route.")]
+        public Color primaryRouteColor = new Color(0.1f, 1f, 0.4f, 1f);       // Bright Green
 
-        [Header("Sizes")]
+        [Tooltip("Second-best alternative route.")]
+        public Color secondRouteColor = new Color(0f, 0.85f, 1f, 0.85f);       // Electric Cyan
+
+        [Tooltip("Third-best alternative route.")]
+        public Color thirdRouteColor = new Color(1f, 0.85f, 0.15f, 0.85f);     // Amber Yellow
+
+        [Tooltip("Warning color when exit is completely cut off.")]
+        public Color noPathColor = new Color(1f, 0.15f, 0.15f, 1f);            // Hazard Red
+
+        [Header("Graph Element Colors")]
+        public Color normalNodeColor = new Color(0.2f, 0.85f, 1f, 0.85f);
+        public Color junctionNodeColor = new Color(1f, 0.85f, 0.2f, 0.95f);
+        public Color startNodeColor = new Color(0.1f, 0.5f, 1f, 1f);
+        public Color exitNodeColor = new Color(0.2f, 1f, 0.3f, 1f);
+        public Color edgeColor = new Color(0.6f, 0.65f, 0.7f, 0.4f);
+        public Color blockedColor = new Color(1f, 0.15f, 0.15f, 1f);
+
+        [Header("Dimensions & Elevation")]
         [Range(0.1f, 1.0f)] public float nodeRadius = 0.35f;
         [Range(0.2f, 1.5f)] public float junctionRadius = 0.55f;
-        public float pathElevation = 0.35f;
+        public float primaryElevation = 0.40f;
+        public float secondElevation = 0.25f;
+        public float thirdElevation = 0.12f;
 
         private AlesaWaypointNetwork _network;
         private AlesaNavigator _navigator;
@@ -72,11 +87,8 @@ namespace Alesa.Runtime
                 DrawWaypointNodes(waypoints);
             }
 
-            // 3. Draw Computed A* Shortest Path
-            if (showOptimalPath)
-            {
-                DrawActiveRoute();
-            }
+            // 3. Draw Ranked Routes or NoPath Warning
+            DrawRoutes();
         }
 
         private void DrawCorridorConnections(List<AlesaWaypoint> waypoints)
@@ -111,9 +123,8 @@ namespace Alesa.Runtime
                         {
                             Gizmos.color = blockedColor;
                             Gizmos.DrawLine(fromPos, toPos);
-                            // Draw an X hazard marker at midpoint
                             Vector3 mid = (fromPos + toPos) * 0.5f + Vector3.up * 0.5f;
-                            Gizmos.DrawWireCube(mid, new Vector3(0.8f, 0.8f, 0.8f));
+                            Gizmos.DrawWireCube(mid, new Vector3(0.9f, 0.9f, 0.9f));
                         }
                     }
                     else
@@ -159,15 +170,57 @@ namespace Alesa.Runtime
             }
         }
 
-        private void DrawActiveRoute()
+        private void DrawRoutes()
         {
-            var route = (_navigator != null && _navigator.ActiveRoute != null) ? _navigator.ActiveRoute : _network.LastRoute;
-            if (route == null || !route.IsValid || route.NodeIds.Count < 2) return;
-
             var graph = _network.ActiveGraph;
             if (graph == null) return;
 
-            Gizmos.color = pathColor;
+            // Check if active route exists
+            RouteResult activeRoute = (_navigator != null && _navigator.ActiveRoute != null)
+                ? _navigator.ActiveRoute
+                : _network.LastRoute;
+
+            // 1. If no path exists, draw warning markers
+            if (activeRoute == null || !activeRoute.IsValid || activeRoute.Status == RouteStatus.NoPath)
+            {
+                DrawNoPathWarning();
+                return;
+            }
+
+            // 2. Multi-route rendering from Yen's algorithm
+            MultiRouteResult multi = _navigator != null ? _navigator.MultiRoute : null;
+
+            if (showAlternativeRoutes && multi != null && multi.HasRoutes)
+            {
+                // Draw 3rd route (bottom layer, amber)
+                if (multi.Count >= 3)
+                {
+                    DrawSinglePath(graph, multi.Routes[2], thirdRouteColor, thirdElevation, nodeRadius * 0.5f);
+                }
+
+                // Draw 2nd route (middle layer, cyan)
+                if (multi.Count >= 2)
+                {
+                    DrawSinglePath(graph, multi.Routes[1], secondRouteColor, secondElevation, nodeRadius * 0.65f);
+                }
+
+                // Draw 1st route (top layer, bright green)
+                if (showActiveRoute && multi.Count >= 1)
+                {
+                    DrawSinglePath(graph, multi.Routes[0], primaryRouteColor, primaryElevation, nodeRadius * 0.85f);
+                }
+            }
+            else if (showActiveRoute && activeRoute.IsValid)
+            {
+                DrawSinglePath(graph, activeRoute, primaryRouteColor, primaryElevation, nodeRadius * 0.85f);
+            }
+        }
+
+        private void DrawSinglePath(WaypointGraph graph, RouteResult route, Color color, float elevation, float sphereRadius)
+        {
+            if (route == null || !route.IsValid || route.NodeIds.Count < 2) return;
+
+            Gizmos.color = color;
 
             for (int i = 0; i < route.NodeIds.Count - 1; i++)
             {
@@ -178,20 +231,29 @@ namespace Alesa.Runtime
                     !graph.TryGetNode(toId, out var toNode))
                     continue;
 
-                Vector3 p1 = fromNode.Position.ToVector3() + Vector3.up * pathElevation;
-                Vector3 p2 = toNode.Position.ToVector3() + Vector3.up * pathElevation;
+                Vector3 p1 = fromNode.Position.ToVector3() + Vector3.up * elevation;
+                Vector3 p2 = toNode.Position.ToVector3() + Vector3.up * elevation;
 
-                // Draw elevated bright green path line
                 Gizmos.DrawLine(p1, p2);
+                Gizmos.DrawSphere(p1, sphereRadius);
 
-                // Draw path step spheres along route
-                Gizmos.DrawSphere(p1, nodeRadius * 0.8f);
                 if (i == route.NodeIds.Count - 2)
                 {
-                    Gizmos.DrawSphere(p2, nodeRadius * 0.8f);
+                    Gizmos.DrawSphere(p2, sphereRadius);
                 }
+            }
+        }
+
+        private void DrawNoPathWarning()
+        {
+            if (_network.exitWaypoint != null)
+            {
+                Vector3 exitPos = _network.exitWaypoint.transform.position + Vector3.up * 1f;
+                Gizmos.color = noPathColor;
+                Gizmos.DrawWireCube(exitPos, new Vector3(2.5f, 2.5f, 2.5f));
+                Gizmos.DrawLine(exitPos + new Vector3(-1.2f, 0, -1.2f), exitPos + new Vector3(1.2f, 0, 1.2f));
+                Gizmos.DrawLine(exitPos + new Vector3(-1.2f, 0, 1.2f), exitPos + new Vector3(1.2f, 0, -1.2f));
             }
         }
     }
 }
-
