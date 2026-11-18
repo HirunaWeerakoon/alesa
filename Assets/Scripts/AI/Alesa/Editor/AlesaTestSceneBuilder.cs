@@ -102,23 +102,36 @@ namespace Alesa.Editor
             // Nathan (Player)
             var nathan = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             nathan.name = "Player_Nathan";
+            nathan.tag = "Player";
             nathan.transform.parent = actorsRoot.transform;
             nathan.transform.position = new Vector3(0f, 1f, -14f);
 
-            // Alesa (Companion) with NavMeshAgent configured
+            // Alesa (Companion) with NavMeshAgent and AlesaFollower configured
             var alesa = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             alesa.name = "Companion_Alesa";
             alesa.transform.parent = actorsRoot.transform;
             alesa.transform.position = new Vector3(0f, 1f, -16f); // trailing behind Nathan
 
             var agent = alesa.AddComponent<UnityEngine.AI.NavMeshAgent>();
-            agent.speed = 4.5f;             // Balanced companion walking/jogging speed
+            agent.speed = 5.0f;             // Matched with player walk speed
             agent.angularSpeed = 360f;      // Responsive turns
             agent.acceleration = 12f;       // Smooth acceleration
-            agent.stoppingDistance = 1.8f;  // Keep natural ~1.5 - 2.0m distance behind player
+            agent.stoppingDistance = 0.4f;  // Managed dynamically by Arrival steering
             agent.radius = 0.4f;            // Standard humanoid radius
             agent.height = 1.8f;            // Standing height
             agent.baseOffset = 1.0f;        // Capsule center offset so feet align with ground
+
+            // Attach and configure AlesaFollower
+            var follower = alesa.AddComponent<Alesa.Runtime.AlesaFollower>();
+            follower.playerTransform = nathan.transform;
+            follower.agent = agent;
+            follower.followDistance = 1.75f;
+            follower.minPersonalSpace = 1.0f;
+            follower.stoppingDistance = 0.4f;
+            follower.slowingRadius = 2.5f;
+            follower.maxWalkSpeed = 5.0f;
+            follower.maxSprintSpeed = 8.5f;
+            follower.autoFreeInTestScene = true;
 
             // Exit Destination
             var exitDest = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
