@@ -40,9 +40,10 @@ namespace Alesa.Logic.Checks
             Test17_PerformanceAndScalabilityBenchmark();
             Test18_CompanionLocomotionStateMachineTransitions();
             Test19_FollowAnchorCalculationsAndSmoothing();
+            Test20_ArrivalSteeringSpeedModulationAndSmoothDeceleration();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 19 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 20 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -1044,6 +1045,67 @@ namespace Alesa.Logic.Checks
             var zeroFwd = new NodePosition(0f, 0f, 0f);
             var fallback = calc.CalculateIdealAnchor(playerPos, zeroFwd);
             Assert(Math.Abs(playerPos.FlatDistanceTo(fallback) - 1.75f) < 1e-4f, "Zero forward must fallback safely without division by zero.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test20_ArrivalSteeringSpeedModulationAndSmoothDeceleration()
+        {
+            Console.Write("Test 20: Arrival steering speed modulation & smooth deceleration... ");
+
+            var steering = new ArrivalSteeringCalculator(
+                stoppingDistance: 0.35f,
+                slowingRadius: 2.5f,
+                acceleration: 8.0f,
+                deceleration: 12.0f);
+
+            float maxWalk = 5.0f;
+            float maxSprint = 8.5f;
+
+            // 1. Far away from target (> SlowingRadius) -> Full Speed
+            float speedFar = steering.CalculateDesiredSpeed(distanceToTarget: 4.0f, maxSpeed: maxWalk);
+            Assert(Math.Abs(speedFar - maxWalk) < 1e-4f, $"Distant target speed must be maxWalk ({maxWalk}), got {speedFar}");
+
+            float speedSprintFar = steering.CalculateDesiredSpeed(distanceToTarget: 10.0f, maxSpeed: maxSprint);
+            Assert(Math.Abs(speedSprintFar - maxSprint) < 1e-4f, $"Distant sprint speed must be maxSprint ({maxSprint}), got {speedSprintFar}");
+
+            // 2. At or within StoppingDistance -> Zero Speed (prevents overshoot/jitter)
+            float speedAtStop = steering.CalculateDesiredSpeed(distanceToTarget: 0.35f, maxSpeed: maxWalk);
+            Assert(speedAtStop == 0f, $"Speed at stopping distance must be 0, got {speedAtStop}");
+
+            float speedInsideStop = steering.CalculateDesiredSpeed(distanceToTarget: 0.15f, maxSpeed: maxWalk);
+            Assert(speedInsideStop == 0f, $"Speed inside stopping distance must be 0, got {speedInsideStop}");
+
+            // 3. Inside deceleration zone (between 0.35m and 2.5m) -> smoothly graduated speed
+            float speedMid = steering.CalculateDesiredSpeed(distanceToTarget: 1.425f, maxSpeed: maxWalk);
+            Assert(speedMid > 0f && speedMid < maxWalk, $"Midpoint speed ({speedMid}) must be strictly between 0 and {maxWalk}");
+
+            // Verify monotonic deceleration: closer distance gives strictly lower speed
+            float speedCloser = steering.CalculateDesiredSpeed(distanceToTarget: 0.8f, maxSpeed: maxWalk);
+            float speedFurther = steering.CalculateDesiredSpeed(distanceToTarget: 2.0f, maxSpeed: maxWalk);
+            Assert(speedCloser < speedMid, "Closer distance must have lower speed.");
+            Assert(speedMid < speedFurther, "Further distance must have higher speed.");
+
+            // 4. Acceleration limit (8.0 m/s^2, dt = 0.1s => max increase 0.8 m/s)
+            float v0 = 0f;
+            float v1 = steering.SmoothSpeed(currentSpeed: v0, targetSpeed: maxWalk, deltaTime: 0.1f);
+            Assert(Math.Abs(v1 - 0.8f) < 1e-4f, $"From 0 to {maxWalk} with 8.0 accel and dt=0.1s must reach 0.8, got {v1}");
+
+            // 5. Deceleration limit (12.0 m/s^2, dt = 0.1s => max decrease 1.2 m/s)
+            float vTop = 5.0f;
+            float vBraked = steering.SmoothSpeed(currentSpeed: vTop, targetSpeed: 0f, deltaTime: 0.1f);
+            Assert(Math.Abs(vBraked - 3.8f) < 1e-4f, $"From 5.0 to 0.0 with 12.0 decel and dt=0.1s must reach 3.8, got {vBraked}");
+
+            // 6. Horizontal steering velocity vector
+            var currentPos = new NodePosition(0f, 0f, 0f);
+            var targetPos = new NodePosition(0f, 0f, 5f); // 5m North
+            var (vx, vz) = steering.CalculateSteeringVelocity(currentPos, targetPos, currentSpeed: 5.0f, maxSpeed: maxWalk, deltaTime: 0.1f);
+            Assert(Math.Abs(vx) < 1e-4f, $"VX should be 0, got {vx}");
+            Assert(Math.Abs(vz - 5.0f) < 1e-4f, $"VZ should be 5.0 towards North, got {vz}");
+
+            // 7. Steering velocity inside stopping distance
+            var (vxStop, vzStop) = steering.CalculateSteeringVelocity(currentPos, new NodePosition(0f, 0f, 0.2f), currentSpeed: 1f, maxSpeed: maxWalk, deltaTime: 0.1f);
+            Assert(vxStop == 0f && vzStop == 0f, "Steering velocity inside stopping distance must be exactly (0, 0)");
 
             Console.WriteLine("PASS");
         }

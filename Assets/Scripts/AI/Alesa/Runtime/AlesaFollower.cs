@@ -42,17 +42,42 @@ namespace Alesa.Runtime
         [Range(0.5f, 4.0f)]
         public float navMeshSampleRadius = 2.0f;
 
+        [Header("Arrival Steering Settings")]
+        [Tooltip("Distance from anchor at which Alesa completely stops (m).")]
+        [Range(0.1f, 1.5f)]
+        public float stoppingDistance = 0.4f;
+
+        [Tooltip("Distance from anchor at which Alesa begins smooth deceleration (m).")]
+        [Range(1.0f, 6.0f)]
+        public float slowingRadius = 2.5f;
+
+        [Tooltip("Standard walking top speed (m/s) matching Nathan's walk speed.")]
+        public float maxWalkSpeed = 5.0f;
+
+        [Tooltip("Sprint top speed (m/s) matching Nathan's sprint speed.")]
+        public float maxSprintSpeed = 8.5f;
+
+        [Tooltip("Acceleration rate (m/s^2).")]
+        public float acceleration = 8.0f;
+
+        [Tooltip("Deceleration rate (m/s^2).")]
+        public float deceleration = 12.0f;
+
         [Header("Debug Status (Read-Only)")]
         [SerializeField] private CompanionState currentState = CompanionState.Dormant;
         [SerializeField] private Vector3 currentAnchorPosition;
+        [SerializeField] private float currentDistanceToAnchor;
+        [SerializeField] private float currentTargetSpeed;
         [SerializeField] private bool hasValidAnchor = false;
 
         private FollowAnchorCalculator _calculator;
+        private ArrivalSteeringCalculator _steeringCalculator;
         private CompanionStateMachine _stateMachine;
         private PlayerMotor _playerMotor;
         private PlayerGameplay _playerGameplay;
 
         public CompanionStateMachine StateMachine => _stateMachine ??= new CompanionStateMachine(CompanionState.Following);
+        public ArrivalSteeringCalculator SteeringCalculator => _steeringCalculator ??= new ArrivalSteeringCalculator(stoppingDistance, slowingRadius, acceleration, deceleration);
         public Vector3 CurrentAnchorPosition => currentAnchorPosition;
         public bool HasValidAnchor => hasValidAnchor;
         public CompanionState CurrentState => _stateMachine != null ? _stateMachine.CurrentState : currentState;
@@ -62,6 +87,7 @@ namespace Alesa.Runtime
             if (agent == null) agent = GetComponent<NavMeshAgent>();
             InitializeReferences();
             _calculator = new FollowAnchorCalculator(followDistance, minPersonalSpace, lateralOffset);
+            _steeringCalculator = new ArrivalSteeringCalculator(stoppingDistance, slowingRadius, acceleration, deceleration);
             _stateMachine = new CompanionStateMachine(CompanionState.Following);
             _stateMachine.OnStateChanged += (prev, next) => currentState = next;
         }
@@ -84,6 +110,11 @@ namespace Alesa.Runtime
             }
 
             UpdateFollowAnchor(Time.deltaTime);
+
+            if (Application.isPlaying)
+            {
+                ApplySteering(Time.deltaTime);
+            }
         }
 
         public void InitializeReferences()
@@ -203,6 +234,48 @@ namespace Alesa.Runtime
             return idealPos;
         }
 
+        /// <summary>
+        /// Applies Craig Reynolds Arrival steering: smoothly slows down within slowingRadius
+        /// and comes to a complete halt at stoppingDistance to eliminate jitter and overshooting.
+        /// </summary>
+        public void ApplySteering(float deltaTime)
+        {
+            if (agent == null || !agent.isOnNavMesh) return;
+
+            currentDistanceToAnchor = Vector3.Distance(transform.position, currentAnchorPosition);
+
+            // Update calculator properties
+            _steeringCalculator.StoppingDistance = stoppingDistance;
+            _steeringCalculator.SlowingRadius = slowingRadius;
+            _steeringCalculator.Acceleration = acceleration;
+            _steeringCalculator.Deceleration = deceleration;
+
+            // Determine target speed depending on companion state
+            float maxSpeed = (currentState == CompanionState.Sprinting) ? maxSprintSpeed : maxWalkSpeed;
+
+            if (currentState == CompanionState.WaitingAim || currentState == CompanionState.Idle || currentState == CompanionState.Dormant)
+            {
+                currentTargetSpeed = 0f;
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+                return;
+            }
+
+            currentTargetSpeed = _steeringCalculator.CalculateDesiredSpeed(currentDistanceToAnchor, maxSpeed);
+
+            if (currentDistanceToAnchor <= stoppingDistance)
+            {
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+                return;
+            }
+
+            agent.isStopped = false;
+            agent.speed = _steeringCalculator.SmoothSpeed(agent.speed, currentTargetSpeed, deltaTime);
+            agent.acceleration = acceleration;
+            agent.SetDestination(currentAnchorPosition);
+        }
+
         private void OnDrawGizmos()
         {
             if (playerTransform == null) return;
@@ -213,12 +286,20 @@ namespace Alesa.Runtime
             Gizmos.color = new Color(1f, 0.9f, 0.2f, 0.25f);
             Gizmos.DrawWireSphere(playerPos + Vector3.up * 0.1f, minPersonalSpace);
 
-            // Draw Follow Anchor
+            // Draw Follow Anchor & Steering Rings
             if (currentAnchorPosition != Vector3.zero)
             {
                 Gizmos.color = hasValidAnchor ? new Color(0f, 0.9f, 1f, 0.85f) : new Color(1f, 0.2f, 0.2f, 0.85f);
                 Gizmos.DrawWireSphere(currentAnchorPosition + Vector3.up * 0.2f, 0.35f);
                 Gizmos.DrawLine(playerPos + Vector3.up * 0.5f, currentAnchorPosition + Vector3.up * 0.2f);
+
+                // Arrival deceleration zone (light green)
+                Gizmos.color = new Color(0.2f, 1f, 0.3f, 0.25f);
+                Gizmos.DrawWireSphere(currentAnchorPosition + Vector3.up * 0.1f, slowingRadius);
+
+                // Complete stop ring (light red)
+                Gizmos.color = new Color(1f, 0.3f, 0.3f, 0.35f);
+                Gizmos.DrawWireSphere(currentAnchorPosition + Vector3.up * 0.1f, stoppingDistance);
             }
         }
     }
