@@ -43,9 +43,10 @@ namespace Alesa.Logic.Checks
             Test20_ArrivalSteeringSpeedModulationAndSmoothDeceleration();
             Test21_StateSynchronizedSpeedAndSafeWaiting();
             Test22_FollowerProgressiveStuckDetectionAndRecovery();
+            Test23_FollowerLocomotionPerformanceBenchmark();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 22 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 23 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -1246,6 +1247,76 @@ namespace Alesa.Logic.Checks
             Assert(!recovery.IsStuck && recovery.CurrentTier == RecoveryTier.None, "Resuming movement must decay timer and resolve stuck status.");
 
             Console.WriteLine("PASS");
+        }
+
+        private static void Test23_FollowerLocomotionPerformanceBenchmark()
+        {
+            Console.Write("Test 23: Follower locomotion & recovery benchmark (10,000 frames)... ");
+
+            var calc = new FollowAnchorCalculator(preferredDistance: 1.75f, minSeparation: 1.0f);
+            var steering = new ArrivalSteeringCalculator(stoppingDistance: 0.35f, slowingRadius: 2.5f, acceleration: 8.0f, deceleration: 12.0f);
+            var fsm = new CompanionStateMachine(CompanionState.Following);
+            var recovery = new FollowerRecoveryController(stuckDetectionTime: 1.0f, minDisplacementRate: 0.2f, extremeDistanceThreshold: 18.0f);
+
+            var playerPos = new NodePosition(10f, 0f, 10f);
+            var playerFwd = new NodePosition(0f, 0f, 1f);
+            var currentAnchor = calc.CalculateIdealAnchor(playerPos, playerFwd);
+            float currentSpeed = 0f;
+
+            // Warm up JIT
+            for (int w = 0; w < 500; w++)
+            {
+                var anchor = calc.CalculateIdealAnchor(playerPos, playerFwd);
+                var safeAnchor = calc.ClampPersonalSpace(playerPos, anchor);
+                currentAnchor = calc.SmoothAnchor(currentAnchor, safeAnchor, 0.016f, 8.0f);
+                float desiredSpeed = steering.CalculateDesiredSpeed(3.0f, 5.0f);
+                currentSpeed = steering.SmoothSpeed(currentSpeed, desiredSpeed, 0.016f);
+            }
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            const int iterations = 10000;
+
+            for (int i = 0; i < iterations; i++)
+            {
+                // 1. Geometric anchor calculation & personal space buffer
+                var idealAnchor = calc.CalculateIdealAnchor(playerPos, playerFwd);
+                var clampedAnchor = calc.ClampPersonalSpace(playerPos, idealAnchor);
+
+                // 2. Exponential anchor smoothing
+                currentAnchor = calc.SmoothAnchor(currentAnchor, clampedAnchor, 0.016f, 8.0f);
+
+                // 3. Arrival steering & speed modulation
+                float distToAnchor = 2.0f;
+                float targetSpeed = steering.CalculateDesiredSpeed(distToAnchor, 5.0f);
+                currentSpeed = steering.SmoothSpeed(currentSpeed, targetSpeed, 0.016f);
+
+                // 4. Stuck evaluation
+                recovery.EvaluateProgress(0.08f, currentSpeed, true, 2.5f, 0.016f);
+
+                // 5. FSM evaluation
+                var ctx = new CompanionContext
+                {
+                    IsAlesaRescued = true,
+                    IsPlayerControlsEnabled = true,
+                    IsPlayerAiming = false,
+                    IsPlayerSprinting = false,
+                    HasPlayerMovementInput = true,
+                    DistanceToPlayer = 2.5f,
+                    DistanceToFollowAnchor = distToAnchor,
+                    HasValidNavPath = true,
+                    IsStuck = recovery.IsStuck
+                };
+                fsm.EvaluateState(in ctx);
+            }
+
+            sw.Stop();
+            double totalMs = sw.Elapsed.TotalMilliseconds;
+            double usPerFrame = (totalMs / iterations) * 1000.0;
+
+            // Verify performance: 10,000 frames must complete in < 50 ms (< 5 us/tick)
+            Assert(totalMs < 50.0, $"10,000 companion locomotion ticks took {totalMs:F2} ms, expected < 50.0 ms ({usPerFrame:F3} us/tick).");
+
+            Console.WriteLine($"PASS ({usPerFrame:F3} us/tick, {totalMs:F2} ms total for 10k frames)");
         }
     }
 }
