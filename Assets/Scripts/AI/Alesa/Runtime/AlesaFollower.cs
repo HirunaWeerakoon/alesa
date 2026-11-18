@@ -67,23 +67,47 @@ namespace Alesa.Runtime
         [Tooltip("When enabled, treats Alesa as freed for isolated test scenes where dialpad puzzle is not present.")]
         public bool autoFreeInTestScene = true;
 
+        [Header("Stuck Detection & Recovery Settings")]
+        [Tooltip("Seconds with zero progress before stuck state is flagged.")]
+        [Range(0.5f, 3.0f)]
+        public float stuckDetectionTime = 1.0f;
+
+        [Tooltip("Minimum movement required per second (m/s) to count as healthy progress.")]
+        public float minDisplacementRate = 0.2f;
+
+        [Tooltip("Distance from Nathan at which Alesa triggers emergency catch-up/teleport.")]
+        public float extremeSeparationDistance = 18.0f;
+
+        [Tooltip("Seconds stuck before escalating to emergency teleport safeguard.")]
+        public float teleportTimeout = 5.5f;
+
         [Header("Debug Status (Read-Only)")]
         [SerializeField] private CompanionState currentState = CompanionState.Dormant;
         [SerializeField] private Vector3 currentAnchorPosition;
         [SerializeField] private float currentDistanceToAnchor;
         [SerializeField] private float currentTargetSpeed;
         [SerializeField] private bool hasValidAnchor = false;
+        [SerializeField] private bool isStuck = false;
+        [SerializeField] private RecoveryTier currentRecoveryTier = RecoveryTier.None;
+        [SerializeField] private float currentStuckTimer = 0f;
+        [SerializeField] private int totalRecoveriesExecuted = 0;
 
         private FollowAnchorCalculator _calculator;
         private ArrivalSteeringCalculator _steeringCalculator;
+        private FollowerRecoveryController _recoveryController;
         private CompanionStateMachine _stateMachine;
         private PlayerMotor _playerMotor;
         private PlayerGameplay _playerGameplay;
+        private Vector3 _lastSampledPosition;
+        private float _lastRecoveryActionTime;
 
         public CompanionStateMachine StateMachine => _stateMachine ??= new CompanionStateMachine(autoFreeInTestScene ? CompanionState.Following : CompanionState.Dormant);
         public ArrivalSteeringCalculator SteeringCalculator => _steeringCalculator ??= new ArrivalSteeringCalculator(stoppingDistance, slowingRadius, acceleration, deceleration);
+        public FollowerRecoveryController RecoveryController => _recoveryController ??= new FollowerRecoveryController(stuckDetectionTime, minDisplacementRate, extremeSeparationDistance);
         public Vector3 CurrentAnchorPosition => currentAnchorPosition;
         public bool HasValidAnchor => hasValidAnchor;
+        public bool IsStuck => isStuck;
+        public RecoveryTier CurrentRecoveryTier => currentRecoveryTier;
         public CompanionState CurrentState => _stateMachine != null ? _stateMachine.CurrentState : currentState;
 
         private void Awake()
@@ -92,6 +116,10 @@ namespace Alesa.Runtime
             InitializeReferences();
             _calculator = new FollowAnchorCalculator(followDistance, minPersonalSpace, lateralOffset);
             _steeringCalculator = new ArrivalSteeringCalculator(stoppingDistance, slowingRadius, acceleration, deceleration);
+            _recoveryController = new FollowerRecoveryController(stuckDetectionTime, minDisplacementRate, extremeSeparationDistance)
+            {
+                TeleportTimeout = teleportTimeout
+            };
             _stateMachine = new CompanionStateMachine(autoFreeInTestScene ? CompanionState.Following : CompanionState.Dormant);
             _stateMachine.WalkSpeed = maxWalkSpeed;
             _stateMachine.SprintSpeed = maxSprintSpeed;
@@ -102,6 +130,7 @@ namespace Alesa.Runtime
         private void OnEnable()
         {
             InitializeReferences();
+            _lastSampledPosition = transform.position;
             if (playerTransform != null)
             {
                 currentAnchorPosition = ComputeRawAnchor(playerTransform.position, playerTransform.forward);
@@ -264,6 +293,26 @@ namespace Alesa.Runtime
                 hasValidPath = agent.pathStatus != NavMeshPathStatus.PathInvalid;
             }
 
+            // Evaluate movement progress and stuck conditions
+            float displacement = Vector3.Distance(transform.position, _lastSampledPosition);
+            _lastSampledPosition = transform.position;
+
+            RecoveryTier tier = _recoveryController.EvaluateProgress(
+                displacement,
+                currentTargetSpeed,
+                hasValidPath,
+                distToPlayer,
+                Time.deltaTime);
+
+            isStuck = _recoveryController.IsStuck;
+            currentRecoveryTier = tier;
+            currentStuckTimer = _recoveryController.StuckTimer;
+
+            if (isStuck)
+            {
+                ExecuteRecoveryAction(tier);
+            }
+
             CompanionContext context = new CompanionContext
             {
                 IsAlesaRescued = isRescued,
@@ -274,7 +323,7 @@ namespace Alesa.Runtime
                 DistanceToPlayer = distToPlayer,
                 DistanceToFollowAnchor = distToAnchor,
                 HasValidNavPath = hasValidPath,
-                IsStuck = false
+                IsStuck = isStuck
             };
 
             _stateMachine.WalkSpeed = maxWalkSpeed;
@@ -283,6 +332,66 @@ namespace Alesa.Runtime
 
             _stateMachine.EvaluateState(in context);
             currentState = _stateMachine.CurrentState;
+        }
+
+        private void ExecuteRecoveryAction(RecoveryTier tier)
+        {
+            if (Time.time - _lastRecoveryActionTime < 0.75f) return;
+            _lastRecoveryActionTime = Time.time;
+
+            switch (tier)
+            {
+                case RecoveryTier.Tier1_Repath:
+                    if (agent != null && agent.isOnNavMesh)
+                    {
+                        agent.ResetPath();
+                        agent.SetDestination(currentAnchorPosition);
+                        _recoveryController.NoteRecoveryActionExecuted();
+                        totalRecoveriesExecuted = _recoveryController.RecoveryCount;
+                    }
+                    break;
+
+                case RecoveryTier.Tier2_FlankOffset:
+                    // Invert or alternate lateral flank to maneuver around obstruction
+                    lateralOffset = (Mathf.Abs(lateralOffset) < 0.1f) ? 1.25f : -lateralOffset;
+                    UpdateFollowAnchor(0.1f);
+                    if (agent != null && agent.isOnNavMesh)
+                    {
+                        agent.ResetPath();
+                        agent.SetDestination(currentAnchorPosition);
+                        _recoveryController.NoteRecoveryActionExecuted();
+                        totalRecoveriesExecuted = _recoveryController.RecoveryCount;
+                    }
+                    break;
+
+                case RecoveryTier.Tier3_WaypointNav:
+                    // Request sprint catch-up
+                    if (agent != null && agent.isOnNavMesh)
+                    {
+                        agent.speed = maxSprintSpeed;
+                        agent.SetDestination(currentAnchorPosition);
+                        _recoveryController.NoteRecoveryActionExecuted();
+                        totalRecoveriesExecuted = _recoveryController.RecoveryCount;
+                    }
+                    break;
+
+                case RecoveryTier.Tier4_Teleport:
+                    // Emergency warp safeguard behind player out of camera view
+                    if (agent != null && agent.isOnNavMesh)
+                    {
+                        Vector3 warpTarget = currentAnchorPosition;
+                        if (NavMesh.SamplePosition(warpTarget, out NavMeshHit hit, 3.0f, NavMesh.AllAreas))
+                        {
+                            agent.Warp(hit.position);
+                            _recoveryController.Reset();
+                            _recoveryController.NoteRecoveryActionExecuted();
+                            totalRecoveriesExecuted = _recoveryController.RecoveryCount;
+                            isStuck = false;
+                            currentRecoveryTier = RecoveryTier.None;
+                        }
+                    }
+                    break;
+            }
         }
 
         /// <summary>
@@ -358,6 +467,14 @@ namespace Alesa.Runtime
             {
                 Gizmos.color = new Color(1f, 0.6f, 0f, 0.9f);
                 Gizmos.DrawWireSphere(transform.position + Vector3.up * 1f, 0.6f);
+            }
+
+            // Draw Stuck warning marker and recovery line
+            if (isStuck)
+            {
+                Gizmos.color = new Color(1f, 0.15f, 0.15f, 0.95f);
+                Gizmos.DrawWireSphere(transform.position + Vector3.up * 1.2f, 0.8f);
+                Gizmos.DrawLine(transform.position + Vector3.up * 1.2f, currentAnchorPosition + Vector3.up * 0.2f);
             }
         }
     }

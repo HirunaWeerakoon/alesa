@@ -42,9 +42,10 @@ namespace Alesa.Logic.Checks
             Test19_FollowAnchorCalculationsAndSmoothing();
             Test20_ArrivalSteeringSpeedModulationAndSmoothDeceleration();
             Test21_StateSynchronizedSpeedAndSafeWaiting();
+            Test22_FollowerProgressiveStuckDetectionAndRecovery();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 21 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 22 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -1178,6 +1179,71 @@ namespace Alesa.Logic.Checks
             ctx.IsPlayerControlsEnabled = false;
             fsm.EvaluateState(ctx);
             Assert(fsm.CurrentState == CompanionState.Idle, "Modal or disabled controls must force Idle state.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test22_FollowerProgressiveStuckDetectionAndRecovery()
+        {
+            Console.Write("Test 22: Follower progressive stuck detection & multi-tier recovery... ");
+
+            var recovery = new FollowerRecoveryController(
+                stuckDetectionTime: 1.0f,
+                minDisplacementRate: 0.2f,
+                extremeDistanceThreshold: 18.0f);
+            recovery.TeleportTimeout = 5.5f;
+
+            // 1. Healthy movement: 0.5m moved in 0.1s at 5.0 m/s -> Not Stuck
+            var tier = recovery.EvaluateProgress(
+                actualDisplacement: 0.5f,
+                commandedSpeed: 5.0f,
+                hasValidNavPath: true,
+                distanceToPlayer: 3.0f,
+                deltaTime: 0.1f);
+            Assert(!recovery.IsStuck && tier == RecoveryTier.None, "Healthy movement must not trigger stuck state.");
+
+            // 2. Physical obstruction: commanded 5.0 m/s but 0.0m displacement
+            // Advance by 0.5s (below 1.0s threshold) -> Still accumulating
+            tier = recovery.EvaluateProgress(0f, 5.0f, true, 3.0f, 0.5f);
+            Assert(!recovery.IsStuck && tier == RecoveryTier.None, "Must not flag stuck before reaching threshold.");
+
+            // Advance by another 0.6s (total 1.1s >= 1.0s) -> Escalates to Tier 1 (Repath)
+            tier = recovery.EvaluateProgress(0f, 5.0f, true, 3.0f, 0.6f);
+            Assert(recovery.IsStuck && tier == RecoveryTier.Tier1_Repath, "Stuck >= 1.0s must trigger Tier 1 Repath.");
+
+            // 3. Persistent obstruction reaches 2.1s -> Escalates to Tier 2 (Flank Offset)
+            tier = recovery.EvaluateProgress(0f, 5.0f, true, 3.0f, 1.0f);
+            Assert(recovery.IsStuck && tier == RecoveryTier.Tier2_FlankOffset, "Stuck >= 2.0s must escalate to Tier 2 Flank Offset.");
+
+            // 4. Obstruction reaches 3.6s -> Escalates to Tier 3 (Waypoint Nav / Catch-up)
+            tier = recovery.EvaluateProgress(0f, 5.0f, true, 3.0f, 1.5f);
+            Assert(recovery.IsStuck && tier == RecoveryTier.Tier3_WaypointNav, "Stuck >= 3.5s must escalate to Tier 3 Waypoint Nav.");
+
+            // 5. Critical timeout reaches 5.6s -> Escalates to Tier 4 (Teleport Safeguard)
+            tier = recovery.EvaluateProgress(0f, 5.0f, true, 3.0f, 2.0f);
+            Assert(recovery.IsStuck && tier == RecoveryTier.Tier4_Teleport, "Stuck >= 5.5s must escalate to Tier 4 Teleport.");
+
+            // 6. Extreme separation (> 18.0m) immediately triggers Tier 4 Teleport
+            recovery.Reset();
+            Assert(!recovery.IsStuck, "Reset must clear stuck state.");
+            tier = recovery.EvaluateProgress(0.5f, 5.0f, true, distanceToPlayer: 25.0f, deltaTime: 0.1f);
+            Assert(recovery.IsStuck && tier == RecoveryTier.Tier4_Teleport, "Distance > 18m must immediately trigger Tier 4 Teleport.");
+
+            // 7. Recovery action note and counter tracking
+            recovery.NoteRecoveryActionExecuted();
+            Assert(recovery.RecoveryCount == 1, "Recovery count must increment.");
+
+            // 8. Natural recovery: agent gets unstuck and moves freely -> timer decays and clears
+            recovery.Reset();
+            // Inject 1.2s stuck
+            recovery.EvaluateProgress(0f, 5.0f, true, 3.0f, 1.2f);
+            Assert(recovery.IsStuck, "Should be stuck.");
+            // Inject healthy movement over several frames to clear timer
+            for (int i = 0; i < 15; i++)
+            {
+                recovery.EvaluateProgress(actualDisplacement: 0.5f, commandedSpeed: 5.0f, hasValidNavPath: true, distanceToPlayer: 3.0f, deltaTime: 0.1f);
+            }
+            Assert(!recovery.IsStuck && recovery.CurrentTier == RecoveryTier.None, "Resuming movement must decay timer and resolve stuck status.");
 
             Console.WriteLine("PASS");
         }
