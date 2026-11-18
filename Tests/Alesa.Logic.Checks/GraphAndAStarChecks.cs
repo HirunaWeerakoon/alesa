@@ -33,9 +33,10 @@ namespace Alesa.Logic.Checks
             Test10_RiskPenaltyInfluencesPathSelection();
             Test11_TemporaryExclusionsWithoutGraphMutation();
             Test12_SceneWaypointTopologyAndRouteVerification();
+            Test13_DynamicEdgeManagementAndSafetyChecks();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 12 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 13 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -429,6 +430,74 @@ namespace Alesa.Logic.Checks
             var restoredRoute = pathfinder.FindPath(graph, "WP_Start", "WP_Exit");
             Assert(restoredRoute.IsValid, "Restored route must be valid.");
             Assert(restoredRoute.NodeIds.Contains("WP_West_Mid"), "Restored route must use West corridor again.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test13_DynamicEdgeManagementAndSafetyChecks()
+        {
+            Console.Write("Test 13: Dynamic edge queries, directed blocking & atomic resets... ");
+
+            var graph = new WaypointGraph();
+            graph.AddNode("N1", new NodePosition(0, 0, 0));
+            graph.AddNode("N2", new NodePosition(10, 0, 0));
+            graph.AddNode("N3", new NodePosition(20, 0, 0));
+
+            graph.AddEdge("N1", "N2", 10f, bidirectional: true);
+            graph.AddEdge("N2", "N3", 10f, bidirectional: true);
+
+            // 1. Query existing edges
+            Assert(graph.TryGetEdge("N1", "N2", out var edge12), "Must find edge N1->N2.");
+            Assert(edge12.BaseLength == 10f, "Base length must be 10.");
+            Assert(edge12.EdgeKey == "N1->N2", "EdgeKey must match 'N1->N2'.");
+            Assert(graph.IsEdgeTraversable("N1", "N2"), "N1->N2 must be traversable.");
+            Assert(!graph.IsEdgeBlocked("N1", "N2"), "N1->N2 must not be blocked.");
+
+            // 2. Query non-existent or invalid edges safely
+            Assert(!graph.TryGetEdge("N1", "NonExistent", out _), "Querying unknown target must return false.");
+            Assert(!graph.TryGetEdge(null, "N2", out _), "Null fromId must return false.");
+            Assert(!graph.TryGetEdge("N1", null, out _), "Null toId must return false.");
+            Assert(!graph.IsEdgeTraversable("N1", "NonExistent"), "Nonexistent edge is not traversable.");
+            Assert(!graph.IsEdgeBlocked("N1", "NonExistent"), "Nonexistent edge is not blocked.");
+
+            // 3. Blocking non-existent edges safely returns false without modifying Version
+            int vBefore = graph.Version;
+            Assert(!graph.SetEdgeBlocked("N1", "NonExistent", true), "Blocking unknown edge returns false.");
+            Assert(!graph.SetEdgeBlocked(null, "N2", true), "Null fromId returns false.");
+            Assert(!graph.SetEdgeRisk("N1", null, 5f), "Null toId returns false.");
+            Assert(graph.Version == vBefore, "Version must not change on invalid edge operations.");
+
+            // 4. Directed vs Bidirectional blocking
+            // Block ONLY directed forward edge N1->N2 (bidirectional: false)
+            graph.SetEdgeBlocked("N1", "N2", true, "One-way hazard", bidirectional: false);
+            Assert(graph.IsEdgeBlocked("N1", "N2"), "N1->N2 must be blocked.");
+            Assert(!graph.IsEdgeTraversable("N1", "N2"), "N1->N2 must not be traversable.");
+            Assert(!graph.IsEdgeBlocked("N2", "N1"), "Backward edge N2->N1 must remain unblocked.");
+            Assert(graph.IsEdgeTraversable("N2", "N1"), "Backward edge N2->N1 must remain traversable.");
+            Assert(edge12.BaseLength == 10f, "Original BaseLength must be preserved even when blocked.");
+
+            // 5. GetBlockedEdges() tracking
+            var blockedList = graph.GetBlockedEdges();
+            Assert(blockedList.Count == 1, "Must be exactly 1 blocked edge.");
+            Assert(blockedList[0].EdgeKey == "N1->N2", "Blocked edge must be N1->N2.");
+
+            // Block N2->N3 bidirectionally
+            graph.SetEdgeBlocked("N2", "N3", true, "Boss Presence", bidirectional: true);
+            var blockedList2 = graph.GetBlockedEdges();
+            Assert(blockedList2.Count == 3, "Must now be 3 blocked edges (N1->N2, N2->N3, N3->N2).");
+
+            // 6. ResetAllBlockedEdges() atomic restoration
+            int resetCount = graph.ResetAllBlockedEdges();
+            Assert(resetCount == 3, $"Expected 3 edges reset, got {resetCount}.");
+            Assert(graph.GetBlockedEdges().Count == 0, "No edges should remain blocked.");
+            Assert(graph.IsEdgeTraversable("N1", "N2"), "N1->N2 must be restored.");
+            Assert(graph.IsEdgeTraversable("N2", "N3"), "N2->N3 must be restored.");
+            Assert(graph.IsEdgeTraversable("N3", "N2"), "N3->N2 must be restored.");
+
+            // 7. Edge removal
+            Assert(graph.RemoveEdge("N1", "N2", bidirectional: true), "Removing edge must return true.");
+            Assert(!graph.TryGetEdge("N1", "N2", out _), "Removed edge must not exist.");
+            Assert(!graph.TryGetEdge("N2", "N1", out _), "Removed reverse edge must not exist.");
 
             Console.WriteLine("PASS");
         }

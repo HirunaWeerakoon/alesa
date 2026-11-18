@@ -84,6 +84,9 @@ namespace Alesa.Core
 
         public bool SetEdgeBlocked(string fromId, string toId, bool isBlocked, string reason = null, bool bidirectional = true)
         {
+            if (string.IsNullOrWhiteSpace(fromId) || string.IsNullOrWhiteSpace(toId))
+                return false;
+
             bool modified = false;
 
             if (_adjacency.TryGetValue(fromId, out var forwardList))
@@ -116,6 +119,9 @@ namespace Alesa.Core
 
         public bool SetEdgeRisk(string fromId, string toId, float riskPenalty, bool bidirectional = true)
         {
+            if (string.IsNullOrWhiteSpace(fromId) || string.IsNullOrWhiteSpace(toId))
+                return false;
+
             bool modified = false;
 
             if (_adjacency.TryGetValue(fromId, out var forwardList))
@@ -144,6 +150,126 @@ namespace Alesa.Core
             }
 
             return modified;
+        }
+
+        /// <summary>
+        /// Safely retrieves an edge between two nodes. Returns false if either node or edge does not exist.
+        /// </summary>
+        public bool TryGetEdge(string fromId, string toId, out WaypointEdge edge)
+        {
+            edge = null;
+            if (string.IsNullOrWhiteSpace(fromId) || string.IsNullOrWhiteSpace(toId))
+                return false;
+
+            if (_adjacency.TryGetValue(fromId, out var edgeList))
+            {
+                for (int i = 0; i < edgeList.Count; i++)
+                {
+                    if (string.Equals(edgeList[i].ToNodeId, toId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        edge = edgeList[i];
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Checks whether a connection exists and is currently traversable.
+        /// </summary>
+        public bool IsEdgeTraversable(string fromId, string toId)
+        {
+            return TryGetEdge(fromId, toId, out var edge) && edge.IsTraversable;
+        }
+
+        /// <summary>
+        /// Checks whether a connection exists and is currently blocked.
+        /// </summary>
+        public bool IsEdgeBlocked(string fromId, string toId)
+        {
+            return TryGetEdge(fromId, toId, out var edge) && edge.IsBlocked;
+        }
+
+        /// <summary>
+        /// Returns all currently blocked edges across the entire graph.
+        /// </summary>
+        public IReadOnlyList<WaypointEdge> GetBlockedEdges()
+        {
+            var list = new List<WaypointEdge>();
+            foreach (var edgeList in _adjacency.Values)
+            {
+                for (int i = 0; i < edgeList.Count; i++)
+                {
+                    if (edgeList[i].IsBlocked)
+                        list.Add(edgeList[i]);
+                }
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// Reopens all blocked edges across the entire graph in one atomic operation.
+        /// Increments Version if any edges were reopened.
+        /// </summary>
+        public int ResetAllBlockedEdges()
+        {
+            int resetCount = 0;
+            foreach (var edgeList in _adjacency.Values)
+            {
+                for (int i = 0; i < edgeList.Count; i++)
+                {
+                    if (edgeList[i].IsBlocked)
+                    {
+                        edgeList[i].SetBlocked(false);
+                        resetCount++;
+                    }
+                }
+            }
+
+            if (resetCount > 0)
+            {
+                Version++;
+            }
+
+            return resetCount;
+        }
+
+        /// <summary>
+        /// Removes an edge connection between two nodes.
+        /// </summary>
+        public bool RemoveEdge(string fromId, string toId, bool bidirectional = true)
+        {
+            if (string.IsNullOrWhiteSpace(fromId) || string.IsNullOrWhiteSpace(toId))
+                return false;
+
+            bool removed = false;
+            if (_adjacency.TryGetValue(fromId, out var forwardList))
+            {
+                var existing = forwardList.FirstOrDefault(e => string.Equals(e.ToNodeId, toId, StringComparison.OrdinalIgnoreCase));
+                if (existing != null)
+                {
+                    forwardList.Remove(existing);
+                    removed = true;
+                }
+            }
+
+            if (bidirectional && _adjacency.TryGetValue(toId, out var backwardList))
+            {
+                var existing = backwardList.FirstOrDefault(e => string.Equals(e.ToNodeId, fromId, StringComparison.OrdinalIgnoreCase));
+                if (existing != null)
+                {
+                    backwardList.Remove(existing);
+                    removed = true;
+                }
+            }
+
+            if (removed)
+            {
+                Version++;
+            }
+
+            return removed;
         }
 
         public bool ContainsNode(string id) => !string.IsNullOrEmpty(id) && _nodes.ContainsKey(id);

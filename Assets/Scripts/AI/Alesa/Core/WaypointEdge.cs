@@ -15,6 +15,11 @@ namespace Alesa.Core
         public bool IsBlocked { get; private set; }
         public string BlockReason { get; private set; }
 
+        /// <summary>
+        /// Stable directional identifier for this edge connection.
+        /// </summary>
+        public string EdgeKey => $"{FromNodeId}->{ToNodeId}";
+
         public WaypointEdge(string fromNodeId, string toNodeId, float baseLength, float riskPenalty = 0f)
         {
             if (string.IsNullOrWhiteSpace(fromNodeId))
