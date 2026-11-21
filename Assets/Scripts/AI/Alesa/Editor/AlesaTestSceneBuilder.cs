@@ -133,6 +133,11 @@ namespace Alesa.Editor
             follower.maxSprintSpeed = 8.5f;
             follower.autoFreeInTestScene = true;
 
+            // Attach Voice Speaker with 3D AudioSource
+            var speaker = alesa.AddComponent<Alesa.Runtime.AlesaVoiceSpeaker>();
+            speaker.enable3DSpatialAudio = true;
+            speaker.voiceVolume = 1.0f;
+
             // Exit Destination
             var exitDest = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             exitDest.name = "Exit_Destination";
@@ -140,10 +145,24 @@ namespace Alesa.Editor
             exitDest.transform.position = new Vector3(0f, 0.2f, 15f);
             exitDest.transform.localScale = new Vector3(3f, 0.2f, 3f);
 
-            // 8. Navigation Waypoint Network and Navigator
+            // 8. Navigation Waypoint Network, Navigator and Voice Guidance
             var network = navRoot.AddComponent<Alesa.Runtime.AlesaWaypointNetwork>();
             var navigator = navRoot.AddComponent<Alesa.Runtime.AlesaNavigator>();
             var visualizer = navRoot.AddComponent<Alesa.Runtime.AlesaRouteVisualizer>();
+            var junctionDetector = navRoot.AddComponent<Alesa.Runtime.AlesaJunctionDetector>();
+            var guidanceController = navRoot.AddComponent<Alesa.Runtime.AlesaGuidanceController>();
+
+            junctionDetector.playerTransform = nathan.transform;
+            junctionDetector.navigator = navigator;
+            junctionDetector.lookaheadDistance = 5.0f;
+
+            guidanceController.playerTransform = nathan.transform;
+            guidanceController.navigator = navigator;
+            guidanceController.junctionDetector = junctionDetector;
+            guidanceController.lookaheadDistance = 5.0f;
+            guidanceController.normalCooldown = 4.0f;
+
+            speaker.guidanceController = guidanceController;
 
             var wpStart = CreateWaypoint(navRoot, "WP_Start", new Vector3(0f, 0.5f, -14f));
             var wpTJunction = CreateWaypoint(navRoot, "WP_T_Junction", new Vector3(0f, 0.5f, -4f), isJunction: true);
