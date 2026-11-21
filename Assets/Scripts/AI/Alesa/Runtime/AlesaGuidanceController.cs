@@ -70,6 +70,7 @@ namespace Alesa.Runtime
             if (navigator != null)
             {
                 navigator.OnRecommendedRouteChanged += HandleRouteChanged;
+                navigator.OnPathLost += HandlePathLost;
             }
         }
 
@@ -78,6 +79,7 @@ namespace Alesa.Runtime
             if (navigator != null)
             {
                 navigator.OnRecommendedRouteChanged -= HandleRouteChanged;
+                navigator.OnPathLost -= HandlePathLost;
             }
         }
 
@@ -155,6 +157,12 @@ namespace Alesa.Runtime
             NodePosition playerPos = playerTransform != null ? playerTransform.position.ToNodePosition() : default;
 
             _controller.HandleRouteChanged(graph, info.ActiveRoute, playerPos, info.ChangeReason, Time.time, out _);
+        }
+
+        private void HandlePathLost()
+        {
+            if (_controller == null) InitializeController();
+            _controller.HandlePathLost(Time.time, out _);
         }
 
         private void HandleGuidanceEmitted(GuidanceDecision decision)

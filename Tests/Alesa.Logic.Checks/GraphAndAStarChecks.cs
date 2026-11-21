@@ -48,9 +48,10 @@ namespace Alesa.Logic.Checks
             Test25_SignedAngleTurnDirectionClassification();
             Test26_ProactiveGuidanceDecisionSystemAndCooldowns();
             Test27_VoiceInstructionMappingAndPriorityInterruption();
+            Test28_DynamicReroutingAndVoiceGuidanceSynchronization();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 27 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 28 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -1654,6 +1655,83 @@ namespace Alesa.Logic.Checks
 
             string blockedText = VoiceClipMapper.GetSubtitleText(VoiceCueId.RouteBlocked);
             Assert(blockedText.Contains("blocked", StringComparison.OrdinalIgnoreCase), "Subtitle must contain 'blocked'.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test28_DynamicReroutingAndVoiceGuidanceSynchronization()
+        {
+            Console.Write("Test 28: Dynamic rerouting & voice guidance synchronization... ");
+
+            var graph = new WaypointGraph();
+            graph.AddNode("Start", new NodePosition(0, 0, -15));
+            graph.AddNode("TJunc", new NodePosition(0, 0, 0), isJunction: true);
+            graph.AddNode("WestWing", new NodePosition(-10, 0, 0));
+            graph.AddNode("EastWing", new NodePosition(10, 0, 0));
+            graph.AddNode("Exit", new NodePosition(0, 0, 20));
+
+            // Shorter path via West: 15 + 10 + 22.36 = ~47.36m
+            graph.AddEdge("Start", "TJunc", 15f);
+            graph.AddEdge("TJunc", "WestWing", 10f);
+            graph.AddEdge("WestWing", "Exit", 22f);
+
+            // Longer path via East: 15 + 10 + 30 = 55m
+            graph.AddEdge("TJunc", "EastWing", 10f);
+            graph.AddEdge("EastWing", "Exit", 30f);
+
+            var planner = new AlesaRoutePlanner(graph, maxAlternatives: 3);
+            planner.SetEndpoints("Start", "Exit", replanImmediately: true);
+
+            var controller = new GuidanceDecisionController(lookaheadDistance: 5.0f, normalCooldown: 4.0f);
+
+            // Connect planner event to controller
+            GuidanceDecision lastGuidance = GuidanceDecision.None;
+            controller.OnGuidanceEmitted += dec => lastGuidance = dec;
+
+            planner.OnRouteChanged += (newRoute, reason) =>
+            {
+                var playerPos = new NodePosition(0, 0, -4); // 4m from junction
+                controller.HandleRouteChanged(graph, newRoute, playerPos, reason, 1.0f, out _);
+            };
+
+            // 1. Initial State: Nathan approaches junction at (0, 0, -4m) -> Optimal path is West (Left Turn)
+            Assert(planner.ActiveRoute.IsValid, "Initial route must be valid.");
+            var playerPos = new NodePosition(0, 0, -4);
+            bool decidedInit = controller.EvaluateGuidance(graph, planner.ActiveRoute, playerPos, currentTime: 0.5f, out var decInit);
+            Assert(decidedInit, "Must emit initial turn guidance.");
+            Assert(decInit.Direction == TurnDirection.Left, $"Initial direction must be Left, got {decInit.Direction}");
+            Assert(VoiceClipMapper.MapDecisionToCue(decInit) == VoiceCueId.TurnLeft, "Must map to TurnLeft cue.");
+
+            // 2. Sudden Obstacle: West corridor blocked by debris
+            graph.SetEdgeBlocked("TJunc", "WestWing", true, "Boss Barricade");
+            bool replanned = planner.CheckAndReplanIfInvalid(out var newMulti);
+            Assert(replanned, "Planner must detect blockage and replan.");
+            Assert(planner.ActiveRoute.NodeIds.Contains("EastWing"), "New route must use EastWing detour.");
+
+            // 3. Immediate Reroute Voice Guidance:
+            // The event fired and controller issued critical reroute decision
+            Assert(lastGuidance.Type == GuidanceType.RouteRerouted, $"Type must be RouteRerouted, got {lastGuidance.Type}");
+            Assert(lastGuidance.IsCritical, "Reroute guidance must be critical.");
+            Assert(lastGuidance.Direction == TurnDirection.Right, $"Rerouted direction must now be Right, got {lastGuidance.Direction}");
+            Assert(VoiceClipMapper.MapDecisionToCue(lastGuidance) == VoiceCueId.RouteRerouted, "Must map to RouteRerouted cue.");
+            Assert(VoiceClipMapper.CanInterrupt(VoiceCueId.TurnLeft, VoiceCueId.RouteRerouted), "RouteRerouted must interrupt active TurnLeft voice.");
+
+            // 4. Secondary Obstacle (Total Blockage): East corridor also gets blocked
+            graph.SetEdgeBlocked("TJunc", "EastWing", true, "Total Collapse");
+            bool replannedLost = planner.CheckAndReplanIfInvalid(out _);
+            Assert(replannedLost, "Planner must detect that second route is also blocked.");
+            Assert(!planner.HasValidRoute, "No valid route should remain.");
+
+            // Controller handles complete path loss
+            controller.HandlePathLost(currentTime: 2.0f, out var decLost);
+            Assert(decLost.Type == GuidanceType.NoRouteAvailable, "Must emit NoRouteAvailable decision.");
+            Assert(VoiceClipMapper.MapDecisionToCue(decLost) == VoiceCueId.NoRouteAvailable, "Must map to NoRouteAvailable cue.");
+
+            // 5. Restoring Connectivity: Debris cleared
+            graph.ResetAllBlockedEdges();
+            planner.Replan(RouteChangeReason.CorridorReopened, force: true);
+            Assert(planner.HasValidRoute, "Reopening corridors must restore optimal route.");
+            Assert(planner.ActiveRoute.NodeIds.Contains("WestWing"), "Restored route should prefer shorter WestWing again.");
 
             Console.WriteLine("PASS");
         }

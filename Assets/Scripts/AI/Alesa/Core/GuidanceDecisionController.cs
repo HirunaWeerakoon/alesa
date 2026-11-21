@@ -241,8 +241,10 @@ namespace Alesa.Core
                 // Check if new route exists
                 if (newRoute != null && newRoute.IsValid)
                 {
-                    // Find new turn direction at upcoming junction
-                    if (_detector.TryFindNextJunctionOnRoute(graph, newRoute, 0, out int jIdx, out string jId, out _))
+                    int currentSeg = _detector.FindClosestRouteSegment(graph, newRoute, playerPosition, newRoute.NodeCount - 1);
+
+                    // Find new turn direction at upcoming junction ahead of player
+                    if (_detector.TryFindNextJunctionOnRoute(graph, newRoute, currentSeg, out int jIdx, out string jId, out _))
                     {
                         TurnDirection newDir = _classifier.ClassifyRouteTurn(graph, newRoute, jIdx, out float angle);
                         float dist = _detector.CalculateDistanceAlongRoute(graph, newRoute, playerPosition, jIdx);
@@ -263,6 +265,19 @@ namespace Alesa.Core
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Explicit handler when no path to the exit remains in the graph.
+        /// </summary>
+        public bool HandlePathLost(float currentTime, out GuidanceDecision decision)
+        {
+            LastAnnouncedJunctionId = string.Empty;
+            LastAnnouncedDirection = TurnDirection.None;
+
+            decision = GuidanceDecision.NoRoute(currentTime);
+            EmitDecision(decision, currentTime, string.Empty, TurnDirection.None);
+            return true;
         }
 
         private void EmitDecision(GuidanceDecision decision, float time, string junctionId, TurnDirection direction)
