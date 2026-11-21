@@ -44,9 +44,10 @@ namespace Alesa.Logic.Checks
             Test21_StateSynchronizedSpeedAndSafeWaiting();
             Test22_FollowerProgressiveStuckDetectionAndRecovery();
             Test23_FollowerLocomotionPerformanceBenchmark();
+            Test24_IntelligentJunctionDetectionAndLookahead();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 23 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 24 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -1317,6 +1318,109 @@ namespace Alesa.Logic.Checks
             Assert(totalMs < 50.0, $"10,000 companion locomotion ticks took {totalMs:F2} ms, expected < 50.0 ms ({usPerFrame:F3} us/tick).");
 
             Console.WriteLine($"PASS ({usPerFrame:F3} us/tick, {totalMs:F2} ms total for 10k frames)");
+        }
+
+        private static void Test24_IntelligentJunctionDetectionAndLookahead()
+        {
+            Console.Write("Test 24: Intelligent junction detection, lookahead & wall distance... ");
+
+            var graph = new WaypointGraph();
+            // Start corridor: S (0,0,-15) -> A (0,0,-8) -> TJunction (0,0,0)
+            graph.AddNode("S", new NodePosition(0, 0, -15));
+            graph.AddNode("A", new NodePosition(0, 0, -8));
+            graph.AddNode("TJunction", new NodePosition(0, 0, 0), isJunction: true);
+            graph.AddNode("LeftWing", new NodePosition(-10, 0, 0));
+            graph.AddNode("RightWing", new NodePosition(10, 0, 0));
+            graph.AddNode("Bend", new NodePosition(10, 0, 10));
+            graph.AddNode("DeadEnd", new NodePosition(10, 0, 15));
+            graph.AddNode("Crossroad", new NodePosition(-10, 0, 10));
+            graph.AddNode("CrossNorth", new NodePosition(-10, 0, 20));
+            graph.AddNode("CrossWest", new NodePosition(-20, 0, 10));
+            graph.AddNode("CrossEast", new NodePosition(0, 0, 10));
+
+            // Wire edges
+            graph.AddEdge("S", "A", 7f);
+            graph.AddEdge("A", "TJunction", 8f);
+            graph.AddEdge("TJunction", "LeftWing", 10f);
+            graph.AddEdge("TJunction", "RightWing", 10f);
+
+            // Right wing: RightWing -> Bend -> DeadEnd
+            graph.AddEdge("RightWing", "Bend", 10f);
+            graph.AddEdge("Bend", "DeadEnd", 5f);
+
+            // Left wing: LeftWing -> Crossroad (4-way)
+            graph.AddEdge("LeftWing", "Crossroad", 10f);
+            graph.AddEdge("Crossroad", "CrossNorth", 10f);
+            graph.AddEdge("Crossroad", "CrossWest", 10f);
+            graph.AddEdge("Crossroad", "CrossEast", 10f);
+
+            var detector = new JunctionDetector(lookaheadDistance: 5.0f);
+
+            // 1. Standard T-Junction: TJunction has 3 traversable outgoing edges (A, LeftWing, RightWing) -> IsJunction
+            Assert(detector.IsJunctionNode(graph, "TJunction", out int tDeg), "T-Junction must be classified as a junction.");
+            Assert(tDeg == 3, $"T-Junction traversable degree must be 3, got {tDeg}");
+
+            // 2. 4-way Crossroad: Crossroad has 4 traversable edges -> IsJunction
+            Assert(detector.IsJunctionNode(graph, "Crossroad", out int cDeg), "4-Way Crossroad must be a junction.");
+            Assert(cDeg == 4, $"Crossroad degree must be 4, got {cDeg}");
+
+            // 3. Normal Corridor Bend: Bend connects RightWing and DeadEnd -> degree 2 -> NOT a junction
+            Assert(!detector.IsJunctionNode(graph, "Bend", out int bDeg), "Normal corridor bend (degree 2) must NOT be a junction.");
+            Assert(bDeg == 2, "Bend degree must be 2.");
+
+            // 4. Dead End: DeadEnd connects only to Bend -> degree 1 -> NOT a junction
+            Assert(!detector.IsJunctionNode(graph, "DeadEnd", out int dDeg), "Dead end (degree 1) must NOT be a junction.");
+            Assert(dDeg == 1, "Dead end degree must be 1.");
+
+            // 5. Blocked connection degrades junction:
+            // Block LeftWing on TJunction -> Now only A and RightWing remain traversable (degree 2) -> No branching choice!
+            graph.SetEdgeBlocked("TJunction", "LeftWing", true, "Debris Blockage");
+            detector.IsJunctionNode(graph, "TJunction", out int blockedDeg);
+            Assert(blockedDeg == 2, $"Traversable degree after blockage must be 2, got {blockedDeg}");
+            // Restore edge
+            graph.SetEdgeBlocked("TJunction", "LeftWing", false);
+
+            // 6. Active Route Junction Finding:
+            // Route: S -> A -> TJunction -> LeftWing -> Crossroad -> CrossNorth
+            var route = RouteResult.Success(new[] { "S", "A", "TJunction", "LeftWing", "Crossroad", "CrossNorth" }, 47f, graph.Version);
+
+            // From S (index 0), next junction on route must be TJunction (index 2)
+            Assert(detector.TryFindNextJunctionOnRoute(graph, route, 0, out int jIdx1, out string jNode1, out _), "Must find TJunction on route.");
+            Assert(jIdx1 == 2 && jNode1 == "TJunction", $"First junction must be TJunction at index 2, got {jNode1} at {jIdx1}");
+
+            // After passing TJunction (from LeftWing, index 3), next junction must be Crossroad (index 4)
+            Assert(detector.TryFindNextJunctionOnRoute(graph, route, 3, out int jIdx2, out string jNode2, out _), "Must find next junction ahead.");
+            Assert(jIdx2 == 4 && jNode2 == "Crossroad", $"Second junction must be Crossroad at index 4, got {jNode2} at {jIdx2}");
+
+            // 7. Lookahead Distance & Proactive Triggering:
+            // Nathan at (0, 0, -10): Between S and A.
+            // Distance to TJunction (at 0,0,0) along corridor is 10m -> Outside 5m lookahead -> false
+            var posFar = new NodePosition(0, 0, -10);
+            bool approachingFar = detector.IsApproachingJunction(graph, route, posFar, lookaheadDistance: 5.0f, out var jInfoFar);
+            Assert(!approachingFar, "Player 10m away must NOT trigger proactive 5m lookahead alert.");
+            Assert(Math.Abs(jInfoFar.DistanceAlongRoute - 10.0f) < 0.5f, $"Corridor distance should be ~10m, got {jInfoFar.DistanceAlongRoute}");
+
+            // Nathan advances to (0, 0, -4): 4 meters from TJunction -> Inside 5m lookahead -> true!
+            var posClose = new NodePosition(0, 0, -4);
+            bool approachingClose = detector.IsApproachingJunction(graph, route, posClose, lookaheadDistance: 5.0f, out var jInfoClose);
+            Assert(approachingClose, "Player 4m away MUST trigger proactive lookahead alert.");
+            Assert(jInfoClose.NodeId == "TJunction", "Upcoming junction must be TJunction.");
+            Assert(Math.Abs(jInfoClose.DistanceAlongRoute - 4.0f) < 0.5f, $"Corridor distance should be ~4m, got {jInfoClose.DistanceAlongRoute}");
+
+            // 8. Wall Separation Safety Test:
+            // Nathan is physically at (-1, 0, 0), which is straight-line Euclidean 1.0m from TJunction (0, 0, 0).
+            // BUT a wall stands between them, so the corridor route enters from South (S -> A -> TJunction).
+            // If Nathan is at S (0, 0, -15), straight line distance to S is 0m, and route distance to TJunction is 15m.
+            var posAtStart = new NodePosition(0, 0, -15);
+            float distAlongRoute = detector.CalculateDistanceAlongRoute(graph, route, posAtStart, targetJunctionIndex: 2);
+            Assert(Math.Abs(distAlongRoute - 15.0f) < 0.5f, $"Distance along corridor route must be 15.0m, got {distAlongRoute}");
+
+            // 9. Safe handling of invalid route or disconnected nodes
+            Assert(!detector.IsApproachingJunction(graph, null, posClose, 5.0f, out _), "Null route must return false.");
+            Assert(!detector.IsApproachingJunction(null, route, posClose, 5.0f, out _), "Null graph must return false.");
+            Assert(!detector.IsJunctionNode(graph, "NonExistentNode", out _), "Non-existent node must return false.");
+
+            Console.WriteLine("PASS");
         }
     }
 }
