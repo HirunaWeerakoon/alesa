@@ -46,9 +46,10 @@ namespace Alesa.Logic.Checks
             Test23_FollowerLocomotionPerformanceBenchmark();
             Test24_IntelligentJunctionDetectionAndLookahead();
             Test25_SignedAngleTurnDirectionClassification();
+            Test26_ProactiveGuidanceDecisionSystemAndCooldowns();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 25 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 26 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -1515,6 +1516,89 @@ namespace Alesa.Logic.Checks
             float zeroAngle = DirectionClassifier.CalculateSignedAngle2D(0f, 0f, 1f, 0f);
             Assert(zeroAngle == 0f, "Zero vector should yield 0 deg.");
             Assert(classifier.ClassifyAngle(zeroAngle) == TurnDirection.Straight, "0 deg classifies as Straight.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test26_ProactiveGuidanceDecisionSystemAndCooldowns()
+        {
+            Console.Write("Test 26: Proactive guidance decisions, cooldowns & dynamic reroute priority... ");
+
+            var graph = new WaypointGraph();
+            graph.AddNode("Start", new NodePosition(0, 0, -20));
+            graph.AddNode("HallwayA", new NodePosition(0, 0, -10));
+            graph.AddNode("TJunction", new NodePosition(0, 0, 0), isJunction: true);
+            graph.AddNode("LeftWing", new NodePosition(-10, 0, 0));
+            graph.AddNode("RightWing", new NodePosition(10, 0, 0));
+            graph.AddNode("ExitNode", new NodePosition(-10, 0, 20));
+
+            graph.AddEdge("Start", "HallwayA", 10f);
+            graph.AddEdge("HallwayA", "TJunction", 10f);
+            graph.AddEdge("TJunction", "LeftWing", 10f);
+            graph.AddEdge("TJunction", "RightWing", 10f);
+            graph.AddEdge("LeftWing", "ExitNode", 20f);
+            graph.AddEdge("RightWing", "ExitNode", 25f);
+
+            var controller = new GuidanceDecisionController(lookaheadDistance: 5.0f, normalCooldown: 4.0f);
+
+            // Active route: Start -> HallwayA -> TJunction -> LeftWing -> ExitNode (optimal left turn at TJunction)
+            var activeRoute = RouteResult.Success(new[] { "Start", "HallwayA", "TJunction", "LeftWing", "ExitNode" }, 50f, graph.Version);
+
+            // 1. Proactive Lookahead: Nathan at (0, 0, -12), distance along corridor to TJunction is 12m (> 5m) -> No announcement
+            var posFar = new NodePosition(0, 0, -12);
+            bool decidedFar = controller.EvaluateGuidance(graph, activeRoute, posFar, currentTime: 1.0f, out var decFar);
+            Assert(!decidedFar, "Nathan at 12m must not trigger proactive 5m guidance.");
+            Assert(!decFar.HasInstruction, "No instruction emitted.");
+
+            // 2. Proactive Trigger: Nathan advances to (0, 0, -4), distance along corridor is 4m (<= 5m) -> Emit Turn Decision!
+            var posClose = new NodePosition(0, 0, -4);
+            bool decidedClose = controller.EvaluateGuidance(graph, activeRoute, posClose, currentTime: 2.0f, out var decClose);
+            Assert(decidedClose, "Nathan at 4m MUST trigger proactive guidance.");
+            Assert(decClose.Type == GuidanceType.TurnInstruction, $"Must be TurnInstruction, got {decClose.Type}");
+            Assert(decClose.Direction == TurnDirection.Left, $"Must be Left turn, got {decClose.Direction}");
+            Assert(decClose.TargetJunctionId == "TJunction", "Target junction must be TJunction.");
+            Assert(!decClose.IsCritical, "Standard turn instruction is not marked critical.");
+            Assert(decClose.Message.Contains("left", StringComparison.OrdinalIgnoreCase), $"Message should tell player to turn left, got '{decClose.Message}'");
+
+            // 3. Duplicate Suppression: Nathan remains at (0, 0, -3) 1 second later (time = 3.0s) -> Suppressed!
+            var posHover = new NodePosition(0, 0, -3);
+            bool decidedHover = controller.EvaluateGuidance(graph, activeRoute, posHover, currentTime: 3.0f, out _);
+            Assert(!decidedHover, "Remaining near same junction must NOT spam duplicate turn instruction.");
+
+            // 4. Cooldown Suppression: Nathan moves to (0, 0, -2) at time = 4.0s (2s elapsed < 4s cooldown) -> Suppressed!
+            bool decidedCooldown = controller.EvaluateGuidance(graph, activeRoute, new NodePosition(0, 0, -2), currentTime: 4.0f, out _);
+            Assert(!decidedCooldown, "Cooldown under 4.0s must suppress regular guidance.");
+
+            // 5. Critical Rerouting Preemption:
+            // LeftWing corridor suddenly gets blocked by debris!
+            // Path recalculates through RightWing: Start -> HallwayA -> TJunction -> RightWing -> ExitNode
+            graph.SetEdgeBlocked("TJunction", "LeftWing", true, "Boss Ambush");
+            var reroutedPath = RouteResult.Success(new[] { "Start", "HallwayA", "TJunction", "RightWing", "ExitNode" }, 55f, graph.Version);
+
+            // HandleRouteChanged called immediately at time = 4.5s (inside ordinary cooldown window!)
+            bool rerouteHandled = controller.HandleRouteChanged(graph, reroutedPath, posHover, RouteChangeReason.CorridorBlocked, currentTime: 4.5f, out var decReroute);
+            Assert(rerouteHandled, "CorridorBlocked must immediately trigger reroute guidance.");
+            Assert(decReroute.Type == GuidanceType.RouteRerouted, "Type must be RouteRerouted.");
+            Assert(decReroute.IsCritical, "Reroute guidance MUST be marked critical (bypasses standard cooldowns).");
+            Assert(decReroute.Direction == TurnDirection.Right, $"Updated turn direction must now be RIGHT, got {decReroute.Direction}");
+            Assert(decReroute.Message.Contains("right", StringComparison.OrdinalIgnoreCase), $"Updated message should guide right, got '{decReroute.Message}'");
+
+            // 6. Complete Path Loss (All Exits Blocked):
+            graph.SetEdgeBlocked("TJunction", "RightWing", true, "Total Cave-in");
+            bool noRouteHandled = controller.HandleRouteChanged(graph, null, posHover, RouteChangeReason.CorridorBlocked, currentTime: 5.0f, out var decNoRoute);
+            Assert(noRouteHandled, "Blocked path without alternative must trigger NoRoute decision.");
+            Assert(decNoRoute.Type == GuidanceType.NoRouteAvailable, "Type must be NoRouteAvailable.");
+            Assert(decNoRoute.IsCritical, "NoRoute must be critical.");
+
+            // Restore edges for clean state
+            graph.ResetAllBlockedEdges();
+
+            // 7. Destination Arrival:
+            var posAtExit = new NodePosition(-10, 0, 19); // 1m from ExitNode (-10, 0, 20)
+            controller.Reset();
+            bool decidedExit = controller.EvaluateGuidance(graph, activeRoute, posAtExit, currentTime: 10.0f, out var decExit);
+            Assert(decidedExit, "Arriving near exit must emit arrival decision.");
+            Assert(decExit.Type == GuidanceType.DestinationReached, $"Type must be DestinationReached, got {decExit.Type}");
 
             Console.WriteLine("PASS");
         }
