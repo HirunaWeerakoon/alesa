@@ -49,9 +49,10 @@ namespace Alesa.Logic.Checks
             Test26_ProactiveGuidanceDecisionSystemAndCooldowns();
             Test27_VoiceInstructionMappingAndPriorityInterruption();
             Test28_DynamicReroutingAndVoiceGuidanceSynchronization();
+            Test29_GuidanceSystemPerformanceBenchmark();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 28 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 29 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -1734,6 +1735,78 @@ namespace Alesa.Logic.Checks
             Assert(planner.ActiveRoute.NodeIds.Contains("WestWing"), "Restored route should prefer shorter WestWing again.");
 
             Console.WriteLine("PASS");
+        }
+
+        private static void Test29_GuidanceSystemPerformanceBenchmark()
+        {
+            Console.Write("Test 29: Guidance system performance & re-entry benchmark (10,000 frames)... ");
+
+            var graph = new WaypointGraph();
+            graph.AddNode("Start", new NodePosition(0, 0, -15));
+            graph.AddNode("TJunc", new NodePosition(0, 0, 0), isJunction: true);
+            graph.AddNode("WestWing", new NodePosition(-10, 0, 0));
+            graph.AddNode("EastWing", new NodePosition(10, 0, 0));
+            graph.AddNode("Exit", new NodePosition(0, 0, 20));
+
+            graph.AddEdge("Start", "TJunc", 15f);
+            graph.AddEdge("TJunc", "WestWing", 10f);
+            graph.AddEdge("WestWing", "Exit", 22f);
+            graph.AddEdge("TJunc", "EastWing", 10f);
+            graph.AddEdge("EastWing", "Exit", 30f);
+
+            var route = RouteResult.Success(new[] { "Start", "TJunc", "WestWing", "Exit" }, 47f, graph.Version);
+
+            var detector = new JunctionDetector(lookaheadDistance: 5.0f);
+            var classifier = new DirectionClassifier();
+            var controller = new GuidanceDecisionController(detector, classifier, lookaheadDistance: 5.0f, normalCooldown: 4.0f);
+
+            // 1. Backtracking and Junction Re-entry Verification:
+            // Nathan approaches to 4m -> triggers decision
+            var posApproach = new NodePosition(0, 0, -4);
+            bool d1 = controller.EvaluateGuidance(graph, route, posApproach, currentTime: 1.0f, out var dec1);
+            Assert(d1 && dec1.Direction == TurnDirection.Left, "First approach must trigger Left turn.");
+
+            // Nathan backtracks 8m back to (0, 0, -12m)
+            var posBacktrack = new NodePosition(0, 0, -12);
+            bool dBacktrack = controller.EvaluateGuidance(graph, route, posBacktrack, currentTime: 3.0f, out _);
+            Assert(!dBacktrack, "Backtracking away must not trigger guidance.");
+
+            // Nathan approaches again at time = 14.0s (> 12s repeat interval) -> re-entry emits refreshed instruction
+            bool dReentry = controller.EvaluateGuidance(graph, route, posApproach, currentTime: 14.0f, out var decReentry);
+            Assert(dReentry && decReentry.Direction == TurnDirection.Left, "Re-entering junction after loiter interval must refresh guidance.");
+
+            // 2. High-Frequency Benchmark (10,000 iterations):
+            // Warm-up
+            for (int w = 0; w < 500; w++)
+            {
+                detector.IsApproachingJunction(graph, route, posApproach, 5.0f, out var jInfo);
+                classifier.ClassifyRouteTurn(graph, route, 1, out _);
+                VoiceClipMapper.CanInterrupt(VoiceCueId.TurnLeft, VoiceCueId.RouteRerouted);
+            }
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            const int iterations = 10000;
+
+            for (int i = 0; i < iterations; i++)
+            {
+                // Full per-frame guidance pipeline
+                bool approaching = detector.IsApproachingJunction(graph, route, posApproach, 5.0f, out var nextJunction);
+                if (approaching)
+                {
+                    TurnDirection turnDir = classifier.ClassifyRouteTurn(graph, route, nextJunction.RouteIndex, out float angle);
+                    var cue = VoiceClipMapper.MapDecisionToCue(new GuidanceDecision(GuidanceType.TurnInstruction, turnDir, nextJunction.NodeId, nextJunction.DistanceAlongRoute, angle, false, null, 1f));
+                    VoiceClipMapper.CanInterrupt(VoiceCueId.None, cue);
+                }
+            }
+
+            sw.Stop();
+            double totalMs = sw.Elapsed.TotalMilliseconds;
+            double usPerFrame = (totalMs / iterations) * 1000.0;
+
+            // Verify performance: 10,000 frames must complete in < 50 ms (< 5 us/tick)
+            Assert(totalMs < 50.0, $"10,000 guidance ticks took {totalMs:F2} ms, expected < 50.0 ms ({usPerFrame:F3} us/tick).");
+
+            Console.WriteLine($"PASS ({usPerFrame:F3} us/tick, {totalMs:F2} ms total for 10k frames)");
         }
     }
 }
