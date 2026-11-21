@@ -100,6 +100,7 @@ namespace Alesa.Runtime
         private PlayerGameplay _playerGameplay;
         private Vector3 _lastSampledPosition;
         private float _lastRecoveryActionTime;
+        private bool _manualRescued;
 
         public CompanionStateMachine StateMachine => _stateMachine ??= new CompanionStateMachine(autoFreeInTestScene ? CompanionState.Following : CompanionState.Dormant);
         public ArrivalSteeringCalculator SteeringCalculator => _steeringCalculator ??= new ArrivalSteeringCalculator(stoppingDistance, slowingRadius, acceleration, deceleration);
@@ -272,13 +273,21 @@ namespace Alesa.Runtime
         }
 
         /// <summary>
+        /// Explicit rescue trigger called by AlesaRescueController or dialpad events.
+        /// </summary>
+        public void ActivateAfterRescue()
+        {
+            _manualRescued = true;
+        }
+
+        /// <summary>
         /// Gathers live player motor, gameplay, and spatial signals and feeds them into the CompanionStateMachine.
         /// </summary>
         public void UpdateCompanionState()
         {
             if (_stateMachine == null) return;
 
-            bool isRescued = autoFreeInTestScene || (_playerGameplay != null && _playerGameplay.AlesaFreed);
+            bool isRescued = autoFreeInTestScene || _manualRescued || (_playerGameplay != null && _playerGameplay.AlesaFreed);
             bool controlsEnabled = _playerMotor == null || _playerMotor.ControlsEnabled;
             bool isAiming = _playerGameplay != null && _playerGameplay.State.CurrentAction == PlayerState.Action.Aiming;
             bool isSprinting = _playerMotor != null && _playerMotor.IsSprinting;

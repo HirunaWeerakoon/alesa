@@ -50,9 +50,10 @@ namespace Alesa.Logic.Checks
             Test27_VoiceInstructionMappingAndPriorityInterruption();
             Test28_DynamicReroutingAndVoiceGuidanceSynchronization();
             Test29_GuidanceSystemPerformanceBenchmark();
+            Test30_CompanionRescueLifecycleAndActivation();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 29 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 30 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -1807,6 +1808,92 @@ namespace Alesa.Logic.Checks
             Assert(totalMs < 50.0, $"10,000 guidance ticks took {totalMs:F2} ms, expected < 50.0 ms ({usPerFrame:F3} us/tick).");
 
             Console.WriteLine($"PASS ({usPerFrame:F3} us/tick, {totalMs:F2} ms total for 10k frames)");
+        }
+
+        private static void Test30_CompanionRescueLifecycleAndActivation()
+        {
+            Console.Write("Test 30: Companion rescue lifecycle, idempotency & state activation... ");
+
+            var rescueCtrl = new RescueStateController();
+
+            // 1. Initial Dormant State Verification
+            Assert(!rescueCtrl.IsRescued, "Rescue controller must start in dormant state (IsRescued = false).");
+            Assert(rescueCtrl.RescueTimestamp < 0f, "Initial rescue timestamp must be negative / unset.");
+            Assert(rescueCtrl.ActivationCount == 0, "Initial activation count must be 0.");
+
+            // 2. FSM Dormant Gate: verify FSM cannot leave Dormant state while IsAlesaRescued is false
+            var fsm = new CompanionStateMachine(CompanionState.Dormant);
+            Assert(fsm.CurrentState == CompanionState.Dormant, "Initial state must be Dormant.");
+
+            var contextBeforeRescue = new CompanionContext
+            {
+                IsAlesaRescued = false,
+                IsPlayerControlsEnabled = true,
+                HasPlayerMovementInput = true,
+                IsPlayerSprinting = true,
+                DistanceToPlayer = 2.0f,
+                DistanceToFollowAnchor = 3.0f,
+                HasValidNavPath = true,
+                IsStuck = false
+            };
+            fsm.EvaluateState(in contextBeforeRescue);
+            Assert(fsm.CurrentState == CompanionState.Dormant, "Companion must remain Dormant when IsAlesaRescued is false despite player movement.");
+
+            // 3. Rescue Trigger Activation
+            int eventFiredCount = 0;
+            rescueCtrl.OnRescued += () => eventFiredCount++;
+
+            bool activated = rescueCtrl.TriggerRescue(currentTime: 14.5f);
+            Assert(activated, "First TriggerRescue call must return true.");
+            Assert(rescueCtrl.IsRescued, "IsRescued must become true.");
+            Assert(Math.Abs(rescueCtrl.RescueTimestamp - 14.5f) < 0.001f, "Rescue timestamp must record the trigger time.");
+            Assert(rescueCtrl.ActivationCount == 1, "Activation count must be 1.");
+            Assert(eventFiredCount == 1, "OnRescued event must fire exactly once.");
+
+            // 4. Strict Idempotency Safeguard: consecutive triggers must be ignored
+            bool reactivated1 = rescueCtrl.TriggerRescue(currentTime: 16.0f);
+            bool reactivated2 = rescueCtrl.TriggerRescue(currentTime: 18.0f);
+            Assert(!reactivated1 && !reactivated2, "Subsequent TriggerRescue calls must return false.");
+            Assert(rescueCtrl.ActivationCount == 1, "Activation count must remain 1.");
+            Assert(Math.Abs(rescueCtrl.RescueTimestamp - 14.5f) < 0.001f, "Original timestamp must be preserved.");
+            Assert(eventFiredCount == 1, "OnRescued event must NOT fire repeatedly.");
+
+            // 5. Post-Rescue FSM Activation: companion transitions to Following / Idle
+            var contextAfterRescue = new CompanionContext
+            {
+                IsAlesaRescued = rescueCtrl.IsRescued,
+                IsPlayerControlsEnabled = true,
+                HasPlayerMovementInput = true,
+                IsPlayerSprinting = false,
+                DistanceToPlayer = 2.0f,
+                DistanceToFollowAnchor = 2.5f,
+                HasValidNavPath = true,
+                IsStuck = false
+            };
+            fsm.EvaluateState(in contextAfterRescue);
+            Assert(fsm.CurrentState == CompanionState.Following, $"Companion must transition to Following once rescued, got {fsm.CurrentState}.");
+
+            // When player stops at anchor, companion settles into Idle
+            var contextIdle = new CompanionContext
+            {
+                IsAlesaRescued = rescueCtrl.IsRescued,
+                IsPlayerControlsEnabled = true,
+                HasPlayerMovementInput = false,
+                IsPlayerSprinting = false,
+                DistanceToPlayer = 1.75f,
+                DistanceToFollowAnchor = 0.2f, // within stop threshold
+                HasValidNavPath = true,
+                IsStuck = false
+            };
+            fsm.EvaluateState(in contextIdle);
+            Assert(fsm.CurrentState == CompanionState.Idle, $"Companion must transition to Idle when settled, got {fsm.CurrentState}.");
+
+            // 6. Reset Capability (scene reload / checkpoint)
+            rescueCtrl.Reset();
+            Assert(!rescueCtrl.IsRescued, "Reset must restore IsRescued to false.");
+            Assert(rescueCtrl.ActivationCount == 0, "Reset must zero activation count.");
+
+            Console.WriteLine("PASS");
         }
     }
 }
