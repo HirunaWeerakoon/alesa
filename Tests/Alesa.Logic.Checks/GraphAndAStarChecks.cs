@@ -47,9 +47,10 @@ namespace Alesa.Logic.Checks
             Test24_IntelligentJunctionDetectionAndLookahead();
             Test25_SignedAngleTurnDirectionClassification();
             Test26_ProactiveGuidanceDecisionSystemAndCooldowns();
+            Test27_VoiceInstructionMappingAndPriorityInterruption();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 26 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 27 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -1599,6 +1600,60 @@ namespace Alesa.Logic.Checks
             bool decidedExit = controller.EvaluateGuidance(graph, activeRoute, posAtExit, currentTime: 10.0f, out var decExit);
             Assert(decidedExit, "Arriving near exit must emit arrival decision.");
             Assert(decExit.Type == GuidanceType.DestinationReached, $"Type must be DestinationReached, got {decExit.Type}");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test27_VoiceInstructionMappingAndPriorityInterruption()
+        {
+            Console.Write("Test 27: Voice cue mapping, priority interruption & subtitles... ");
+
+            // 1. Mapping Turn Decisions to discrete VoiceCueIds
+            var decLeft = GuidanceDecision.Turn(TurnDirection.Left, "JuncA", 4f, -90f, 1f);
+            Assert(VoiceClipMapper.MapDecisionToCue(decLeft) == VoiceCueId.TurnLeft, "Turn Left must map to VoiceCueId.TurnLeft.");
+
+            var decRight = GuidanceDecision.Turn(TurnDirection.Right, "JuncA", 4f, 90f, 1f);
+            Assert(VoiceClipMapper.MapDecisionToCue(decRight) == VoiceCueId.TurnRight, "Turn Right must map to VoiceCueId.TurnRight.");
+
+            var decStraight = GuidanceDecision.Turn(TurnDirection.Straight, "JuncA", 4f, 0f, 1f);
+            Assert(VoiceClipMapper.MapDecisionToCue(decStraight) == VoiceCueId.ContinueStraight, "Straight must map to VoiceCueId.ContinueStraight.");
+
+            var decUTurn = GuidanceDecision.Turn(TurnDirection.UTurn, "JuncA", 4f, 180f, 1f);
+            Assert(VoiceClipMapper.MapDecisionToCue(decUTurn) == VoiceCueId.UTurn, "UTurn must map to VoiceCueId.UTurn.");
+
+            // 2. Mapping Critical Danger Decisions
+            var decBlocked = GuidanceDecision.Blocked("ObstacleA", 2f);
+            Assert(VoiceClipMapper.MapDecisionToCue(decBlocked) == VoiceCueId.RouteBlocked, "Blocked must map to RouteBlocked.");
+
+            var decReroute = GuidanceDecision.Rerouted(TurnDirection.Right, "JuncA", 4f, 90f, 2f);
+            Assert(VoiceClipMapper.MapDecisionToCue(decReroute) == VoiceCueId.RouteRerouted, "Reroute must map to RouteRerouted.");
+
+            var decNoRoute = GuidanceDecision.NoRoute(3f);
+            Assert(VoiceClipMapper.MapDecisionToCue(decNoRoute) == VoiceCueId.NoRouteAvailable, "NoRoute must map to NoRouteAvailable.");
+
+            // 3. Priority Interruption Arbitration
+            // While TurnLeft is active, TurnRight CANNOT interrupt (ordinary navigation line must finish)
+            bool canOverlap = VoiceClipMapper.CanInterrupt(activeCue: VoiceCueId.TurnLeft, incomingCue: VoiceCueId.TurnRight);
+            Assert(!canOverlap, "Ordinary navigation line must not interrupt another active line.");
+
+            // While TurnLeft is active, RouteBlocked CAN interrupt immediately (emergency safety preemption!)
+            bool canInterruptBlocked = VoiceClipMapper.CanInterrupt(activeCue: VoiceCueId.TurnLeft, incomingCue: VoiceCueId.RouteBlocked);
+            Assert(canInterruptBlocked, "Critical RouteBlocked line MUST immediately interrupt normal turn instruction.");
+
+            // While TurnRight is active, RouteRerouted CAN interrupt immediately
+            bool canInterruptReroute = VoiceClipMapper.CanInterrupt(activeCue: VoiceCueId.TurnRight, incomingCue: VoiceCueId.RouteRerouted);
+            Assert(canInterruptReroute, "Critical RouteRerouted line MUST interrupt normal turn instruction.");
+
+            // While critical RouteBlocked is active, normal TurnLeft CANNOT interrupt
+            bool canInterruptBack = VoiceClipMapper.CanInterrupt(activeCue: VoiceCueId.RouteBlocked, incomingCue: VoiceCueId.TurnLeft);
+            Assert(!canInterruptBack, "Ordinary turn instruction cannot interrupt an active critical emergency line.");
+
+            // 4. Subtitle generation
+            string leftText = VoiceClipMapper.GetSubtitleText(VoiceCueId.TurnLeft);
+            Assert(leftText.Contains("left", StringComparison.OrdinalIgnoreCase), "Subtitle must contain 'left'.");
+
+            string blockedText = VoiceClipMapper.GetSubtitleText(VoiceCueId.RouteBlocked);
+            Assert(blockedText.Contains("blocked", StringComparison.OrdinalIgnoreCase), "Subtitle must contain 'blocked'.");
 
             Console.WriteLine("PASS");
         }
