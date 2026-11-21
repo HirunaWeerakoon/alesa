@@ -54,9 +54,10 @@ namespace Alesa.Logic.Checks
             Test31_CompanionGameplayLifecycleAndPauseHandling();
             Test32_ThreatEventIntegrationAndCorridorObstruction();
             Test33_ThreatAwareEscapeRouteReplanningAndTrappedCondition();
+            Test34_FullCompanionBehaviorCoordination();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 33 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 34 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -2162,6 +2163,115 @@ namespace Alesa.Logic.Checks
             Assert(replannedRestored, "Replanning must trigger when corridor is reopened.");
             Assert(planner.HasValidRoute, "Planner must recover valid route once hazard is cleared.");
             Assert(restoredPath.NodeIds[0] == "Junction1" && restoredPath.NodeIds[1] == "WestA", "Path must return to West corridor.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test34_FullCompanionBehaviorCoordination()
+        {
+            Console.Write("Test 34: Full companion behavior coordination (follow, sprint, aim safe waiting & threat replanning)... ");
+
+            // 1. Build Hospital Maze Graph
+            var graph = new WaypointGraph();
+            graph.AddNode("Start", new NodePosition(0, 0, -15));
+            graph.AddNode("TJunction", new NodePosition(0, 0, 0), isJunction: true);
+            graph.AddNode("WestWing", new NodePosition(-10, 0, 0));
+            graph.AddNode("EastWing", new NodePosition(10, 0, 0));
+            graph.AddNode("Exit", new NodePosition(0, 0, 20));
+
+            graph.AddEdge("Start", "TJunction", 15f);
+            graph.AddEdge("TJunction", "WestWing", 10f);
+            graph.AddEdge("WestWing", "Exit", 22f); // Shorter: 15 + 10 + 22 = 47m
+            graph.AddEdge("TJunction", "EastWing", 10f);
+            graph.AddEdge("EastWing", "Exit", 28f); // Longer: 15 + 10 + 28 = 53m
+
+            var coordinator = new CompanionBehaviorCoordinator(graph, "Start", "Exit", followDistance: 1.75f, guidanceCooldown: 4.0f);
+
+            // 2. Scenario Step A: Dormant Before Rescue
+            var frameInput = new CoordinatorFrameInput
+            {
+                PlayerPosition = new NodePosition(0, 0, -15),
+                PlayerForward = new NodePosition(0, 0, 1),
+                CompanionPosition = new NodePosition(0, 0, -16.75f),
+                IsRescued = false,
+                ControlsEnabled = true,
+                IsAiming = false,
+                IsSprinting = false,
+                HasMovementInput = false,
+                CurrentTime = 1.0f,
+                DeltaTime = 0.02f
+            };
+
+            var outA = coordinator.Tick(in frameInput);
+            Assert(outA.LocomotionState == CompanionState.Dormant, "Alesa must remain Dormant before rescue.");
+            Assert(Math.Abs(outA.DesiredSpeed) < 0.001f, "Desired speed must be 0 when Dormant.");
+            Assert(outA.EmittedVoiceCue == VoiceCueId.None, "No voice cues should emit when Dormant.");
+
+            // 3. Scenario Step B: Rescue Activation & Walking Follow
+            frameInput.IsRescued = true;
+            frameInput.HasMovementInput = true;
+            frameInput.PlayerPosition = new NodePosition(0, 0, -10);
+            frameInput.CompanionPosition = new NodePosition(0, 0, -13); // 3m from player -> needs to walk
+
+            var outB = coordinator.Tick(in frameInput);
+            Assert(outB.LocomotionState == CompanionState.Following, $"State should be Following, got {outB.LocomotionState}");
+            Assert(outB.DesiredSpeed > 0f && outB.DesiredSpeed <= coordinator.StateMachine.WalkSpeed, "Desired speed should match walking pace.");
+
+            // 4. Scenario Step C: Proactive Junction Guidance
+            // Nathan advances to (0, 0, -4) (4m from TJunction at (0, 0, 0))
+            frameInput.PlayerPosition = new NodePosition(0, 0, -4);
+            frameInput.CompanionPosition = new NodePosition(0, 0, -5.75f);
+            frameInput.CurrentTime = 3.0f;
+
+            var outC = coordinator.Tick(in frameInput);
+            Assert(outC.CurrentGuidance.Type == GuidanceType.TurnInstruction, $"Should emit turn instruction, got {outC.CurrentGuidance.Type}");
+            Assert(outC.CurrentGuidance.Direction == TurnDirection.Left, $"Turn direction should be Left into West corridor, got {outC.CurrentGuidance.Direction}");
+            Assert(outC.EmittedVoiceCue == VoiceCueId.TurnLeft, $"Emitted cue should be TurnLeft, got {outC.EmittedVoiceCue}");
+
+            // 5. Scenario Step D: Nathan Sprints
+            frameInput.IsSprinting = true;
+            var outD = coordinator.Tick(in frameInput);
+            Assert(outD.LocomotionState == CompanionState.Sprinting, $"Alesa must escalate to Sprinting to match Nathan, got {outD.LocomotionState}");
+            Assert(Math.Abs(coordinator.StateMachine.GetTargetSpeed() - coordinator.StateMachine.SprintSpeed) < 0.001f, "Target speed must match sprint speed.");
+
+            // 6. Scenario Step E: Boss Ambush Blocks Corridor & Reroutes
+            var threat = new ThreatEvent("Boss1", ThreatType.BossPresence, "TJunction", "WestWing", isBlocking: true, reason: "Possessed Boss");
+            coordinator.ReportThreat(threat);
+
+            frameInput.CurrentTime = 5.0f;
+            var outE = coordinator.Tick(in frameInput);
+            Assert(outE.IsRouteReplanned, "Coordinator must detect route blockage and replan.");
+            Assert(outE.ActiveRoute.NodeIds[2] == "EastWing", $"Detour must redirect through EastWing, got {outE.ActiveRoute.NodeIds[2]}");
+            Assert(outE.CurrentGuidance.Type == GuidanceType.RouteRerouted, $"Must issue critical RouteRerouted guidance, got {outE.CurrentGuidance.Type}");
+            Assert(outE.EmittedVoiceCue == VoiceCueId.RouteRerouted, $"Emitted voice cue must be RouteRerouted, got {outE.EmittedVoiceCue}");
+
+            // 7. Scenario Step F: Combat Safe Waiting (Nathan Aims Revolver at Boss)
+            frameInput.IsAiming = true;
+            frameInput.CurrentTime = 6.0f;
+
+            var outF = coordinator.Tick(in frameInput);
+            Assert(outF.LocomotionState == CompanionState.WaitingAim, $"Alesa must transition to WaitingAim when Nathan aims, got {outF.LocomotionState}");
+            Assert(Math.Abs(outF.DesiredSpeed) < 0.001f, "Alesa must immediately stop moving (speed = 0) while Nathan is aiming.");
+
+            // 8. Scenario Step G: Silver Bullet Defeats Boss & Threat Cleared
+            coordinator.ClearThreat("Boss1");
+            frameInput.IsAiming = false; // Nathan lowers gun
+            frameInput.IsSprinting = false;
+            frameInput.CurrentTime = 7.0f;
+
+            var outG = coordinator.Tick(in frameInput);
+            Assert(outG.LocomotionState == CompanionState.Following, "Alesa resumes Following once gun is lowered.");
+            Assert(outG.ActiveRoute.NodeIds[2] == "WestWing", "Route restores to optimal WestWing corridor once Boss threat is cleared.");
+
+            // 9. Scenario Step H: Arrival at Exit
+            frameInput.HasMovementInput = false;
+            frameInput.PlayerPosition = new NodePosition(0, 0, 19.9f);
+            frameInput.CompanionPosition = new NodePosition(0, 0, 18.15f); // exactly at follow anchor
+            frameInput.CurrentTime = 12.0f;
+
+            var outH = coordinator.Tick(in frameInput);
+            Assert(outH.LocomotionState == CompanionState.Idle, $"Companion must settle into Idle when stopped at anchor, got {outH.LocomotionState}");
+            Assert(Math.Abs(outH.DesiredSpeed) < 0.001f, "Speed must be 0 when settled into Idle.");
 
             Console.WriteLine("PASS");
         }
