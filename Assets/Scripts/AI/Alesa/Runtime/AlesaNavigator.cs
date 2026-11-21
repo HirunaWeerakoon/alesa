@@ -69,6 +69,16 @@ namespace Alesa.Runtime
             InitializePlanner();
         }
 
+        private void OnDisable()
+        {
+            if (_planner != null)
+            {
+                _planner.OnRouteChanged -= HandlePlannerRouteChanged;
+                _planner.OnActiveRouteBlocked -= HandlePlannerRouteBlocked;
+                _planner.OnNoPathAvailable -= HandlePlannerNoPath;
+            }
+        }
+
         private void Update()
         {
             if (!isActive || _planner == null || network == null) return;

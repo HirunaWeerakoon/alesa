@@ -51,9 +51,10 @@ namespace Alesa.Logic.Checks
             Test28_DynamicReroutingAndVoiceGuidanceSynchronization();
             Test29_GuidanceSystemPerformanceBenchmark();
             Test30_CompanionRescueLifecycleAndActivation();
+            Test31_CompanionGameplayLifecycleAndPauseHandling();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 30 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 31 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -1892,6 +1893,82 @@ namespace Alesa.Logic.Checks
             rescueCtrl.Reset();
             Assert(!rescueCtrl.IsRescued, "Reset must restore IsRescued to false.");
             Assert(rescueCtrl.ActivationCount == 0, "Reset must zero activation count.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test31_CompanionGameplayLifecycleAndPauseHandling()
+        {
+            Console.Write("Test 31: Companion gameplay lifecycle, pause time dilation & modal suspension... ");
+
+            var lifecycle = new CompanionLifecycleManager();
+
+            // 1. Initial State
+            Assert(lifecycle.CurrentState == GameplayLifecycleState.Playing, "Initial state must be Playing.");
+            Assert(lifecycle.CanMove, "Companion must be allowed to move when Playing.");
+            Assert(lifecycle.CanProcessGuidance, "Companion must be allowed to process guidance when Playing.");
+            Assert(lifecycle.CanPlayAudio, "Companion must be allowed to play audio when Playing.");
+            Assert(!lifecycle.IsPaused && !lifecycle.IsInModal, "Must not be paused or in modal screen.");
+
+            // 2. Pause Handling & Event Dispatch
+            int pauseEventCount = 0;
+            int resumeEventCount = 0;
+            lifecycle.OnPaused += () => pauseEventCount++;
+            lifecycle.OnResumed += () => resumeEventCount++;
+
+            bool paused = lifecycle.Pause(currentTime: 10.0f);
+            Assert(paused, "First Pause() call must return true.");
+            Assert(lifecycle.CurrentState == GameplayLifecycleState.Paused, "CurrentState must be Paused.");
+            Assert(!lifecycle.CanMove, "Movement must be prohibited while Paused.");
+            Assert(!lifecycle.CanProcessGuidance, "Guidance processing must be prohibited while Paused.");
+            Assert(!lifecycle.CanPlayAudio, "Audio playback must be prohibited while Paused.");
+            Assert(lifecycle.IsPaused, "IsPaused must be true.");
+            Assert(pauseEventCount == 1, "OnPaused must fire exactly once.");
+
+            // Idempotent duplicate pause
+            bool pausedAgain = lifecycle.Pause(currentTime: 12.0f);
+            Assert(!pausedAgain, "Duplicate Pause() must return false.");
+            Assert(pauseEventCount == 1, "Duplicate Pause() must not re-fire OnPaused.");
+
+            // 3. Effective Time Calculation During Active Pause
+            // Raw time has advanced to 15.0s, but game was paused at 10.0s -> effective time must freeze at 10.0s
+            float effectiveDuringPause = lifecycle.GetEffectiveTime(rawTime: 15.0f);
+            Assert(Math.Abs(effectiveDuringPause - 10.0f) < 0.001f, $"Effective time during pause should be 10.0s, got {effectiveDuringPause}");
+
+            // 4. Resume Handling & Accumulated Duration
+            bool resumed = lifecycle.Resume(currentTime: 16.0f); // Paused for 6.0 seconds (10.0 to 16.0)
+            Assert(resumed, "Resume() must return true.");
+            Assert(lifecycle.CurrentState == GameplayLifecycleState.Playing, "State must restore to Playing.");
+            Assert(lifecycle.CanMove && lifecycle.CanProcessGuidance && lifecycle.CanPlayAudio, "Permissions must restore on resume.");
+            Assert(resumeEventCount == 1, "OnResumed must fire exactly once.");
+            Assert(Math.Abs(lifecycle.TotalPausedDuration - 6.0f) < 0.001f, $"TotalPausedDuration must be 6.0s, got {lifecycle.TotalPausedDuration}");
+
+            // At raw time 20.0s, effective time should be 14.0s (20.0 - 6.0 = 14.0)
+            float effectiveAfterResume = lifecycle.GetEffectiveTime(rawTime: 20.0f);
+            Assert(Math.Abs(effectiveAfterResume - 14.0f) < 0.001f, $"Effective time after resume should be 14.0s, got {effectiveAfterResume}");
+
+            // 5. Modal Screen Suspension (Notes & Keypad)
+            bool modalOpened = lifecycle.OpenModal(currentTime: 22.0f);
+            Assert(modalOpened, "OpenModal() must return true.");
+            Assert(lifecycle.CurrentState == GameplayLifecycleState.ModalScreen, "State must be ModalScreen.");
+            Assert(!lifecycle.CanMove, "Movement must be suspended while reading notes or using keypad.");
+            Assert(!lifecycle.CanProcessGuidance, "Guidance must be suppressed during modal screens.");
+            Assert(lifecycle.IsInModal, "IsInModal must be true.");
+
+            bool modalClosed = lifecycle.CloseModal(currentTime: 25.0f);
+            Assert(modalClosed, "CloseModal() must return true.");
+            Assert(lifecycle.CurrentState == GameplayLifecycleState.Playing, "State must restore to Playing after modal.");
+            Assert(lifecycle.CanMove && lifecycle.CanProcessGuidance, "Movement and guidance must be restored.");
+
+            // 6. Teardown / Disabled State
+            bool disabled = lifecycle.SetState(GameplayLifecycleState.Disabled, currentTime: 30.0f);
+            Assert(disabled, "Transition to Disabled must succeed.");
+            Assert(!lifecycle.CanMove && !lifecycle.CanProcessGuidance, "Permissions must be revoked when Disabled.");
+
+            // 7. Reset Capability
+            lifecycle.Reset();
+            Assert(lifecycle.CurrentState == GameplayLifecycleState.Playing, "Reset must restore Playing state.");
+            Assert(Math.Abs(lifecycle.TotalPausedDuration) < 0.001f, "Reset must clear TotalPausedDuration.");
 
             Console.WriteLine("PASS");
         }

@@ -127,6 +127,8 @@ namespace Alesa.Runtime
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
+
             if (playerTransform == null || navigator == null)
             {
                 InitializeReferences();

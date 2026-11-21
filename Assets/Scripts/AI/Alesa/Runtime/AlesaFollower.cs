@@ -138,12 +138,30 @@ namespace Alesa.Runtime
             }
         }
 
+        private void OnDisable()
+        {
+            if (agent != null && agent.isOnNavMesh)
+            {
+                agent.isStopped = true;
+                agent.ResetPath();
+            }
+        }
+
         private void Update()
         {
             if (playerTransform == null)
             {
                 InitializeReferences();
                 if (playerTransform == null) return;
+            }
+
+            if (Time.timeScale <= 0f)
+            {
+                if (agent != null && agent.isOnNavMesh && !agent.isStopped)
+                {
+                    agent.isStopped = true;
+                }
+                return;
             }
 
             UpdateFollowAnchor(Time.deltaTime);

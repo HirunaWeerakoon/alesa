@@ -95,6 +95,11 @@ namespace Alesa.Runtime
             {
                 guidanceController.OnGuidanceEmitted -= HandleGuidanceEmitted;
             }
+
+            if (audioSource != null && audioSource.isPlaying)
+            {
+                audioSource.Stop();
+            }
         }
 
         private void Update()
