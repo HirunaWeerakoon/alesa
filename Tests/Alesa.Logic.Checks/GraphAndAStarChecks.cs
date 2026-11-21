@@ -53,9 +53,10 @@ namespace Alesa.Logic.Checks
             Test30_CompanionRescueLifecycleAndActivation();
             Test31_CompanionGameplayLifecycleAndPauseHandling();
             Test32_ThreatEventIntegrationAndCorridorObstruction();
+            Test33_ThreatAwareEscapeRouteReplanningAndTrappedCondition();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 32 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 33 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -2073,6 +2074,94 @@ namespace Alesa.Logic.Checks
             Assert(coordinator.ActiveThreatCount == 0, "Active threat count must be 0 after ClearAllThreats.");
             bool hasEdgeCleared = graph.TryGetEdge("Start", "MidB", out var edgeCleared);
             Assert(hasEdgeCleared && edgeCleared != null && Math.Abs(edgeCleared.RiskPenalty) < 0.001f, "Edge risk penalty must reset to 0.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test33_ThreatAwareEscapeRouteReplanningAndTrappedCondition()
+        {
+            Console.Write("Test 33: Threat-aware escape route replanning, player position anchoring & total path loss... ");
+
+            // 1. Build a multi-stage hospital graph:
+            // Start (0, 0, -10) -> Junction1 (0, 0, 0)
+            // Left Path: Junction1 -> WestA (-8, 0, 0) -> WestB (-8, 0, 10) -> Exit (0, 0, 15) [Cost 8 + 10 + 9.4 = 27.4m]
+            // Right Detour: Junction1 -> EastA (8, 0, 0) -> EastB (8, 0, 10) -> Exit (0, 0, 15) [Cost 8 + 10 + 9.4 = 27.4m, EastA edge cost slightly higher = 33m]
+            var graph = new WaypointGraph();
+            graph.AddNode("Start", new NodePosition(0, 0, -10));
+            graph.AddNode("Junction1", new NodePosition(0, 0, 0), isJunction: true);
+            graph.AddNode("WestA", new NodePosition(-8, 0, 0));
+            graph.AddNode("WestB", new NodePosition(-8, 0, 10));
+            graph.AddNode("EastA", new NodePosition(8, 0, 0));
+            graph.AddNode("EastB", new NodePosition(8, 0, 10));
+            graph.AddNode("Exit", new NodePosition(0, 0, 15));
+
+            graph.AddEdge("Start", "Junction1", 10f);
+            graph.AddEdge("Junction1", "WestA", 8f);
+            graph.AddEdge("WestA", "WestB", 10f);
+            graph.AddEdge("WestB", "Exit", 10f);
+
+            // East detour is 6m longer total
+            graph.AddEdge("Junction1", "EastA", 12f);
+            graph.AddEdge("EastA", "EastB", 12f);
+            graph.AddEdge("EastB", "Exit", 10f);
+
+            var planner = new AlesaRoutePlanner(graph, new YenKShortestPaths(), maxAlternatives: 3);
+            planner.SetEndpoints("Start", "Exit", replanImmediately: true);
+
+            // Initial optimal path: Start -> Junction1 -> WestA -> WestB -> Exit (Cost = 38m)
+            Assert(planner.HasValidRoute, "Planner must have an initial valid escape route.");
+            Assert(planner.ActiveRoute.NodeIds[0] == "Start", "Initial route starts at 'Start'.");
+            Assert(planner.ActiveRoute.NodeIds[2] == "WestA", "Initial route uses West path.");
+            Assert(Math.Abs(planner.ActiveRoute.TotalCost - 38f) < 0.001f, $"Initial route cost should be 38m, got {planner.ActiveRoute.TotalCost}");
+
+            // 2. Player Advances: Nathan progresses from Start to Junction1
+            // UpdatePlayerNode should recognize Junction1 is along the active route and advance start without recalculation
+            bool deviated = planner.UpdatePlayerNode("Junction1");
+            Assert(!deviated, "Advancing along active route must not flag deviation.");
+            Assert(planner.StartNodeId == "Junction1", "StartNodeId must now be anchored to Junction1.");
+
+            // 3. Threat Strikes Ahead of Player: Possessed Boss blocks WestA <-> WestB
+            int routeChangeEvents = 0;
+            RouteChangeReason lastReason = RouteChangeReason.ManualRequest;
+            planner.OnRouteChanged += (r, reason) =>
+            {
+                routeChangeEvents++;
+                lastReason = reason;
+            };
+
+            graph.SetEdgeBlocked("WestA", "WestB", true, "Boss Infiltration");
+
+            // Verify planner detects active route is compromised
+            Assert(!planner.IsActiveRouteTraversable(), "Active route must be detected as untraversable.");
+
+            // CheckAndReplanIfInvalid executes threat-aware replanning
+            bool replanned = planner.CheckAndReplanIfInvalid(out var reroutedPath);
+            Assert(replanned, "CheckAndReplanIfInvalid must trigger replanning when route is blocked.");
+            Assert(reroutedPath.IsValid, "Rerouted path must be valid.");
+            Assert(lastReason == RouteChangeReason.CorridorBlocked, "Change reason must be CorridorBlocked.");
+
+            // CRITICAL TEST: The rerouted path MUST be anchored to Nathan's current node (Junction1), NOT sending him back to Start!
+            Assert(reroutedPath.NodeIds[0] == "Junction1", $"Rerouted path MUST start at Nathan's current junction 'Junction1', got '{reroutedPath.NodeIds[0]}'.");
+            Assert(reroutedPath.NodeIds[1] == "EastA", "Rerouted path must detour into East corridor.");
+            Assert(reroutedPath.NodeIds[reroutedPath.NodeIds.Count - 1] == "Exit", "Rerouted path must terminate at Exit.");
+
+            // 4. Catastrophic Threat: Both Wings Blocked (Complete Path Loss / Trapped)
+            int pathLostEventCount = 0;
+            planner.OnNoPathAvailable += () => pathLostEventCount++;
+
+            graph.SetEdgeBlocked("EastA", "EastB", true, "Ceiling Collapse");
+            bool replannedTrapped = planner.CheckAndReplanIfInvalid(out var trappedPath);
+            Assert(replannedTrapped, "Replanning must trigger when alternative is also lost.");
+            Assert(!planner.HasValidRoute, "Planner must flag HasValidRoute as false when trapped.");
+            Assert(trappedPath.Status == RouteStatus.NoPath, "Route status must be NoPath.");
+            Assert(pathLostEventCount == 1, "OnNoPathAvailable event must fire when completely trapped.");
+
+            // 5. Threat Resolution: Silver bullet despawns Boss on West corridor
+            graph.SetEdgeBlocked("WestA", "WestB", false);
+            bool replannedRestored = planner.CheckAndReplanIfInvalid(out var restoredPath);
+            Assert(replannedRestored, "Replanning must trigger when corridor is reopened.");
+            Assert(planner.HasValidRoute, "Planner must recover valid route once hazard is cleared.");
+            Assert(restoredPath.NodeIds[0] == "Junction1" && restoredPath.NodeIds[1] == "WestA", "Path must return to West corridor.");
 
             Console.WriteLine("PASS");
         }

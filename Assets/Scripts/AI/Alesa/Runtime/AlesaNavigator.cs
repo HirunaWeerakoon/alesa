@@ -28,6 +28,10 @@ namespace Alesa.Runtime
         [Tooltip("The waypoint network managing scene nodes and the core graph.")]
         [SerializeField] private AlesaWaypointNetwork network;
 
+        [Header("Player Tracking")]
+        [Tooltip("Nathan's Transform. If unassigned, automatically finds Player in scene.")]
+        public Transform playerTransform;
+
         [Header("Replanning Throttle")]
         [Tooltip("Interval in seconds between graph change and route validation checks.")]
         [Range(0.05f, 1f)]
@@ -83,11 +87,36 @@ namespace Alesa.Runtime
         {
             if (!isActive || _planner == null || network == null) return;
 
-            // Throttled graph version and route validity check
+            // Throttled graph version, player tracking, and route validity check
             if (Time.time - _lastCheckTime >= checkInterval)
             {
                 _lastCheckTime = Time.time;
+
+                if (playerTransform == null)
+                {
+                    FindPlayerReference();
+                }
+
+                if (playerTransform != null && network != null)
+                {
+                    var closestWp = network.FindClosestWaypoint(playerTransform.position);
+                    if (closestWp != null)
+                    {
+                        _planner.UpdatePlayerNode(closestWp.Id);
+                    }
+                }
+
                 CheckAndHandleReplanning();
+            }
+        }
+
+        private void FindPlayerReference()
+        {
+            if (playerTransform == null)
+            {
+                var p = GameObject.FindWithTag("Player");
+                if (p == null) p = GameObject.Find("Player_Nathan");
+                if (p != null) playerTransform = p.transform;
             }
         }
 

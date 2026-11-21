@@ -140,6 +140,32 @@ namespace Alesa.Runtime
             return _graph;
         }
 
+        /// <summary>
+        /// Finds the nearest waypoint in the network to a given world position.
+        /// </summary>
+        public AlesaWaypoint FindClosestWaypoint(Vector3 worldPos, float maxDistance = 50f)
+        {
+            if (waypoints == null || waypoints.Count == 0) return null;
+
+            AlesaWaypoint closest = null;
+            float minSqrDist = maxDistance * maxDistance;
+
+            for (int i = 0; i < waypoints.Count; i++)
+            {
+                var wp = waypoints[i];
+                if (wp == null) continue;
+
+                float sqrDist = (wp.transform.position - worldPos).sqrMagnitude;
+                if (sqrDist < minSqrDist)
+                {
+                    minSqrDist = sqrDist;
+                    closest = wp;
+                }
+            }
+
+            return closest;
+        }
+
         [ContextMenu("Test Find Route (Start to Exit)")]
         public RouteResult RequestRoute()
         {
