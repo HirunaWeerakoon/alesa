@@ -38,6 +38,7 @@ namespace Alesa.Editor
             var envRoot = new GameObject("--- ENVIRONMENT ---");
             var actorsRoot = new GameObject("--- ACTORS ---");
             var navRoot = new GameObject("--- NAVIGATION ---");
+            var demoRoot = new GameObject("--- DEMONSTRATION SUITE ---");
 
             // 4. Floor (40m x 40m area)
             var floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
@@ -133,10 +134,20 @@ namespace Alesa.Editor
             follower.maxSprintSpeed = 8.5f;
             follower.autoFreeInTestScene = true;
 
+            // Attach Rescue Controller and Gameplay Lifecycle
+            var rescueCtrl = alesa.AddComponent<Alesa.Runtime.AlesaRescueController>();
+            rescueCtrl.follower = follower;
+
+            var lifecycle = alesa.AddComponent<Alesa.Runtime.AlesaGameplayLifecycle>();
+            lifecycle.follower = follower;
+
             // Attach Voice Speaker with 3D AudioSource
             var speaker = alesa.AddComponent<Alesa.Runtime.AlesaVoiceSpeaker>();
             speaker.enable3DSpatialAudio = true;
             speaker.voiceVolume = 1.0f;
+
+            rescueCtrl.voiceSpeaker = speaker;
+            lifecycle.voiceSpeaker = speaker;
 
             // Exit Destination
             var exitDest = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -163,6 +174,25 @@ namespace Alesa.Editor
             guidanceController.normalCooldown = 4.0f;
 
             speaker.guidanceController = guidanceController;
+            rescueCtrl.navigator = navigator;
+            rescueCtrl.guidanceController = guidanceController;
+            lifecycle.navigator = navigator;
+            lifecycle.guidanceController = guidanceController;
+
+            var threatAdapter = navRoot.AddComponent<Alesa.Runtime.AlesaThreatAdapter>();
+            threatAdapter.navigator = navigator;
+            threatAdapter.mockFromNodeId = "WP_West_Entry";
+            threatAdapter.mockToNodeId = "WP_West_Mid";
+
+            // Attach 10-Stage Scenario Demonstrator
+            var demo = demoRoot.AddComponent<Alesa.Runtime.AlesaScenarioDemonstrator>();
+            demo.playerTransform = nathan.transform;
+            demo.companion = follower;
+            demo.navigator = navigator;
+            demo.rescueController = rescueCtrl;
+            demo.threatAdapter = threatAdapter;
+            demo.voiceSpeaker = speaker;
+            demo.guidanceController = guidanceController;
 
             var wpStart = CreateWaypoint(navRoot, "WP_Start", new Vector3(0f, 0.5f, -14f));
             var wpTJunction = CreateWaypoint(navRoot, "WP_T_Junction", new Vector3(0f, 0.5f, -4f), isJunction: true);
