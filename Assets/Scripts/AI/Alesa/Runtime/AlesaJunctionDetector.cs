@@ -34,15 +34,21 @@ namespace Alesa.Runtime
         [SerializeField] private float distanceToUpcomingJunction = float.PositiveInfinity;
         [SerializeField] private int junctionDegree = 0;
         [SerializeField] private bool isWithinGuidanceRange = false;
+        [SerializeField] private TurnDirection upcomingTurnDirection = TurnDirection.None;
+        [SerializeField] private float turnSignedAngle = 0f;
 
         private JunctionDetector _detector;
+        private DirectionClassifier _classifier;
         private JunctionInfo _currentJunction;
 
         public JunctionDetector Detector => _detector ??= new JunctionDetector(lookaheadDistance, triggerHysteresis);
+        public DirectionClassifier Classifier => _classifier ??= new DirectionClassifier();
         public JunctionInfo CurrentJunction => _currentJunction;
         public bool IsWithinGuidanceRange => isWithinGuidanceRange;
         public string CurrentJunctionId => currentJunctionId;
         public float DistanceToJunction => distanceToUpcomingJunction;
+        public TurnDirection UpcomingTurnDirection => upcomingTurnDirection;
+        public float TurnSignedAngle => turnSignedAngle;
 
         public event Action<JunctionInfo> OnJunctionApproached;
         public event Action<string> OnJunctionPassed;
@@ -128,6 +134,9 @@ namespace Alesa.Runtime
                 junctionDegree = nextJunction.TraversableDegree;
                 _currentJunction = nextJunction;
 
+                // Classify required turn direction using route geometry
+                upcomingTurnDirection = Classifier.ClassifyRouteTurn(graph, route, junctionRouteIndex, out turnSignedAngle);
+
                 bool wasInRange = isWithinGuidanceRange;
                 isWithinGuidanceRange = approaching;
 
@@ -155,6 +164,8 @@ namespace Alesa.Runtime
             distanceToUpcomingJunction = float.PositiveInfinity;
             junctionDegree = 0;
             isWithinGuidanceRange = false;
+            upcomingTurnDirection = TurnDirection.None;
+            turnSignedAngle = 0f;
             _currentJunction = default;
         }
 
@@ -167,15 +178,24 @@ namespace Alesa.Runtime
 
             Vector3 junctionWorldPos = node.Position.ToVector3();
 
-            // Draw golden alert beacon at junction
-            Gizmos.color = new Color(1f, 0.8f, 0.1f, 0.9f);
+            // Draw alert beacon at junction (color coded by turn direction)
+            Color beaconColor = upcomingTurnDirection switch
+            {
+                TurnDirection.Left => new Color(0.2f, 0.8f, 1f, 0.9f),    // Cyan
+                TurnDirection.Right => new Color(0.2f, 1f, 0.3f, 0.9f),   // Bright green
+                TurnDirection.Straight => new Color(1f, 0.9f, 0.2f, 0.9f),// Yellow
+                TurnDirection.UTurn => new Color(1f, 0.3f, 0.2f, 0.9f),   // Red
+                _ => new Color(1f, 0.8f, 0.1f, 0.9f)
+            };
+
+            Gizmos.color = beaconColor;
             Gizmos.DrawWireSphere(junctionWorldPos + Vector3.up * 1f, 0.75f);
             Gizmos.DrawLine(junctionWorldPos, junctionWorldPos + Vector3.up * 2f);
 
             // Connect player to upcoming junction
             if (playerTransform != null)
             {
-                Gizmos.color = new Color(1f, 0.8f, 0.1f, 0.45f);
+                Gizmos.color = new Color(beaconColor.r, beaconColor.g, beaconColor.b, 0.45f);
                 Gizmos.DrawLine(playerTransform.position + Vector3.up * 1f, junctionWorldPos + Vector3.up * 1f);
             }
         }

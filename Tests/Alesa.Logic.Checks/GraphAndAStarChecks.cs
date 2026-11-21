@@ -45,9 +45,10 @@ namespace Alesa.Logic.Checks
             Test22_FollowerProgressiveStuckDetectionAndRecovery();
             Test23_FollowerLocomotionPerformanceBenchmark();
             Test24_IntelligentJunctionDetectionAndLookahead();
+            Test25_SignedAngleTurnDirectionClassification();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 24 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 25 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -1419,6 +1420,101 @@ namespace Alesa.Logic.Checks
             Assert(!detector.IsApproachingJunction(graph, null, posClose, 5.0f, out _), "Null route must return false.");
             Assert(!detector.IsApproachingJunction(null, route, posClose, 5.0f, out _), "Null graph must return false.");
             Assert(!detector.IsJunctionNode(graph, "NonExistentNode", out _), "Non-existent node must return false.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test25_SignedAngleTurnDirectionClassification()
+        {
+            Console.Write("Test 25: Signed-angle turn direction classification (L/R/Straight/UTurn)... ");
+
+            var classifier = new DirectionClassifier(straightThreshold: 30.0f, uTurnThreshold: 150.0f);
+
+            // 1. Straight heading North (0, 1) -> (0, 1) -> Angle 0 deg -> Straight
+            float angleStraight = DirectionClassifier.CalculateSignedAngle2D(0f, 1f, 0f, 1f);
+            Assert(Math.Abs(angleStraight) < 1e-4f, $"Straight angle should be 0, got {angleStraight}");
+            Assert(classifier.ClassifyAngle(angleStraight) == TurnDirection.Straight, "0 deg must classify as Straight.");
+
+            // 2. Small corridor bend (15 deg Right) -> within 30 deg -> Straight
+            float angleBend = DirectionClassifier.CalculateSignedAngle2D(0f, 1f, 0.26f, 0.965f); // ~15 deg
+            Assert(angleBend > 0f && angleBend < 30f, "Should be ~15 deg.");
+            Assert(classifier.ClassifyAngle(angleBend) == TurnDirection.Straight, "Angle < 30 deg must classify as Straight.");
+
+            // 3. 90-degree Right Turn: North (0, 1) -> East (1, 0) -> Angle +90 deg -> Right
+            float angleRight90 = DirectionClassifier.CalculateSignedAngle2D(0f, 1f, 1f, 0f);
+            Assert(Math.Abs(angleRight90 - 90f) < 1e-4f, $"Right 90 turn must be +90 deg, got {angleRight90}");
+            Assert(classifier.ClassifyAngle(angleRight90) == TurnDirection.Right, "+90 deg must classify as Right.");
+
+            // 4. 90-degree Left Turn: North (0, 1) -> West (-1, 0) -> Angle -90 deg -> Left
+            float angleLeft90 = DirectionClassifier.CalculateSignedAngle2D(0f, 1f, -1f, 0f);
+            Assert(Math.Abs(angleLeft90 - (-90f)) < 1e-4f, $"Left 90 turn must be -90 deg, got {angleLeft90}");
+            Assert(classifier.ClassifyAngle(angleLeft90) == TurnDirection.Left, "-90 deg must classify as Left.");
+
+            // 5. 45-degree Right Turn: North (0, 1) -> NorthEast (1, 1) -> Angle +45 deg -> Right
+            float angleRight45 = DirectionClassifier.CalculateSignedAngle2D(0f, 1f, 1f, 1f);
+            Assert(Math.Abs(angleRight45 - 45f) < 1e-3f, $"Right 45 turn must be +45 deg, got {angleRight45}");
+            Assert(classifier.ClassifyAngle(angleRight45) == TurnDirection.Right, "+45 deg must classify as Right.");
+
+            // 6. 45-degree Left Turn: North (0, 1) -> NorthWest (-1, 1) -> Angle -45 deg -> Left
+            float angleLeft45 = DirectionClassifier.CalculateSignedAngle2D(0f, 1f, -1f, 1f);
+            Assert(Math.Abs(angleLeft45 - (-45f)) < 1e-3f, $"Left 45 turn must be -45 deg, got {angleLeft45}");
+            Assert(classifier.ClassifyAngle(angleLeft45) == TurnDirection.Left, "-45 deg must classify as Left.");
+
+            // 7. 180-degree U-Turn: North (0, 1) -> South (0, -1) -> Angle 180 deg -> UTurn
+            float angleUTurn = DirectionClassifier.CalculateSignedAngle2D(0f, 1f, 0f, -1f);
+            Assert(Math.Abs(Math.Abs(angleUTurn) - 180f) < 1e-4f, $"U-turn must be +/-180 deg, got {angleUTurn}");
+            Assert(classifier.ClassifyAngle(angleUTurn) == TurnDirection.UTurn, "180 deg must classify as UTurn.");
+
+            // 8. Rotated Junction Orientations:
+            // Approach from West heading East (1, 0):
+            // Turning South (0, -1) is a RIGHT turn (+90 deg)
+            float angleEastToSouth = DirectionClassifier.CalculateSignedAngle2D(1f, 0f, 0f, -1f);
+            Assert(Math.Abs(angleEastToSouth - 90f) < 1e-4f, $"East to South must be +90 deg (Right), got {angleEastToSouth}");
+            Assert(classifier.ClassifyAngle(angleEastToSouth) == TurnDirection.Right, "East to South must classify as Right.");
+
+            // Turning North (0, 1) is a LEFT turn (-90 deg)
+            float angleEastToNorth = DirectionClassifier.CalculateSignedAngle2D(1f, 0f, 0f, 1f);
+            Assert(Math.Abs(angleEastToNorth - (-90f)) < 1e-4f, $"East to North must be -90 deg (Left), got {angleEastToNorth}");
+            Assert(classifier.ClassifyAngle(angleEastToNorth) == TurnDirection.Left, "East to North must classify as Left.");
+
+            // Approach from North heading South (0, -1):
+            // Turning West (-1, 0) is a RIGHT turn (+90 deg)
+            float angleSouthToWest = DirectionClassifier.CalculateSignedAngle2D(0f, -1f, -1f, 0f);
+            Assert(Math.Abs(angleSouthToWest - 90f) < 1e-4f, $"South to West must be +90 deg (Right), got {angleSouthToWest}");
+            Assert(classifier.ClassifyAngle(angleSouthToWest) == TurnDirection.Right, "South to West must classify as Right.");
+
+            // 9. Route-based classification with graph waypoints:
+            var graph = new WaypointGraph();
+            graph.AddNode("Incoming", new NodePosition(0, 0, -10));
+            graph.AddNode("Junction", new NodePosition(0, 0, 0), isJunction: true);
+            graph.AddNode("RightBranch", new NodePosition(10, 0, 0));
+            graph.AddNode("LeftBranch", new NodePosition(-10, 0, 0));
+            graph.AddNode("StraightBranch", new NodePosition(0, 0, 10));
+
+            graph.AddEdge("Incoming", "Junction", 10f);
+            graph.AddEdge("Junction", "RightBranch", 10f);
+            graph.AddEdge("Junction", "LeftBranch", 10f);
+            graph.AddEdge("Junction", "StraightBranch", 10f);
+
+            var routeRight = RouteResult.Success(new[] { "Incoming", "Junction", "RightBranch" }, 20f, graph.Version);
+            var dirRight = classifier.ClassifyRouteTurn(graph, routeRight, 1, out float rAngle);
+            Assert(dirRight == TurnDirection.Right, $"Route must classify as Right, got {dirRight}");
+            Assert(Math.Abs(rAngle - 90f) < 1e-4f, $"Angle should be 90, got {rAngle}");
+
+            var routeLeft = RouteResult.Success(new[] { "Incoming", "Junction", "LeftBranch" }, 20f, graph.Version);
+            var dirLeft = classifier.ClassifyRouteTurn(graph, routeLeft, 1, out float lAngle);
+            Assert(dirLeft == TurnDirection.Left, $"Route must classify as Left, got {dirLeft}");
+            Assert(Math.Abs(lAngle - (-90f)) < 1e-4f, $"Angle should be -90, got {lAngle}");
+
+            var routeStraight = RouteResult.Success(new[] { "Incoming", "Junction", "StraightBranch" }, 20f, graph.Version);
+            var dirStraight = classifier.ClassifyRouteTurn(graph, routeStraight, 1, out float sAngle);
+            Assert(dirStraight == TurnDirection.Straight, $"Route must classify as Straight, got {dirStraight}");
+            Assert(Math.Abs(sAngle) < 1e-4f, $"Angle should be 0, got {sAngle}");
+
+            // 10. Degenerate zero vectors:
+            float zeroAngle = DirectionClassifier.CalculateSignedAngle2D(0f, 0f, 1f, 0f);
+            Assert(zeroAngle == 0f, "Zero vector should yield 0 deg.");
+            Assert(classifier.ClassifyAngle(zeroAngle) == TurnDirection.Straight, "0 deg classifies as Straight.");
 
             Console.WriteLine("PASS");
         }
