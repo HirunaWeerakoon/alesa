@@ -52,9 +52,10 @@ namespace Alesa.Logic.Checks
             Test29_GuidanceSystemPerformanceBenchmark();
             Test30_CompanionRescueLifecycleAndActivation();
             Test31_CompanionGameplayLifecycleAndPauseHandling();
+            Test32_ThreatEventIntegrationAndCorridorObstruction();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 31 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 32 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -1969,6 +1970,109 @@ namespace Alesa.Logic.Checks
             lifecycle.Reset();
             Assert(lifecycle.CurrentState == GameplayLifecycleState.Playing, "Reset must restore Playing state.");
             Assert(Math.Abs(lifecycle.TotalPausedDuration) < 0.001f, "Reset must clear TotalPausedDuration.");
+
+            Console.WriteLine("PASS");
+        }
+
+        private static void Test32_ThreatEventIntegrationAndCorridorObstruction()
+        {
+            Console.Write("Test 32: Threat event integration, dynamic corridor blocking & hazard clearing... ");
+
+            // 1. Build a dual-branch graph
+            // Path 1 (Primary / shorter): Start -> MidA -> Exit (Cost 10 + 10 = 20m)
+            // Path 2 (Alternative / longer): Start -> MidB -> Exit (Cost 16 + 16 = 32m)
+            var graph = new WaypointGraph();
+            graph.AddNode("Start", new NodePosition(0, 0, 0));
+            graph.AddNode("MidA", new NodePosition(-5, 0, 10));
+            graph.AddNode("MidB", new NodePosition(5, 0, 10));
+            graph.AddNode("Exit", new NodePosition(0, 0, 20));
+
+            graph.AddEdge("Start", "MidA", 10f);
+            graph.AddEdge("MidA", "Exit", 10f);
+            graph.AddEdge("Start", "MidB", 16f);
+            graph.AddEdge("MidB", "Exit", 16f);
+
+            var pathfinder = new AStarPathfinder();
+            var primaryRoute = pathfinder.FindPath(graph, "Start", "Exit");
+            Assert(primaryRoute.IsValid, "Initial path must be valid.");
+            Assert(primaryRoute.NodeIds.Count == 3 && primaryRoute.NodeIds[1] == "MidA", "Initial path should use MidA.");
+            Assert(Math.Abs(primaryRoute.TotalCost - 20f) < 0.001f, "Initial cost should be 20m.");
+
+            // 2. ThreatEventCoordinator Integration
+            var coordinator = new ThreatEventCoordinator();
+            int threatActivatedCount = 0;
+            int threatResolvedCount = 0;
+            coordinator.OnThreatActivated += t => threatActivatedCount++;
+            coordinator.OnThreatResolved += t => threatResolvedCount++;
+
+            // Report Boss threat blocking corridor MidA <-> Exit
+            var bossThreat = new ThreatEvent(
+                "Boss1",
+                ThreatType.BossPresence,
+                "MidA",
+                "Exit",
+                isBlocking: true,
+                riskPenalty: 0f,
+                reason: "Possessed Boss Stalking MidA",
+                bidirectional: true,
+                timestamp: 10.0f);
+
+            int versionBefore = graph.Version;
+            bool reported = coordinator.ReportThreat(graph, bossThreat);
+            Assert(reported, "Reporting Boss threat must return true.");
+            Assert(coordinator.ActiveThreatCount == 1, "Active threat count must be 1.");
+            Assert(threatActivatedCount == 1, "OnThreatActivated must fire.");
+            Assert(graph.Version > versionBefore, "Graph version must increment on threat block.");
+            Assert(coordinator.IsCorridorBlocked("MidA", "Exit"), "Corridor MidA-Exit must be marked blocked.");
+
+            // Idempotent duplicate report
+            bool reportedAgain = coordinator.ReportThreat(graph, bossThreat);
+            Assert(!reportedAgain, "Duplicate threat report must return false.");
+            Assert(threatActivatedCount == 1, "Duplicate threat report must not re-fire event.");
+
+            // 3. Path Recalculation under Threat
+            var detourRoute = pathfinder.FindPath(graph, "Start", "Exit");
+            Assert(detourRoute.IsValid, "Detour path must be valid.");
+            Assert(detourRoute.NodeIds.Count == 3 && detourRoute.NodeIds[1] == "MidB", "Pathfinder must detour through MidB away from Boss.");
+            Assert(Math.Abs(detourRoute.TotalCost - 32f) < 0.001f, "Detour cost should be 32m.");
+
+            // 4. Report Supernatural Risk Penalty (+25m) on Start <-> MidB
+            var riskThreat = new ThreatEvent(
+                "Risk1",
+                ThreatType.ParanormalRisk,
+                "Start",
+                "MidB",
+                isBlocking: false,
+                riskPenalty: 25f,
+                reason: "Whispering Entity Corridor",
+                bidirectional: true,
+                timestamp: 12.0f);
+
+            bool riskReported = coordinator.ReportThreat(graph, riskThreat);
+            Assert(riskReported, "Risk penalty threat report must return true.");
+            Assert(coordinator.ActiveThreatCount == 2, "Active threat count must now be 2.");
+
+            // Verify edge risk penalty applied
+            bool hasEdge = graph.TryGetEdge("Start", "MidB", out var edge);
+            Assert(hasEdge && edge != null && Math.Abs(edge.RiskPenalty - 25f) < 0.001f, "Risk penalty must be 25m.");
+
+            // 5. Boss Defeated / Silver Bullet: Clear Boss Threat
+            bool cleared = coordinator.ClearThreat(graph, "Boss1");
+            Assert(cleared, "ClearThreat must return true for active threat.");
+            Assert(coordinator.ActiveThreatCount == 1, "Active threat count should decrease to 1.");
+            Assert(threatResolvedCount == 1, "OnThreatResolved must fire.");
+            Assert(!coordinator.IsCorridorBlocked("MidA", "Exit"), "Corridor MidA-Exit must no longer be blocked.");
+
+            // Path now reverts back to MidA because MidB is burdened with +25m risk penalty!
+            var restoredRoute = pathfinder.FindPath(graph, "Start", "Exit");
+            Assert(restoredRoute.IsValid, "Restored route must be valid.");
+            Assert(restoredRoute.NodeIds[1] == "MidA", "Path must return to optimal MidA route once unblocked.");
+
+            // 6. Clear All Threats
+            coordinator.ClearAllThreats(graph);
+            Assert(coordinator.ActiveThreatCount == 0, "Active threat count must be 0 after ClearAllThreats.");
+            bool hasEdgeCleared = graph.TryGetEdge("Start", "MidB", out var edgeCleared);
+            Assert(hasEdgeCleared && edgeCleared != null && Math.Abs(edgeCleared.RiskPenalty) < 0.001f, "Edge risk penalty must reset to 0.");
 
             Console.WriteLine("PASS");
         }
