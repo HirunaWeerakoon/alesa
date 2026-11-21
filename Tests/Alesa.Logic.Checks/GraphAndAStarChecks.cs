@@ -55,9 +55,10 @@ namespace Alesa.Logic.Checks
             Test32_ThreatEventIntegrationAndCorridorObstruction();
             Test33_ThreatAwareEscapeRouteReplanningAndTrappedCondition();
             Test34_FullCompanionBehaviorCoordination();
+            Test35_FullLifecycleStressAndPerformanceProfiling();
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine(" ALL 34 TESTS PASSED SUCCESSFULLY!                ");
+            Console.WriteLine(" ALL 35 TESTS PASSED SUCCESSFULLY!                ");
             Console.WriteLine("==================================================");
         }
 
@@ -2274,6 +2275,90 @@ namespace Alesa.Logic.Checks
             Assert(Math.Abs(outH.DesiredSpeed) < 0.001f, "Speed must be 0 when settled into Idle.");
 
             Console.WriteLine("PASS");
+        }
+
+        private static void Test35_FullLifecycleStressAndPerformanceProfiling()
+        {
+            Console.Write("Test 35: Full end-to-end integration stress & profiling (10,000 frames)... ");
+
+            // Build a benchmark 50-node hospital maze
+            var graph = new WaypointGraph();
+            for (int r = 0; r < 5; r++)
+            {
+                for (int c = 0; c < 10; c++)
+                {
+                    string id = $"N_{r}_{c}";
+                    bool isJunc = (r % 2 == 0) && (c % 2 == 0);
+                    graph.AddNode(id, new NodePosition(c * 6f, 0, r * 8f), isJunction: isJunc);
+                }
+            }
+
+            for (int r = 0; r < 5; r++)
+            {
+                for (int c = 0; c < 10; c++)
+                {
+                    string curr = $"N_{r}_{c}";
+                    if (c + 1 < 10) graph.AddEdge(curr, $"N_{r}_{c + 1}", 6f);
+                    if (r + 1 < 5) graph.AddEdge(curr, $"N_{r + 1}_{c}", 8f);
+                }
+            }
+
+            var coordinator = new CompanionBehaviorCoordinator(graph, "N_0_0", "N_4_9", followDistance: 1.75f, guidanceCooldown: 4.0f);
+
+            var frame = new CoordinatorFrameInput
+            {
+                PlayerPosition = new NodePosition(0, 0, 0),
+                PlayerForward = new NodePosition(1, 0, 0),
+                CompanionPosition = new NodePosition(-1.75f, 0, 0),
+                IsRescued = true,
+                ControlsEnabled = true,
+                IsAiming = false,
+                IsSprinting = false,
+                HasMovementInput = true,
+                CurrentTime = 1.0f,
+                DeltaTime = 0.016f
+            };
+
+            // JIT Warm-up (500 frames)
+            for (int w = 0; w < 500; w++)
+            {
+                frame.CurrentTime += 0.016f;
+                coordinator.Tick(in frame);
+            }
+
+            // Benchmark 10,000 full pipeline ticks
+            const int iterations = 10000;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                frame.CurrentTime += 0.016f;
+
+                // Alternate player behavior states across frames to stress all branches
+                frame.IsSprinting = (i % 200 > 100);
+                frame.IsAiming = (i % 500 > 450);
+
+                // Periodic dynamic threat injection and clearance
+                if (i == 2000)
+                {
+                    coordinator.ReportThreat(new ThreatEvent("BossBench", ThreatType.BossPresence, "N_0_0", "N_0_1", isBlocking: true));
+                }
+                else if (i == 4000)
+                {
+                    coordinator.ClearThreat("BossBench");
+                }
+
+                coordinator.Tick(in frame);
+            }
+
+            sw.Stop();
+            double totalMs = sw.Elapsed.TotalMilliseconds;
+            double usPerFrame = (totalMs / iterations) * 1000.0;
+
+            // Target: Complete integrated pipeline in under 5.0 microseconds per frame (< 0.03% of 16.6ms 60 FPS frame)
+            Assert(totalMs < 50.0, $"10,000 coordinated frames took {totalMs:F2} ms, expected < 50.0 ms ({usPerFrame:F3} us/tick).");
+
+            Console.WriteLine($"PASS ({usPerFrame:F3} us/tick, {totalMs:F2} ms total for 10k frames)");
         }
     }
 }
