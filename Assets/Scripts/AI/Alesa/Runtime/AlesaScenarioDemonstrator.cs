@@ -124,7 +124,7 @@ namespace Alesa.Runtime
                     if (companion != null)
                     {
                         var pm = playerTransform != null ? playerTransform.GetComponent<PlayerMotor>() : null;
-                        if (pm != null) pm.SetSprinting(true);
+                        if (pm != null) pm.setSprint(true);
                     }
                     if (playerTransform != null) playerTransform.position = new Vector3(-2f, 1f, -1f);
                     break;
@@ -154,7 +154,7 @@ namespace Alesa.Runtime
                 case DemonstrationStage.Stage10_ExitArrival:
                     LogStage("Stage 10: Exit Arrival", "Destination reached! Alesa speaks: 'We reached the exit! Keep moving!', smooth arrival deceleration into Idle.");
                     if (playerTransform != null) playerTransform.position = new Vector3(0f, 1f, 14f);
-                    if (voiceSpeaker != null) voiceSpeaker.PlayVoiceCueDirectly(VoiceCueId.DestinationReached);
+                    if (voiceSpeaker != null) voiceSpeaker.PlayVoiceGuidance(GuidanceDecision.Arrived("Exit", Time.time));
                     break;
             }
         }

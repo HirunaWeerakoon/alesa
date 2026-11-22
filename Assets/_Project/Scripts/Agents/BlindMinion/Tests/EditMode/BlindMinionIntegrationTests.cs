@@ -83,7 +83,7 @@ namespace Alesa.Agents.BlindMinion.Tests
             Assert.AreEqual(MinionState.Investigating, brain.State, "Should transition to Investigating");
 
             // Step 3: Minion follows route towards destination
-            Assert.IsTrue(brain.Intent.HasDestination);
+            Assert.IsTrue(brain.Intent.HasTarget);
 
             // Simulate minion stepping along corridor until reaching target (Node B)
             brain.CurrentPosition = _graph[_nodeB].Position;

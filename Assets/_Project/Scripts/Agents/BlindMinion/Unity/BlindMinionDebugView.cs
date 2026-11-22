@@ -1,3 +1,4 @@
+#if ENABLE_GV_AGENT_RUNTIME
 using Alesa.Runtime;
 using Alesa.Runtime.World;
 using UnityEngine;
@@ -91,3 +92,4 @@ namespace Alesa.Agents.BlindMinion
         }
     }
 }
+#endif
