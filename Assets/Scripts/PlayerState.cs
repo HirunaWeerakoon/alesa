@@ -1,11 +1,12 @@
 // Single authority for action permissions; presentation and physics remain in their components.
 public sealed class PlayerState
 {
-    public enum Mode { Playing, Paused, Note, Keypad }
+    public enum Mode { Playing, Paused, Note, Keypad, Dead, Escaped }
     public enum Action { Free, Aiming, Reloading }
     public Mode CurrentMode { get; private set; }
     public Action CurrentAction { get; private set; }
     public bool WeaponObstructed { get; private set; }
+    public bool IsTerminal => CurrentMode == Mode.Dead || CurrentMode == Mode.Escaped;
     public bool CanMove => CurrentMode == Mode.Playing;
     public bool CanInteract => CanMove && CurrentAction != Action.Reloading;
     public bool CanSprint => CanMove && CurrentAction == Action.Free;
@@ -13,7 +14,7 @@ public sealed class PlayerState
 
     public void SetMode(Mode mode)
     {
-        if (CurrentMode == mode) return;
+        if (IsTerminal || CurrentMode == mode) return;
         CurrentMode = mode;
         CurrentAction = Action.Free;
         WeaponObstructed = false;
