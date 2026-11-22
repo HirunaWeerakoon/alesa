@@ -84691,7 +84691,7 @@ GameObject:
   - component: {fileID: 855000001}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -184750,6 +184750,91 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
+--- !u!1001 &844166009
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 151240992709685281, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: m_Name
+      value: Alesa_Companion
+      objectReference: {fileID: 0}
+    - target: {fileID: 671740363559430811, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 90.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 671740363559430811, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 24.62
+      objectReference: {fileID: 0}
+    - target: {fileID: 671740363559430811, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 671740363559430811, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 671740363559430811, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 671740363559430811, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 671740363559430811, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 671740363559430811, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 671740363559430811, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 671740363559430811, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2879609095980054440, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: targetKeypad
+      value: 
+      objectReference: {fileID: 850000044}
+    - target: {fileID: 2879609095980054440, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: playerGameplay
+      value: 
+      objectReference: {fileID: 850000002}
+    - target: {fileID: 4915759448653983891, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: playerTransform
+      value: 
+      objectReference: {fileID: 421453152}
+    - target: {fileID: 4915759448653983891, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: currentAnchorPosition.x
+      value: 84.54
+      objectReference: {fileID: 0}
+    - target: {fileID: 4915759448653983891, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: currentAnchorPosition.y
+      value: 24.626638
+      objectReference: {fileID: 0}
+    - target: {fileID: 4915759448653983891, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: currentAnchorPosition.z
+      value: -2.1799998
+      objectReference: {fileID: 0}
+    - target: {fileID: 5740020889975490840, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
+      propertyPath: playerGameplay
+      value: 
+      objectReference: {fileID: 850000002}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a5a61d6ac0b24d2419144476a67b09a6, type: 3}
 --- !u!1 &846462699
 GameObject:
   m_ObjectHideFlags: 0
@@ -451205,6 +451290,51 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!1 &1653315560
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1653315562}
+  - component: {fileID: 1653315561}
+  m_Layer: 0
+  m_Name: Hospital Navigation
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1653315561
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1653315560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62bcab80f452a9f4e87c693b8e8b6c84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Alesa.Runtime::Alesa.Runtime.World.HospitalNavMeshLoader
+  navigationData: {fileID: 23800000, guid: ed3028ab5f88ba34188b8213156fd8af, type: 2}
+--- !u!4 &1653315562
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1653315560}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1667335149
 GameObject:
   m_ObjectHideFlags: 0
@@ -1003543,3 +1003673,5 @@ SceneRoots:
   - {fileID: 1629819947}
   - {fileID: 1449851991}
   - {fileID: 1747280536}
+  - {fileID: 1653315562}
+  - {fileID: 844166009}
