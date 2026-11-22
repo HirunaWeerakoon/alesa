@@ -31,6 +31,7 @@ public class PlayerMotor : MonoBehaviour
     private bool crouching, sprinting, aiming, controlsEnabled = true, jumpRequested;
     private float verticalSpeed, xRotation, originalStepOffset;
     private Vector3 groundNormal = Vector3.up;
+    private float contactMoveSpeed;
     private Transform capsuleVisual;
     private Vector3 visualScale;
     private readonly Collider[] overlaps = new Collider[32];
@@ -133,6 +134,7 @@ public class PlayerMotor : MonoBehaviour
         Vector3 direction = transform.TransformDirection(new Vector3(input.x, 0, input.y));
         if (IsGrounded) direction = Vector3.ProjectOnPlane(direction, groundNormal).normalized * input.magnitude;
         verticalSpeed += gravity * Time.deltaTime;
+        contactMoveSpeed = direction.magnitude * speed;
         var flags = controller.Move((direction * speed + Vector3.up * verticalSpeed) * Time.deltaTime);
         if ((flags & CollisionFlags.Above) != 0 && verticalSpeed > 0f) verticalSpeed = 0f;
         IsGrounded = verticalSpeed <= 0f && ProbeGround();
@@ -154,6 +156,13 @@ public class PlayerMotor : MonoBehaviour
             capsuleVisual.localPosition = position;
             capsuleVisual.localScale = new Vector3(visualScale.x, visualScale.y * controller.height / standingHeight, visualScale.z);
         }
+    }
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (!ControlsEnabled || hit.collider == null || contactMoveSpeed <= 0f) return;
+        var prop = hit.collider.GetComponentInParent<PropNoiseEmitter>();
+        if (prop != null) prop.ReportPlayerImpact(contactMoveSpeed);
     }
 
     public void quickTurn() { if (ControlsEnabled) transform.Rotate(0, 180, 0); }

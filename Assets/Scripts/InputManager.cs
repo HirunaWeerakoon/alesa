@@ -8,7 +8,7 @@ public class InputManager : MonoBehaviour
     [SerializeField] private Flashlight flashlight;
     private PlayerInputs playerInput;
     private InputActionMap onFoot;
-    private InputAction interact, aim, shoot, reload, pause;
+    private InputAction interact, aim, shoot, reload, pause, switchAmmo;
     private InputAction movement, jump, crouch, quickTurn, sprint, flashlightToggle, flashlightFlicker;
     private PlayerMotor motor;
     private PlayerGameplay gameplay;
@@ -27,6 +27,7 @@ public class InputManager : MonoBehaviour
         aim = Action("Aim", "<Mouse>/rightButton");
         shoot = Action("Shoot", "<Mouse>/leftButton");
         reload = Action("Reload", "<Keyboard>/r");
+        switchAmmo = Action("SwitchAmmo", "<Keyboard>/v");
         movement = onFoot.FindAction("Movement", true);
         jump = onFoot.FindAction("Jump", true);
         crouch = onFoot.FindAction("Crouch", true);
@@ -58,6 +59,7 @@ public class InputManager : MonoBehaviour
         gameplay.Combat.SetAim(aim.IsPressed());
         if (interact.WasPressedThisFrame()) gameplay.TryInteract();
         if (gameplay.BlocksControls) return;
+        if (switchAmmo.WasPressedThisFrame()) gameplay.Combat.SwitchAmmo();
         if (reload.WasPressedThisFrame()) gameplay.Combat.TryReload();
         if (shoot.WasPressedThisFrame()) gameplay.Combat.TryShoot();
         if (jump.WasPressedThisFrame()) motor.Jump();
