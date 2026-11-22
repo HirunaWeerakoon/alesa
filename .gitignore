@@ -111,3 +111,9 @@ InitTestScene*.unity*
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
 /[Dd]ocs/
+
+# Claude Code (local only)
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.mcp.json
