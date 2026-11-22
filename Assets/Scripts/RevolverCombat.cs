@@ -4,6 +4,8 @@ using UnityEngine.Events;
 
 public class RevolverCombat : MonoBehaviour
 {
+    /// <summary>Inventory/ammunition changed; HUD consumers can refresh without polling.</summary>
+    public event System.Action WeaponStatusChanged;
     public enum AmmunitionType { Ordinary, Silver }
     public RevolverAmmo ammo = new RevolverAmmo();
     public RevolverAmmo silverAmmo = new RevolverAmmo();
@@ -53,7 +55,7 @@ public class RevolverCombat : MonoBehaviour
     public bool IsReloading => player != null && player.State.CurrentAction == PlayerState.Action.Reloading;
     public bool IsObstructed => player != null && player.State.WeaponObstructed;
     public float AimBlend => aimBlend;
-    public bool ReadyToFire => player != null && player.State.CanShoot && aimBlend >= 0.95f && obstructionBlend <= 0.05f;
+    public bool ReadyToFire => hasRevolver && player != null && player.View != null && player.State.CanShoot && (!IsAiming || aimBlend >= 0.95f) && obstructionBlend <= 0.05f;
     private PlayerGameplay player;
     private float aimBlend, nextShot, reloadProgress;
     private Coroutine reloadRoutine;
@@ -166,6 +168,7 @@ public class RevolverCombat : MonoBehaviour
         player.Notify("Shot fired", 0.3f);
         AcousticBus.EmitSound(muzzle, 40f, SoundType.Gunshot);
         onShot.Invoke();
+        WeaponStatusChanged?.Invoke();
         return true;
     }
 
@@ -193,6 +196,7 @@ public class RevolverCombat : MonoBehaviour
         reloadProgress = 1f;
         player.State.EndReload(); reloadRoutine = null;
         onReloaded.Invoke();
+        WeaponStatusChanged?.Invoke();
     }
 
     public void CancelReload()

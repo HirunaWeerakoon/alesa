@@ -92,10 +92,15 @@ if(fs.existsSync(revolverAsset)){
  const gameplay=docs.find(d=>d[3].includes('Assembly-CSharp::PlayerGameplay\n'));
  assert(gameplay[3].includes(`crosshairTexture: {fileID: 2800000, guid: ${guid('Assets/OccaSoftware/Crosshairs/Art/Textures/Crosshair_04.png')}, type: 3}`),'Crosshair texture not assigned');
  const flashlight=docs.find(d=>d[3].includes('Assembly-CSharp::Flashlight\n'));
- assert(/^  defaultIntensity: 1$/m.test(flashlight[3]),'Flashlight script intensity');
+ // Hospital lighting rebalance in c0486da: validate the intentional scene overrides.
+ assert(flashlight, 'Flashlight script component missing');
+ for(const [key,value] of Object.entries({defaultIntensity:0.7,defaultRange:11,defaultSpotAngle:58})){
+  const match=flashlight[3].match(new RegExp('^  '+key+': ([^\\r\\n]+)', 'm'));
+  assert(match && Number(match[1])===value, 'Flashlight '+key+' must match hospital lighting preset ('+value+')');
+ }
  const lightId=flashlight[3].match(/flashlightLight: \{fileID: (\d+)\}/)[1];
  const light=docs.find(d=>d[2]===lightId)[3];
- for(const [key,value]of Object.entries({m_Intensity:1,m_Range:12.5,m_SpotAngle:100,m_BounceIntensity:0,m_Lightmapping:4}))assert(light.includes(`  ${key}: ${value}\n`),'Flashlight '+key);
+ for(const [key,value]of Object.entries({m_Intensity:0.7,m_Range:11,m_SpotAngle:58,m_BounceIntensity:0,m_Lightmapping:4}))assert(light.includes(`  ${key}: ${value}\n`),'Flashlight '+key);
  const material=fs.readFileSync('Assets/Material/Revolver_Player.mat','utf8');
  assert(material.includes('m_Shader: {fileID: 46,'),'Revolver must use the project Standard shader');
  console.log('Passed imported revolver, crosshair, compatible material and flashlight defaults checks.');
