@@ -6,7 +6,7 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerMotor))]
 public class PlayerGameplay : MonoBehaviour
 {
-    public enum ScreenMode { Playing, Paused, Note, Keypad }
+    public enum ScreenMode { Playing, Paused, Note, Keypad, Dead }
     [Min(0.1f)] public float interactionDistance = 2f;
     public LayerMask interactionMask = ~0;
     [Header("Crosshair")]
@@ -24,6 +24,8 @@ public class PlayerGameplay : MonoBehaviour
     public PlayerState State { get; } = new PlayerState();
     public ScreenMode Mode => (ScreenMode)State.CurrentMode;
     public bool BlocksControls => !State.CanMove;
+    /// <summary>A Canvas HUD can replace the legacy crosshair, ammo display, and control hints.</summary>
+    public bool UseCanvasHUD { get; set; }
     public bool AlesaFreed { get; private set; }
     public readonly List<string> NoteTitles = new List<string>();
     private readonly List<string> noteTexts = new List<string>();
@@ -128,14 +130,20 @@ public class PlayerGameplay : MonoBehaviour
     public void TryInteract() { Target()?.Interact(this); nextInteractionCheck = 0f; }
     public void Notify(string message, float seconds = 3f) { notification = message; notificationUntil = Time.unscaledTime + seconds; }
 
+    public AnalogPauseMenu PauseMenu { get; set; }
+    public void OpenPauseScreen() { if (!BlocksControls) OpenScreen(ScreenMode.Paused); }
+
     public void HandleEscape()
     {
+        if (State.IsDead) return;
+        if (PauseMenu != null && (Mode == ScreenMode.Playing || Mode == ScreenMode.Paused)) { PauseMenu.HandleEscape(); return; }
         if (BlocksControls) CloseScreen();
         else OpenScreen(ScreenMode.Paused);
     }
 
     private void OpenScreen(ScreenMode mode)
     {
+        if (State.IsDead) return;
         if (!ownsModal)
         {
             previousTimeScale = Time.timeScale;
@@ -155,6 +163,7 @@ public class PlayerGameplay : MonoBehaviour
 
     public void CloseScreen()
     {
+        if (State.IsDead) return;
         if (keypad != null)
         {
             if (keypad.stationaryCamera != null) keypad.stationaryCamera.enabled = false;
@@ -220,13 +229,14 @@ public class PlayerGameplay : MonoBehaviour
 
     private void OnGUI()
     {
+        if (State.IsDead || (Mode == ScreenMode.Paused && PauseMenu != null)) return;
         if (Combat == null) return;
         if (!BlocksControls && Event.current.type != EventType.Repaint) return;
         var oldMatrix = GUI.matrix;
         GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(Screen.width / 1280f, Screen.height / 720f, 1));
         if (!BlocksControls)
         {
-            if (crosshairTexture != null)
+            if (!UseCanvasHUD && crosshairTexture != null)
             {
                 // Draw in screen pixels so the texture stays square on any aspect ratio.
                 var hudMatrix = GUI.matrix;
@@ -237,8 +247,8 @@ public class PlayerGameplay : MonoBehaviour
             }
             if (interactionPrompt != null) GUI.Box(new Rect(440, 420, 400, 35), interactionPrompt);
             if (Combat.IsObstructed) GUI.Label(new Rect(580, 390, 180, 25), "Weapon blocked");
-            if (Combat.HasRevolver) GUI.Box(new Rect(1020, 650, 230, 42), ammoLabel ?? "Revolver");
-            GUI.Label(new Rect(25, 670, 500, 30), "E Interact   |   RMB Aim   LMB Fire   R Reload   |   Esc Pause");
+            if (!UseCanvasHUD && Combat.HasRevolver) GUI.Box(new Rect(1020, 650, 230, 42), ammoLabel ?? "Revolver");
+            if (!UseCanvasHUD) GUI.Label(new Rect(25, 670, 500, 30), "E Interact   |   RMB Aim   LMB Fire   R Reload   |   Esc Pause");
         }
         if (Time.unscaledTime < notificationUntil) GUI.Box(new Rect(300, 35, 680, 38), notification);
         if (BlocksControls)

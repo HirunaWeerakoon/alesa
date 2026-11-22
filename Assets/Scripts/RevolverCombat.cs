@@ -4,6 +4,8 @@ using UnityEngine.Events;
 
 public class RevolverCombat : MonoBehaviour
 {
+    /// <summary>Inventory/ammunition changed; HUD consumers can refresh without polling.</summary>
+    public event System.Action WeaponStatusChanged;
     public RevolverAmmo ammo = new RevolverAmmo();
     [SerializeField] private bool hasRevolver;
     [Min(0.01f)] public float reloadSeconds = 2f;
@@ -46,7 +48,7 @@ public class RevolverCombat : MonoBehaviour
     public bool IsReloading => player != null && player.State.CurrentAction == PlayerState.Action.Reloading;
     public bool IsObstructed => player != null && player.State.WeaponObstructed;
     public float AimBlend => aimBlend;
-    public bool ReadyToFire => player != null && player.State.CanShoot && aimBlend >= 0.95f && obstructionBlend <= 0.05f;
+    public bool ReadyToFire => hasRevolver && player != null && player.View != null && player.State.CanShoot && (!IsAiming || aimBlend >= 0.95f) && obstructionBlend <= 0.05f;
     private PlayerGameplay player;
     private float aimBlend, nextShot, reloadProgress;
     private Coroutine reloadRoutine;
@@ -97,10 +99,11 @@ public class RevolverCombat : MonoBehaviour
         hasRevolver = true;
         ammo.LoadPickup(rounds);
         if (weaponView == null) CreateWeaponView();
-        player.Notify("Revolver acquired. Hold RMB to aim; LMB to fire; R to reload.");
+        player.Notify("Revolver acquired. LMB to hip fire; hold RMB to aim; R to reload.");
+        WeaponStatusChanged?.Invoke();
     }
 
-    public void AddAmmo(int amount) { ammo.AddSpare(amount); }
+    public void AddAmmo(int amount) { ammo.AddSpare(amount); WeaponStatusChanged?.Invoke(); }
 
     public void SetAim(bool held)
     {
@@ -130,6 +133,7 @@ public class RevolverCombat : MonoBehaviour
         }
         player.Notify("Shot fired", 0.3f);
         onShot.Invoke();
+        WeaponStatusChanged?.Invoke();
         return true;
     }
 
@@ -157,6 +161,7 @@ public class RevolverCombat : MonoBehaviour
         reloadProgress = 1f;
         player.State.EndReload(); reloadRoutine = null;
         onReloaded.Invoke();
+        WeaponStatusChanged?.Invoke();
     }
 
     public void CancelReload()
