@@ -6,7 +6,7 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerMotor))]
 public class PlayerGameplay : MonoBehaviour
 {
-    public enum ScreenMode { Playing, Paused, Note, Keypad, Dead }
+    public enum ScreenMode { Playing, Paused, Note, Keypad, Dead, Escaped }
     [Min(0.1f)] public float interactionDistance = 2f;
     public LayerMask interactionMask = ~0;
     [Header("Crosshair")]
@@ -44,6 +44,7 @@ public class PlayerGameplay : MonoBehaviour
     private float nextInteractionCheck;
     private int displayedLoaded = -1, displayedSpare = -1;
     private bool displayedReloading;
+    private string displayedAmmoType;
     private GUIStyle noteStyle;
 
     private void Awake()
@@ -79,10 +80,11 @@ public class PlayerGameplay : MonoBehaviour
             interactionPrompt = target != null ? "[E] " + target.Prompt : null;
             nextInteractionCheck = Time.unscaledTime + 0.08f;
         }
-        if (displayedLoaded != Combat.LoadedAmmo || displayedSpare != Combat.SpareAmmo || displayedReloading != Combat.IsReloading || ammoLabel == null)
+        if (displayedLoaded != Combat.LoadedAmmo || displayedSpare != Combat.SpareAmmo || displayedReloading != Combat.IsReloading || displayedAmmoType != Combat.AmmoName || ammoLabel == null)
         {
             displayedLoaded = Combat.LoadedAmmo; displayedSpare = Combat.SpareAmmo; displayedReloading = Combat.IsReloading;
-            ammoLabel = displayedReloading ? "Reloading..." : $"Revolver  {displayedLoaded} / {displayedSpare}";
+            displayedAmmoType = Combat.AmmoName;
+            ammoLabel = displayedReloading ? "Reloading / switching..." : $"{displayedAmmoType}  {displayedLoaded} / {displayedSpare}";
         }
     }
 
@@ -137,6 +139,7 @@ public class PlayerGameplay : MonoBehaviour
     {
         if (State.IsDead) return;
         if (PauseMenu != null && (Mode == ScreenMode.Playing || Mode == ScreenMode.Paused)) { PauseMenu.HandleEscape(); return; }
+        if (State.IsTerminal) return;
         if (BlocksControls) CloseScreen();
         else OpenScreen(ScreenMode.Paused);
     }
@@ -164,6 +167,7 @@ public class PlayerGameplay : MonoBehaviour
     public void CloseScreen()
     {
         if (State.IsDead) return;
+        if (State.IsTerminal) return;
         if (keypad != null)
         {
             if (keypad.stationaryCamera != null) keypad.stationaryCamera.enabled = false;
@@ -213,6 +217,21 @@ public class PlayerGameplay : MonoBehaviour
         solved.Unlock(this);
     }
 
+    public void EndRun(bool escaped)
+    {
+        if (State.IsTerminal) return;
+        OpenScreen(escaped ? ScreenMode.Escaped : ScreenMode.Dead);
+    }
+
+    private void RestartRun()
+    {
+        Time.timeScale = 1f;
+        ownsModal = false;
+        var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        if (scene.buildIndex >= 0) UnityEngine.SceneManagement.SceneManager.LoadScene(scene.buildIndex);
+        else UnityEngine.SceneManagement.SceneManager.LoadScene(scene.path);
+    }
+
     public void MarkAlesaFreed() { AlesaFreed = true; Notify("Access granted. Alesa is free.", 5f); }
 
     private void OnApplicationFocus(bool focused)
@@ -249,13 +268,22 @@ public class PlayerGameplay : MonoBehaviour
             if (Combat.IsObstructed) GUI.Label(new Rect(580, 390, 180, 25), "Weapon blocked");
             if (!UseCanvasHUD && Combat.HasRevolver) GUI.Box(new Rect(1020, 650, 230, 42), ammoLabel ?? "Revolver");
             if (!UseCanvasHUD) GUI.Label(new Rect(25, 670, 500, 30), "E Interact   |   RMB Aim   LMB Fire   R Reload   |   Esc Pause");
+            if (Combat.HasRevolver) GUI.Box(new Rect(1020, 650, 230, 42), ammoLabel ?? "Revolver");
+            GUI.Label(new Rect(25, 670, 500, 30), "E Interact   |   RMB Aim   LMB Fire   R Reload   V Ammo   |   Esc Pause");
         }
         if (Time.unscaledTime < notificationUntil) GUI.Box(new Rect(300, 35, 680, 38), notification);
         if (BlocksControls)
         {
             GUI.Box(new Rect(390, 110, 500, 510), "");
             GUILayout.BeginArea(new Rect(415, 130, 450, 470));
-            if (Mode == ScreenMode.Paused)
+            if (State.IsTerminal)
+            {
+                GUILayout.Label(Mode == ScreenMode.Dead ? "YOU WERE CAUGHT" : "YOU ESCAPED");
+                GUILayout.Space(20);
+                GUILayout.Label(Mode == ScreenMode.Dead ? "The possessed body caught Nathan." : "Nathan and Alesa reached the exit.");
+                if (GUILayout.Button("Restart", GUILayout.Height(42))) RestartRun();
+            }
+            else if (Mode == ScreenMode.Paused)
             {
                 GUILayout.Label("PAUSED");
                 GUILayout.Space(20);

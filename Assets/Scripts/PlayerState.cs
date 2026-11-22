@@ -1,7 +1,7 @@
 // Single authority for action permissions; presentation and physics remain in their components.
 public sealed class PlayerState
 {
-    public enum Mode { Playing, Paused, Note, Keypad, Dead }
+    public enum Mode { Playing, Paused, Note, Keypad, Dead, Escaped }
     public enum Action { Free, Aiming, Reloading }
     public Mode CurrentMode { get; private set; }
     public Action CurrentAction { get; private set; }
@@ -9,6 +9,7 @@ public sealed class PlayerState
     public bool IsDead => CurrentMode == Mode.Dead;
     /// <summary>Raised only when mode, action, or obstruction actually changes.</summary>
     public event System.Action Changed;
+    public bool IsTerminal => CurrentMode == Mode.Dead || CurrentMode == Mode.Escaped;
     public bool CanMove => CurrentMode == Mode.Playing;
     public bool CanInteract => CanMove && CurrentAction != Action.Reloading;
     public bool CanSprint => CanMove && CurrentAction == Action.Free;
@@ -18,6 +19,7 @@ public sealed class PlayerState
     {
         // Death is terminal for this player instance. Retry creates a fresh scene/player.
         if (IsDead || CurrentMode == mode) return;
+        if (IsTerminal || CurrentMode == mode) return;
         CurrentMode = mode;
         CurrentAction = Action.Free;
         WeaponObstructed = false;
