@@ -10,6 +10,11 @@ public class PlayerMovementAudio : MonoBehaviour
     public AudioClip[] crouchClips = new AudioClip[0];
     public AudioClip jumpClip;
     public AudioClip landClip;
+    [Header("AI acoustic radii (independent of speaker volume)")]
+    [Tooltip("Hearing radius in metres for each played walking step; zero disables walking noise.")]
+    [Min(0f)] public float walkNoiseRadius = 2f;
+    [Tooltip("Hearing radius in metres for each played sprint step.")]
+    [Min(0f)] public float sprintNoiseRadius = 10f;
     [Header("Interactions")]
     public AudioClip paperClip;
     public AudioClip weaponPickupClip;
@@ -89,16 +94,28 @@ public class PlayerMovementAudio : MonoBehaviour
         remainingDistance -= speed * Time.deltaTime;
         if (remainingDistance > 0f) return;
         if (gait == 2) { PlayNext(crouchClips, ref crouchIndex, crouchVolume); remainingDistance = Mathf.Max(0.1f, crouchStepDistance); }
-        else if (gait == 1) { PlayNext(runClips, ref runIndex, runVolume); remainingDistance = Mathf.Max(0.1f, runStepDistance); }
-        else { PlayNext(walkClips, ref walkIndex, walkVolume); remainingDistance = Mathf.Max(0.1f, walkStepDistance); }
+        else if (gait == 1)
+        {
+            if (PlayNext(runClips, ref runIndex, runVolume) && sprintNoiseRadius > 0f)
+                AcousticBus.EmitSound(transform.position, sprintNoiseRadius, SoundType.Sprint);
+            remainingDistance = Mathf.Max(0.1f, runStepDistance);
+        }
+        else
+        {
+            if (PlayNext(walkClips, ref walkIndex, walkVolume) && walkNoiseRadius > 0f)
+                AcousticBus.EmitSound(transform.position, walkNoiseRadius, SoundType.Footstep);
+            remainingDistance = Mathf.Max(0.1f, walkStepDistance);
+        }
     }
 
-    private void PlayNext(AudioClip[] clips, ref int index, float volume)
+    private bool PlayNext(AudioClip[] clips, ref int index, float volume)
     {
-        if (clips == null || clips.Length == 0) return;
+        if (clips == null || clips.Length == 0) return false;
         var clip = clips[index % clips.Length];
         index = (index + 1) % clips.Length;
-        if (clip != null) footstepSource.PlayOneShot(clip, volume);
+        if (clip == null) return false;
+        footstepSource.PlayOneShot(clip, volume);
+        return true;
     }
 
     private void StopSteps()
