@@ -1,0 +1,25 @@
+{
+    "name": "Alesa.Agents.BlindMinion.Tests",
+    "rootNamespace": "Alesa.Agents.BlindMinion.Tests",
+    "references": [
+        "Alesa.Core",
+        "Alesa.Agents.BlindMinion",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

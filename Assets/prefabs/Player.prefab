@@ -8,6 +8,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 861000000}
   - component: {fileID: 855000000}
   - component: {fileID: 853000000}
   - component: {fileID: 852000000}
@@ -427,3 +428,33 @@ MonoBehaviour:
   nearbyShadowLights: 4
   shadowRadius: 28
   maximumCustomShadowResolution: 1024
+--- !u!114 &861000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1034858885761068494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61cd7729bd104f149863a7064e10e544, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDeathSequence
+  playerCamera: {fileID: 3944551070590937799}
+  deathUI: {fileID: 0}
+  collapsedCameraAnchor: {fileID: 0}
+  heldObjectsToHide: []
+  audioToStop: []
+  extraControllersToDisable: []
+  collapseDuration: 0.65
+  floorEyeHeight: 0.2
+  rollDegrees: 20
+  upwardPitch: -3
+  floorFlashlight: {fileID: 0}
+  silhouette: {fileID: 0}
+  generatedStage: {fileID: 0}
+  deathVolume: {fileID: 0}
+  monochrome: {fileID: 0}
+  veins: {fileID: 0}
+  enableDebugKey: 1
+  debugKey: 25

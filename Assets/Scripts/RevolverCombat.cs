@@ -4,7 +4,16 @@ using UnityEngine.Events;
 
 public class RevolverCombat : MonoBehaviour
 {
+    /// <summary>Inventory/ammunition changed; HUD consumers can refresh without polling.</summary>
+    public event System.Action WeaponStatusChanged;
+    public enum AmmunitionType { Ordinary, Silver }
     public RevolverAmmo ammo = new RevolverAmmo();
+    public RevolverAmmo silverAmmo = new RevolverAmmo();
+    [SerializeField] private AmmunitionType selectedAmmo;
+    [Min(.1f)] public float ammoSwitchSeconds = .75f;
+    public AmmunitionType SelectedAmmo => selectedAmmo;
+    public string AmmoName => selectedAmmo == AmmunitionType.Silver ? "Silver" : "Ordinary";
+    private RevolverAmmo ActiveAmmo => selectedAmmo == AmmunitionType.Silver ? silverAmmo : ammo;
     [SerializeField] private bool hasRevolver;
     [Min(0.01f)] public float reloadSeconds = 2f;
     [Min(0.01f)] public float shotInterval = 0.35f;
@@ -39,14 +48,14 @@ public class RevolverCombat : MonoBehaviour
     public UnityEvent onReloadCanceled = new UnityEvent();
     public bool IsTriggerHeld { get; private set; }
     public void SetTriggerHeld(bool held) { IsTriggerHeld = held; }
-    public int LoadedAmmo => ammo.loaded;
-    public int SpareAmmo => ammo.spare;
+    public int LoadedAmmo => ActiveAmmo.loaded;
+    public int SpareAmmo => ActiveAmmo.spare;
     public bool HasRevolver => hasRevolver;
     public bool IsAiming => player != null && player.State.CurrentAction == PlayerState.Action.Aiming;
     public bool IsReloading => player != null && player.State.CurrentAction == PlayerState.Action.Reloading;
     public bool IsObstructed => player != null && player.State.WeaponObstructed;
     public float AimBlend => aimBlend;
-    public bool ReadyToFire => player != null && player.State.CanShoot && aimBlend >= 0.95f && obstructionBlend <= 0.05f;
+    public bool ReadyToFire => hasRevolver && player != null && player.View != null && player.State.CanShoot && (!IsAiming || aimBlend >= 0.95f) && obstructionBlend <= 0.05f;
     private PlayerGameplay player;
     private float aimBlend, nextShot, reloadProgress;
     private Coroutine reloadRoutine;
@@ -60,6 +69,7 @@ public class RevolverCombat : MonoBehaviour
     {
         player = GetComponent<PlayerGameplay>();
         ammo.Normalize();
+        silverAmmo.Normalize();
         if (GetComponent<RevolverAudio>() == null) gameObject.AddComponent<RevolverAudio>();
     }
 
@@ -97,10 +107,37 @@ public class RevolverCombat : MonoBehaviour
         hasRevolver = true;
         ammo.LoadPickup(rounds);
         if (weaponView == null) CreateWeaponView();
-        player.Notify("Revolver acquired. Hold RMB to aim; LMB to fire; R to reload.");
+        player.Notify("Revolver acquired. Hold RMB to aim; LMB to fire; R to reload; V to switch ammunition.");
     }
 
     public void AddAmmo(int amount) { ammo.AddSpare(amount); }
+    public void AddSilverAmmo(int amount) { silverAmmo.AddSpare(amount); }
+
+    public bool SwitchAmmo()
+    {
+        if (!hasRevolver || player == null || player.BlocksControls || IsReloading) return false;
+        SetAim(false);
+        if (!player.State.TryStartReload()) return false;
+        reloadRoutine = StartCoroutine(SwapAmmunition());
+        return true;
+    }
+
+    private IEnumerator SwapAmmunition()
+    {
+        reloadProgress = 0f;
+        onReloadStarted.Invoke();
+        float elapsed = 0f, duration = Mathf.Max(.1f, ammoSwitchSeconds);
+        while (elapsed < duration)
+        {
+            reloadProgress = elapsed / duration;
+            yield return null;
+            elapsed += Time.deltaTime;
+        }
+        selectedAmmo = selectedAmmo == AmmunitionType.Ordinary ? AmmunitionType.Silver : AmmunitionType.Ordinary;
+        player.State.EndReload(); reloadRoutine = null; reloadProgress = 0f;
+        onReloaded.Invoke();
+        player.Notify(AmmoName + " rounds selected. R to reload.", 2f);
+    }
 
     public void SetAim(bool held)
     {
@@ -114,7 +151,7 @@ public class RevolverCombat : MonoBehaviour
         RefreshObstruction();
         if (!ReadyToFire || player.BlocksControls || Time.time < nextShot) return false;
         nextShot = Time.time + shotInterval;
-        if (!ammo.TryConsume()) { onEmptyClick.Invoke(); player.Notify("Cylinder empty. Press R to reload."); return false; }
+        if (!ActiveAmmo.TryConsume()) { onEmptyClick.Invoke(); player.Notify("Cylinder empty. Press R to reload."); return false; }
         Vector3 aimPoint = player.View.transform.position + player.View.transform.forward * range;
         if (player.RaycastFromView(range, hitMask, out RaycastHit aimedHit)) aimPoint = aimedHit.point;
         Vector3 muzzle = weaponView != null ? weaponView.TransformPoint(muzzleOffset) : player.View.transform.position;
@@ -124,18 +161,20 @@ public class RevolverCombat : MonoBehaviour
         if (player.RaycastFromPoint(muzzle, trajectory.normalized, Mathf.Min(range, trajectory.magnitude) + 0.01f, hitMask, out RaycastHit hit))
         {
             var boss = hit.collider.GetComponentInParent<PossessedBoss>();
-            if (boss != null) boss.HitBySilverBullet();
+            if (boss != null) { if (selectedAmmo == AmmunitionType.Silver) boss.HitBySilverBullet(); }
             else foreach (var behaviour in hit.collider.GetComponentsInParent<MonoBehaviour>())
                 if (behaviour is IDamageable target) { target.TakeDamage(damage); break; }
         }
         player.Notify("Shot fired", 0.3f);
+        AcousticBus.EmitSound(muzzle, 40f, SoundType.Gunshot);
         onShot.Invoke();
+        WeaponStatusChanged?.Invoke();
         return true;
     }
 
     public bool TryReload()
     {
-        if (!hasRevolver || ammo.loaded >= ammo.capacity || ammo.spare == 0 || !player.State.TryStartReload()) return false;
+        if (!hasRevolver || ActiveAmmo.loaded >= ActiveAmmo.capacity || ActiveAmmo.spare == 0 || !player.State.TryStartReload()) return false;
         reloadRoutine = StartCoroutine(Reload());
         return true;
     }
@@ -153,10 +192,11 @@ public class RevolverCombat : MonoBehaviour
             yield return null;
             elapsed += Time.deltaTime;
         }
-        ammo.Reload();
+        ActiveAmmo.Reload();
         reloadProgress = 1f;
         player.State.EndReload(); reloadRoutine = null;
         onReloaded.Invoke();
+        WeaponStatusChanged?.Invoke();
     }
 
     public void CancelReload()
