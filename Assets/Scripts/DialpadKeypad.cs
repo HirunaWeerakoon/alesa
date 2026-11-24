@@ -10,6 +10,10 @@ public class DialpadKeypad : MonoBehaviour, IInteractable
     [Tooltip("Disable this barrier when the correct code frees Alesa.")]
     public GameObject lockedBarrier;
     public UnityEvent onAlesaFreed = new UnityEvent();
+    [Tooltip("When true (legacy behaviour) a correct code also frees Alesa. Turn off when Alesa is freed some other way, e.g. a cage.")]
+    public bool freesAlesaOnUnlock = true;
+    [Tooltip("Raised on a correct code, e.g. to open a door.")]
+    public UnityEvent onUnlocked = new UnityEvent();
     public bool IsUnlocked { get; private set; }
     public string Prompt => requiredBreaker != null && !requiredBreaker.HasPower ? "Keypad has no power" : "Use access keypad";
     public bool CanInteract(PlayerGameplay player) => !IsUnlocked && player.State.CanInteract;
@@ -31,6 +35,8 @@ public class DialpadKeypad : MonoBehaviour, IInteractable
         if (IsUnlocked) return;
         IsUnlocked = true;
         if (lockedBarrier != null) lockedBarrier.SetActive(false);
+        onUnlocked.Invoke();
+        if (!freesAlesaOnUnlock) { player.Notify("Access granted. A door has unlocked.", 4f); return; }
         player.MarkAlesaFreed();
         onAlesaFreed.Invoke();
     }

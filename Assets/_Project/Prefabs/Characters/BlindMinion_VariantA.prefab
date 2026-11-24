@@ -9,6 +9,18 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -90,6 +102,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1971526691193009955}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9210255204162256046}
   m_SourcePrefab: {fileID: 100100000, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
 --- !u!1 &2304902380315892485 stripped
 GameObject:
@@ -319,6 +334,26 @@ CapsuleCollider:
   m_Height: 1.75
   m_Direction: 1
   m_Center: {x: 0, y: 0.875, z: 0}
+--- !u!114 &9210255204162256046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2304902380315892485}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80d4962bb362ddf4eb1fbbd03a49af6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinionCombatBridge
+  health: 100
+  damagePerHit: 1
+  windupSeconds: 0.7
+  lungeDistance: 0
+  maxHitDistance: 3.2
+  fallSeconds: 0.9
+  deathClipSeconds: 3
+  corpseSeconds: 6
 --- !u!95 &4780382957286448069 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}

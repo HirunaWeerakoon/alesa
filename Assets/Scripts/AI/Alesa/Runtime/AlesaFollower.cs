@@ -324,20 +324,33 @@ namespace Alesa.Runtime
             float displacement = Vector3.Distance(transform.position, _lastSampledPosition);
             _lastSampledPosition = transform.position;
 
-            RecoveryTier tier = _recoveryController.EvaluateProgress(
-                displacement,
-                currentTargetSpeed,
-                hasValidPath,
-                distToPlayer,
-                Time.deltaTime);
-
-            isStuck = _recoveryController.IsStuck;
-            currentRecoveryTier = tier;
-            currentStuckTimer = _recoveryController.StuckTimer;
-
-            if (isStuck)
+            // Stuck/teleport recovery only applies once she is free. While caged she is meant to stand still,
+            // which would otherwise look like being "stuck" and get her teleported next to Nathan.
+            RecoveryTier tier = RecoveryTier.None;
+            if (isRescued)
             {
-                ExecuteRecoveryAction(tier);
+                tier = _recoveryController.EvaluateProgress(
+                    displacement,
+                    currentTargetSpeed,
+                    hasValidPath,
+                    distToPlayer,
+                    Time.deltaTime);
+
+                isStuck = _recoveryController.IsStuck;
+                currentRecoveryTier = tier;
+                currentStuckTimer = _recoveryController.StuckTimer;
+
+                if (isStuck)
+                {
+                    ExecuteRecoveryAction(tier);
+                }
+            }
+            else
+            {
+                _recoveryController.Reset();
+                isStuck = false;
+                currentRecoveryTier = RecoveryTier.None;
+                currentStuckTimer = 0f;
             }
 
             CompanionContext context = new CompanionContext
