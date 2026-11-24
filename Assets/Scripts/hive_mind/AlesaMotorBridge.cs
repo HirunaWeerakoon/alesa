@@ -94,7 +94,8 @@ namespace Alesa.Runtime
             bool blockedByLifecycle = Time.timeScale <= 0f || (lifecycle != null && !lifecycle.CanMove);
             bool holdPosition = state == CompanionState.Dormant ||
                                 state == CompanionState.Idle ||
-                                state == CompanionState.WaitingAim;
+                                state == CompanionState.WaitingAim ||
+                                _follower.IsHoldingPosition;
 
             if (blockedByLifecycle || !_follower.HasValidAnchor || holdPosition)
             {
@@ -103,8 +104,11 @@ namespace Alesa.Runtime
                     _motor.Stop();
                 }
                 _hasActiveCommand = false;
+                KeepOutOfPlayer();
                 return;
             }
+
+            KeepOutOfPlayer();
 
             // 3. Forward AlesaFollower's computed follow anchor and speed to AgentMotor.
             float targetSpeed = _follower.StateMachine != null
@@ -133,6 +137,42 @@ namespace Alesa.Runtime
                 _lastSentSpeed = targetSpeed;
                 _hasActiveCommand = true;
             }
+        }
+
+        /// <summary>
+        /// Pushes Alesa back out when she and Nathan end up inside one another.
+        /// </summary>
+        /// <remarks>
+        /// Nothing in the navigation layer prevents it. Her NavMeshAgent has <c>updatePosition</c>
+        /// off because <see cref="AgentMotor"/> owns the transform, so the agent's own avoidance
+        /// never moves her — and Nathan is a CharacterController, which NavMesh avoidance cannot see
+        /// at all. This runs in LateUpdate, after the motor has already written this frame's
+        /// position, and nudges rather than snaps so the correction is not visible as a jump.
+        /// </remarks>
+        private void KeepOutOfPlayer()
+        {
+            Transform player = _follower.playerTransform;
+            float space = _follower.minPersonalSpace;
+            if (player == null || space <= 0f || _follower.separationPushSpeed <= 0f) return;
+
+            Vector3 offset = transform.position - player.position;
+            offset.y = 0f;
+            float distance = offset.magnitude;
+            if (distance >= space) return;
+
+            Vector3 away = distance > 0.01f ? offset / distance : -player.forward;
+            float step = Mathf.Min(space - distance, _follower.separationPushSpeed * Time.deltaTime);
+            Vector3 target = transform.position + away * step;
+
+            // Never push her into geometry to get her out of Nathan: if the only way out is through
+            // a wall, leave the overlap alone and let the follow anchor resolve it.
+            if (NavMesh.Raycast(transform.position, target, out _, NavMesh.AllAreas)) return;
+            if (!NavMesh.SamplePosition(target, out NavMeshHit hit, 0.25f, NavMesh.AllAreas)) return;
+
+            // Move the transform only. AgentMotor re-reads it into the solver at the top of its next
+            // Update, so this needs no Warp — and a Warp here would clear her path every frame she
+            // happened to be touching Nathan.
+            transform.position = hit.position;
         }
 
         private void ResolveReferences()

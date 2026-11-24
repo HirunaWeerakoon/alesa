@@ -51,6 +51,14 @@ namespace Alesa.Runtime
         [Range(1.0f, 6.0f)]
         public float slowingRadius = 2.5f;
 
+        [Tooltip("Once parked, Alesa only sets off again when the anchor has drifted this far (m). Without the gap she shuffles in place whenever Nathan stands still.")]
+        [Range(0.3f, 3.0f)]
+        public float reengageDistance = 1.0f;
+
+        [Tooltip("Speed (m/s) at which Alesa is pushed back out when she and Nathan end up inside each other.")]
+        [Range(0f, 6.0f)]
+        public float separationPushSpeed = 2.5f;
+
         [Tooltip("Standard walking top speed (m/s) matching Nathan's walk speed.")]
         public float maxWalkSpeed = 5.0f;
 
@@ -101,6 +109,20 @@ namespace Alesa.Runtime
         private Vector3 _lastSampledPosition;
         private float _lastRecoveryActionTime;
         private bool _manualRescued;
+        private Vector3 _anchorForward = Vector3.forward;
+        private Vector3 _lastPlayerPosition;
+        private bool _hasLastPlayerPosition;
+        private bool _parked;
+        private bool _motorDrivesTransform;
+
+        /// <summary>Smallest per-frame player travel (m) that counts as walking rather than mouse-look drift.</summary>
+        private const float PlayerTravelEpsilon = 0.0025f;
+
+        /// <summary>
+        /// True while Alesa has arrived and should stay put. Cleared only when the anchor drifts past
+        /// <see cref="reengageDistance"/>, so she does not creep after every small anchor correction.
+        /// </summary>
+        public bool IsHoldingPosition => _parked;
 
         public CompanionStateMachine StateMachine => _stateMachine ??= new CompanionStateMachine(autoFreeInTestScene ? CompanionState.Following : CompanionState.Dormant);
         public ArrivalSteeringCalculator SteeringCalculator => _steeringCalculator ??= new ArrivalSteeringCalculator(stoppingDistance, slowingRadius, acceleration, deceleration);
@@ -176,6 +198,7 @@ namespace Alesa.Runtime
         public void InitializeReferences()
         {
             if (agent == null) agent = GetComponent<NavMeshAgent>();
+            _motorDrivesTransform = GetComponent<Alesa.Runtime.Motion.AgentMotor>() != null;
 
             if (playerTransform == null)
             {
@@ -218,7 +241,7 @@ namespace Alesa.Runtime
             _calculator.LateralOffset = lateralOffset;
 
             // 1. Calculate ideal geometric anchor behind Nathan
-            Vector3 rawTarget = ComputeRawAnchor(playerTransform.position, playerTransform.forward);
+            Vector3 rawTarget = ComputeRawAnchor(playerTransform.position, ResolveAnchorBasis());
 
             // 2. Validate and project onto NavMesh
             Vector3 resolvedNavMeshTarget = ResolveNavMeshPosition(rawTarget, playerTransform.position, playerTransform.right);
@@ -237,6 +260,41 @@ namespace Alesa.Runtime
             }
 
             return currentAnchorPosition;
+        }
+
+        /// <summary>
+        /// The direction the anchor sits behind. This is Nathan's direction of travel, held steady
+        /// while he is standing still.
+        /// </summary>
+        /// <remarks>
+        /// Taking it from <c>playerTransform.forward</c> instead means the anchor is tied to where the
+        /// camera is pointing. Nathan can stand perfectly still and sweep his view through 360°, and
+        /// the anchor — and Alesa with it — runs a full circle around him. Travel direction does not
+        /// move when he only looks, and freezing it when he stops keeps the anchor parked where he
+        /// last walked from, which is the "come near me and stop" behaviour we want.
+        /// </remarks>
+        private Vector3 ResolveAnchorBasis()
+        {
+            Vector3 travel = _hasLastPlayerPosition
+                ? playerTransform.position - _lastPlayerPosition
+                : Vector3.zero;
+            travel.y = 0f;
+            _lastPlayerPosition = playerTransform.position;
+            _hasLastPlayerPosition = true;
+
+            if (travel.sqrMagnitude > PlayerTravelEpsilon * PlayerTravelEpsilon)
+            {
+                _anchorForward = travel.normalized;
+            }
+            else if (_anchorForward.sqrMagnitude < 1e-6f)
+            {
+                // First frame, or Nathan has never moved: fall back to his facing once.
+                Vector3 facing = playerTransform.forward;
+                facing.y = 0f;
+                _anchorForward = facing.sqrMagnitude > 1e-6f ? facing.normalized : Vector3.forward;
+            }
+
+            return _anchorForward;
         }
 
         private Vector3 ComputeRawAnchor(Vector3 playerPos, Vector3 playerForward)
@@ -313,6 +371,18 @@ namespace Alesa.Runtime
 
             float distToPlayer = Vector3.Distance(transform.position, playerTransform.position);
             float distToAnchor = Vector3.Distance(transform.position, currentAnchorPosition);
+
+            // Arrive-and-stay hysteresis. One threshold would have her start and stop every frame as
+            // the smoothed anchor jitters around her; parking only clears once the anchor has really
+            // moved on, which is what makes her settle beside Nathan instead of fidgeting.
+            if (_parked)
+            {
+                if (distToAnchor > Mathf.Max(reengageDistance, stoppingDistance)) _parked = false;
+            }
+            else if (distToAnchor <= stoppingDistance)
+            {
+                _parked = true;
+            }
 
             bool hasValidPath = true;
             if (agent != null && agent.isOnNavMesh && agent.hasPath)
@@ -406,8 +476,12 @@ namespace Alesa.Runtime
                     // Emergency warp safeguard behind player out of camera view
                     if (agent != null && agent.isOnNavMesh)
                     {
+                        // A 3 m search radius used to be enough to land on the far side of a thin
+                        // partition, which is a teleport straight through a wall. Keep the search
+                        // tight and require the destination to be reachable in a straight line.
                         Vector3 warpTarget = currentAnchorPosition;
-                        if (NavMesh.SamplePosition(warpTarget, out NavMeshHit hit, 3.0f, NavMesh.AllAreas))
+                        if (NavMesh.SamplePosition(warpTarget, out NavMeshHit hit, 1.0f, NavMesh.AllAreas) &&
+                            !NavMesh.Raycast(playerTransform.position, hit.position, out _, NavMesh.AllAreas))
                         {
                             agent.Warp(hit.position);
                             _recoveryController.Reset();
@@ -443,19 +517,27 @@ namespace Alesa.Runtime
             if (currentState == CompanionState.WaitingAim || currentState == CompanionState.Idle || currentState == CompanionState.Dormant)
             {
                 currentTargetSpeed = 0f;
+                if (_motorDrivesTransform) return;
                 agent.isStopped = true;
                 agent.velocity = Vector3.zero;
                 return;
             }
 
-            currentTargetSpeed = _steeringCalculator.CalculateDesiredSpeed(currentDistanceToAnchor, maxSpeed);
+            currentTargetSpeed = _parked ? 0f : _steeringCalculator.CalculateDesiredSpeed(currentDistanceToAnchor, maxSpeed);
 
-            if (currentDistanceToAnchor <= stoppingDistance)
+            if (_parked || currentDistanceToAnchor <= stoppingDistance)
             {
+                if (_motorDrivesTransform) return;
                 agent.isStopped = true;
                 agent.velocity = Vector3.zero;
                 return;
             }
+
+            // An AgentMotor owns the transform (it sets updatePosition/updateRotation false), so the
+            // NavMeshAgent must not steer as well. Two systems writing one transform is what made
+            // Alesa's internal nextPosition drift away from where she actually was, which in turn
+            // tripped AlesaMotorBridge's teleport sync and warped her through walls.
+            if (_motorDrivesTransform) return;
 
             agent.isStopped = false;
             agent.speed = _steeringCalculator.SmoothSpeed(agent.speed, currentTargetSpeed, deltaTime);

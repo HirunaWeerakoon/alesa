@@ -19,6 +19,12 @@ namespace Alesa.Runtime.Motion
         private static readonly int AngularVelocityParam = Animator.StringToHash("AngularVelocity");
         private static readonly int TurningInPlaceParam = Animator.StringToHash("TurningInPlace");
 
+        /// <summary>Distance kept inside a NavMesh boundary edge, so the next raycast does not flicker on it.</summary>
+        private const float NavMeshEdgeInset = 0.05f;
+
+        /// <summary>Snap radius used for grounding. Must stay below the thinnest wall in the level.</summary>
+        private const float NavMeshSnapRadius = 0.25f;
+
         [Header("Kinematic Motion")]
         [SerializeField] private float acceleration = 8f;
         [SerializeField] private float deceleration = 12f;
@@ -38,6 +44,13 @@ namespace Alesa.Runtime.Motion
         [SerializeField] private int navMeshAreaMask = NavMesh.AllAreas;
         [Tooltip("Keeps an attached NavMeshAgent synchronized without letting it override MotionSolver rotation/position.")]
         [SerializeField] private bool syncAttachedNavMeshAgent = true;
+
+        [Header("Separation")]
+        [Tooltip("Centre-to-centre distance (m) at which two agents start pushing each other apart. Bodies are 0.7 m across, so this needs to exceed that by the gap you want to see between them. 0 disables it.")]
+        [SerializeField] private float separationRadius = 1.4f;
+
+        [Tooltip("How hard the push is, in metres per second at full overlap.")]
+        [SerializeField] private float separationStrength = 2.5f;
 
         [Header("Animation (optional)")]
         [SerializeField] private Animator animator;
@@ -81,9 +94,64 @@ namespace Alesa.Runtime.Motion
         public float RemainingDistance => Solver != null ? Solver.RemainingDistance : 0f;
         public IReadOnlyList<Vector3> CurrentPath => _unityPath;
 
+        /// <summary>Every enabled motor, so agents can push off each other without a physics query.</summary>
+        private static readonly List<AgentMotor> ActiveMotors = new List<AgentMotor>();
+
         private void Awake()
         {
             EnsureInitialized();
+        }
+
+        private void OnEnable() => ActiveMotors.Add(this);
+
+        private void OnDisable() => ActiveMotors.Remove(this);
+
+        /// <summary>
+        /// Pushes this agent out of any other agent it is standing inside.
+        /// </summary>
+        /// <remarks>
+        /// The NavMeshAgent's own avoidance cannot do this here. Avoidance works by steering
+        /// <c>NavMeshAgent.nextPosition</c>, and this motor sets <c>updatePosition = false</c> and
+        /// writes the transform itself, so the avoidance result is computed and then thrown away —
+        /// which is why the agents' HighQualityObstacleAvoidance setting had no effect and two
+        /// minions walking to the same place merged into one silhouette.
+        ///
+        /// This is a plain separation force instead: cheap, order-independent, and enough to keep
+        /// three abreast in a three-metre corridor. It is clamped per frame so a crowd cannot
+        /// catapult anyone, and the result still goes through <see cref="ConstrainToNavMesh"/>, so
+        /// being shoved can never push an agent through a wall.
+        /// </remarks>
+        private Vector3 Separate(Vector3 position, float dt)
+        {
+            if (separationRadius <= 0f || separationStrength <= 0f || ActiveMotors.Count < 2) return position;
+
+            Vector3 push = Vector3.zero;
+            for (int i = 0; i < ActiveMotors.Count; i++)
+            {
+                AgentMotor other = ActiveMotors[i];
+                if (other == null || other == this) continue;
+
+                Vector3 away = position - other.transform.position;
+                away.y = 0f;
+                float distance = away.magnitude;
+                if (distance >= separationRadius) continue;
+
+                // Two agents spawned on the exact same spot have no direction to separate along;
+                // break the tie deterministically by instance id so they do not both pick the same way.
+                if (distance < 0.001f)
+                {
+                    float angle = (GetInstanceID() % 360) * Mathf.Deg2Rad;
+                    away = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+                    distance = 0.001f;
+                }
+
+                push += (away / distance) * (1f - distance / separationRadius);
+            }
+
+            if (push.sqrMagnitude < 1e-6f) return position;
+
+            float step = Mathf.Min(separationStrength * dt, separationRadius * 0.5f);
+            return position + Vector3.ClampMagnitude(push, 1f) * step;
         }
 
         /// <summary>Binds a decision brain whose <see cref="IMobileBrain.Intent"/> will drive this motor.</summary>
@@ -229,8 +297,8 @@ namespace Alesa.Runtime.Motion
 
             Solver.Step(_corePath, maxSpeed, lookAt, dt);
 
-            Vector3 nextPosition = Solver.Position.ToUnity();
-            nextPosition.y = ResolveGroundHeight(nextPosition, transform.position.y);
+            Vector3 nextPosition = Separate(Solver.Position.ToUnity(), dt);
+            nextPosition = ConstrainToNavMesh(transform.position, nextPosition);
 
             transform.position = nextPosition;
             transform.rotation = Quaternion.Euler(0f, Solver.Heading, 0f);
@@ -312,13 +380,61 @@ namespace Alesa.Runtime.Motion
             }
         }
 
-        private float ResolveGroundHeight(Vector3 position, float fallbackY)
+        /// <summary>
+        /// Keeps the step from <paramref name="from"/> to <paramref name="to"/> on the walkable
+        /// surface, and returns the ground height there.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="MotionSolver"/> steers toward a point <c>Lookahead</c> metres along the path
+        /// rather than to the next corner, so it deliberately cuts corners. In a two-metre hospital
+        /// corridor a cut corner puts the body inside the wall, and nothing else pulls it back:
+        /// an attached <see cref="NavMeshAgent"/> has <c>updatePosition</c> off, so its own
+        /// containment never runs.
+        ///
+        /// <see cref="NavMesh.SamplePosition"/> alone cannot fix that. It finds the nearest point on
+        /// the mesh within a radius and ignores walls entirely, so from inside a partition it is just
+        /// as likely to answer with the room on the far side. <see cref="NavMesh.Raycast"/> is the
+        /// only query that reports crossing a boundary edge, so the step is clipped at the edge and
+        /// then allowed to slide along it — the agent hugs the corner instead of stopping dead.
+        /// </remarks>
+        private Vector3 ConstrainToNavMesh(Vector3 from, Vector3 to)
         {
-            if (useNavMesh && NavMesh.SamplePosition(position, out NavMeshHit hit, navMeshSampleRadius, navMeshAreaMask))
+            if (!useNavMesh)
             {
-                return hit.position.y;
+                to.y = from.y;
+                return to;
             }
-            return fallbackY;
+
+            if (NavMesh.Raycast(from, to, out NavMeshHit wall, navMeshAreaMask))
+            {
+                Vector3 normal = wall.normal;
+                normal.y = 0f;
+                normal = normal.sqrMagnitude > 1e-6f ? normal.normalized : (from - to).normalized;
+
+                // Slide the blocked remainder along the wall rather than discarding it.
+                Vector3 slide = Vector3.ProjectOnPlane(to - wall.position, normal);
+                Vector3 slid = wall.position + slide + normal * NavMeshEdgeInset;
+                to = NavMesh.Raycast(wall.position, slid, out NavMeshHit corner, navMeshAreaMask)
+                    ? corner.position + normal * NavMeshEdgeInset
+                    : slid;
+            }
+
+            // A tight radius here is deliberate: a wide one would happily snap to the far side of a
+            // thin wall and undo the clipping above.
+            if (NavMesh.SamplePosition(to, out NavMeshHit surface, NavMeshSnapRadius, navMeshAreaMask))
+            {
+                return surface.position;
+            }
+
+            // Off the mesh entirely (spawned badly, or the mesh was rebaked under us): fall back to
+            // the configured search radius so the agent recovers instead of freezing forever.
+            if (NavMesh.SamplePosition(to, out NavMeshHit recovered, navMeshSampleRadius, navMeshAreaMask))
+            {
+                return recovered.position;
+            }
+
+            to.y = from.y;
+            return to;
         }
 
         private void ClearPath()
