@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -17,6 +18,16 @@ public class PossessedBoss : MonoBehaviour
     public float predictionTime = 2f, movementSpeed = 6.8f, appearanceWarning = 1.25f;
     public float grabReach = 1.35f, grabWindup = .85f, grabRecovery = 1.5f;
     public float sightMemory = 3f, commitmentSeconds = 1.5f;
+    [Tooltip("Seconds the boss takes to fade out and sink when banished by a silver round.")]
+    [Min(0f)] public float vanishSeconds = 1.1f;
+    [Min(0f)] public float vanishSinkMetres = 0.35f;
+    [Tooltip("Particle prefab played while the boss burns away (e.g. Hovl Studio 'Magic fire pro orange'). Optional.")]
+    public GameObject vanishFirePrefab;
+    [Min(0.1f)] public float vanishFireScale = 1.6f;
+    [Tooltip("Height above the feet at which the flames are centred.")]
+    [Min(0f)] public float vanishFireHeight = 0.9f;
+    [Tooltip("Seconds the remaining flames keep burning after the body has gone.")]
+    [Min(0f)] public float vanishFireLingerSeconds = 1.5f;
     public event Action<PossessedBoss> Banished;
     public event Action<PossessedBoss> RelocationRequested;
     public Vector3 LastInterceptTarget { get; private set; }
@@ -124,6 +135,7 @@ public class PossessedBoss : MonoBehaviour
     public bool AppearAt(Vector3 feet, Quaternion rotation)
     {
         if (IsPresent || currentState == BossState.Appearing || currentState == BossState.Finished) return false;
+        CancelVanish();
         NavMeshHit hit;
         if (!NavMesh.SamplePosition(feet, out hit, .8f, NavMesh.AllAreas)) return false;
         agent.enabled = true;
@@ -135,11 +147,117 @@ public class PossessedBoss : MonoBehaviour
     public void HitBySilverBullet()
     {
         if (!IsPresent) return;
-        Hide(BossState.Despawned); Banished?.Invoke(this);
+        if (vanishSeconds <= 0f || !isActiveAndEnabled) Hide(BossState.Despawned);
+        else StartVanish();
+        Banished?.Invoke(this);
+    }
+
+    // ---- Vanish effect: freeze, fade out and sink, then hide as before. Gameplay state changes at once. ----
+    Coroutine vanishRoutine;
+    Material[][] originalMaterials;
+
+    void StartVanish()
+    {
+        CancelVanish();
+        currentState = BossState.Despawned;
+        if (agent != null) { if (agent.enabled && agent.isOnNavMesh) agent.ResetPath(); agent.enabled = false; } // so the sink below is not overridden
+        foreach (var c in bodyColliders) if (c != null) c.enabled = false;
+        SpawnVanishFire();
+        vanishRoutine = StartCoroutine(VanishRoutine());
+    }
+
+    GameObject fireInstance;
+    Light fireLight;
+
+    void SpawnVanishFire()
+    {
+        if (vanishFirePrefab == null) return;
+        fireInstance = Instantiate(vanishFirePrefab, transform.position + Vector3.up * vanishFireHeight, Quaternion.identity);
+        fireInstance.transform.localScale = Vector3.one * vanishFireScale;
+        var lightHost = new GameObject("Vanish fire light");
+        lightHost.transform.SetParent(fireInstance.transform, false);
+        fireLight = lightHost.AddComponent<Light>();
+        fireLight.type = LightType.Point; fireLight.color = new Color(1f, 0.55f, 0.2f);
+        fireLight.range = 7f; fireLight.intensity = 3f; fireLight.shadows = LightShadows.None;
+    }
+
+    // Stops new flames, lets the existing ones die out, then removes the object.
+    void EndVanishFire(float lingerSeconds)
+    {
+        if (fireInstance == null) return;
+        foreach (var ps in fireInstance.GetComponentsInChildren<ParticleSystem>()) ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        if (fireLight != null) Destroy(fireLight.gameObject);
+        Destroy(fireInstance, lingerSeconds + 3f);
+        fireInstance = null; fireLight = null;
+    }
+
+    IEnumerator VanishRoutine()
+    {
+        // Give every renderer its own fade-capable copies so shared assets are never touched.
+        originalMaterials = new Material[visuals.Length][];
+        var faded = new Material[visuals.Length][];
+        for (int i = 0; i < visuals.Length; i++)
+        {
+            if (visuals[i] == null) continue;
+            originalMaterials[i] = visuals[i].sharedMaterials;
+            faded[i] = new Material[originalMaterials[i].Length];
+            for (int j = 0; j < faded[i].Length; j++)
+            {
+                var source = originalMaterials[i][j];
+                if (source == null) continue;
+                var copy = new Material(source);
+                if (copy.shader.name == "Standard") MakeFade(copy);
+                faded[i][j] = copy;
+            }
+            visuals[i].materials = faded[i];
+        }
+        Vector3 start = transform.position;
+        for (float t = 0f; t < vanishSeconds; t += Time.deltaTime)
+        {
+            float k = Mathf.Clamp01(t / vanishSeconds);
+            float alpha = 1f - k * k;
+            foreach (var row in faded) if (row != null) foreach (var m in row) if (m != null && m.HasProperty("_Color")) { var c = m.color; c.a = alpha; m.color = c; }
+            transform.position = start + Vector3.down * (vanishSinkMetres * k);
+            if (fireLight != null) fireLight.intensity = 3f * (0.7f + 0.3f * Mathf.Sin(Time.time * 30f)) * (1f - 0.5f * k);
+            yield return null;
+        }
+        transform.position = start;
+        vanishRoutine = null;
+        RestoreMaterials(faded);
+        Hide(BossState.Despawned);
+        EndVanishFire(vanishFireLingerSeconds);
+    }
+
+    static void MakeFade(Material m)
+    {
+        m.SetFloat("_Mode", 2);
+        m.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        m.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        m.SetInt("_ZWrite", 0);
+        m.DisableKeyword("_ALPHATEST_ON"); m.EnableKeyword("_ALPHABLEND_ON"); m.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        m.renderQueue = 3000;
+    }
+
+    void RestoreMaterials(Material[][] faded)
+    {
+        if (originalMaterials == null) return;
+        for (int i = 0; i < visuals.Length; i++)
+            if (visuals[i] != null && originalMaterials[i] != null) visuals[i].sharedMaterials = originalMaterials[i];
+        if (faded != null) foreach (var row in faded) if (row != null) foreach (var m in row) if (m != null) Destroy(m);
+        originalMaterials = null;
+    }
+
+    void CancelVanish()
+    {
+        if (vanishRoutine == null) return;
+        StopCoroutine(vanishRoutine); vanishRoutine = null;
+        RestoreMaterials(null);
+        EndVanishFire(0f);
     }
     public void FinishEncounter() { Hide(BossState.Finished); }
     void Hide(BossState state)
     {
+        CancelVanish();
         currentState = state;
         if (agent != null) { if (agent.enabled && agent.isOnNavMesh) agent.ResetPath(); agent.enabled = false; }
         SetVisible(false);

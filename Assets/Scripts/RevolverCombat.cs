@@ -202,7 +202,10 @@ public class RevolverCombat : MonoBehaviour
 
     public bool TryReload()
     {
-        if (!hasRevolver || ActiveAmmo.loaded >= ActiveAmmo.capacity || ActiveAmmo.spare == 0 || !player.State.TryStartReload()) return false;
+        if (!hasRevolver || player == null) return false;
+        if (ActiveAmmo.loaded >= ActiveAmmo.capacity) { player.Notify("Cylinder already full.", 1.5f); return false; }
+        if (ActiveAmmo.spare == 0) { player.Notify("No spare " + AmmoName.ToLower() + " rounds to reload.", 2f); return false; }
+        if (!player.State.TryStartReload()) return false;
         reloadRoutine = StartCoroutine(Reload());
         return true;
     }

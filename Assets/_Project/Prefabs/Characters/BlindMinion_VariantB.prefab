@@ -104,6 +104,18 @@ PrefabInstance:
       value: 0.99493533
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -194,6 +206,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1957147589523477655}
+      addedObject: {fileID: 4627735308355480198}
   m_SourcePrefab: {fileID: 100100000, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
 --- !u!4 &1340354421233043648 stripped
 Transform:
@@ -443,8 +456,8 @@ CapsuleCollider:
   m_Radius: 0.35
   m_Height: 1.4188309
   m_Direction: 1
-  m_Center: {x: 0, y: 0.70941544, z: 0}
---- !u!114 &832163672289219284
+  m_Center: {x: 0, y: 0.875, z: 0}
+--- !u!114 &4627735308355480198
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -513,3 +526,14 @@ MonoBehaviour:
   idleBreathMinGap: 3.5
   idleBreathMaxGap: 9
   idleBreathHuntingScale: 0.45
+  m_Script: {fileID: 11500000, guid: 80d4962bb362ddf4eb1fbbd03a49af6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinionCombatBridge
+  health: 100
+  damagePerHit: 1
+  windupSeconds: 0.7
+  lungeDistance: 0
+  maxHitDistance: 3.2
+  fallSeconds: 0.9
+  deathClipSeconds: 3
+  corpseSeconds: 6

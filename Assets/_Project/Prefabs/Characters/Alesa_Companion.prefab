@@ -18,15 +18,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2721558332436076453, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.0740616
+      value: 1.25
       objectReference: {fileID: 0}
     - target: {fileID: 2721558332436076453, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.0740616
+      value: 1.25
       objectReference: {fileID: 0}
     - target: {fileID: 2721558332436076453, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.0740616
+      value: 1.25
       objectReference: {fileID: 0}
     - target: {fileID: 2721558332436076453, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -155,12 +155,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Alesa.Runtime.AlesaFollower
   playerTransform: {fileID: 0}
   agent: {fileID: 3566151197235480872}
-  followDistance: 1.75
-  minPersonalSpace: 1
+  followDistance: 3
+  minPersonalSpace: 2.2
   lateralOffset: 0
   anchorSmoothingSpeed: 8
   navMeshSampleRadius: 2
-  stoppingDistance: 0.4
+  stoppingDistance: 0.6
   slowingRadius: 2.5
   reengageDistance: 1
   separationPushSpeed: 2.5
