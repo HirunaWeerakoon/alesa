@@ -167,6 +167,43 @@ namespace Alesa.Agents.BlindMinion
         /// <summary>The places the current sweep is visiting, in order. Empty outside a sweep.</summary>
         public IReadOnlyList<int> SweepNodes => _sweep;
 
+        // ------------------------------------------------------------------ combat variety
+        // Also off by default. A lunge is a short burst of speed when the player is just out of swing reach;
+        // the blow itself is still the adapter's wind-up swing, so it can still be dodged. Frenzy is a
+        // faster tempo after two hits in a row.
+
+        /// <summary>Lunge at a hunted player standing between <see cref="AttackRange"/> and <see cref="LungeReach"/>.</summary>
+        public bool LungeEnabled { get; set; }
+        public float LungeReach { get; set; } = 3.2f;
+        public float LungeSpeed { get; set; } = 8.5f;
+        public float LungeSeconds { get; set; } = 0.4f;
+        public float LungeCooldown { get; set; } = 4f;
+
+        /// <summary>Two hits in a row make it attack faster for <see cref="FrenzyDuration"/> seconds.</summary>
+        public bool FrenzyEnabled { get; set; }
+        public float FrenzyCooldownMultiplier { get; set; } = 0.6f;
+        public float FrenzyDuration { get; set; } = 5f;
+
+        public bool IsLunging => _clock < _lungeUntil;
+        public bool IsFrenzied => FrenzyEnabled && _frenzy.IsFrenzied(_clock);
+
+        /// <summary>Raised the moment a lunge begins (adapter plays the snarl).</summary>
+        public event Action Lunged;
+
+        /// <summary>The adapter reports that a swing landed. Two in a row start a frenzy.</summary>
+        public void RegisterHit()
+        {
+            if (!FrenzyEnabled) return;
+            _frenzy.FrenzyDuration = FrenzyDuration;
+            _frenzy.RegisterHit(_clock);
+        }
+
+        /// <summary>The adapter reports that a swing missed. It breaks the streak.</summary>
+        public void RegisterMiss()
+        {
+            if (FrenzyEnabled) _frenzy.RegisterMiss();
+        }
+
         /// <summary>Unique per minion, stamped on its screams so it never reacts to its own voice.</summary>
         public int Id { get; }
         private static int _nextId = 1;
@@ -210,6 +247,10 @@ namespace Alesa.Agents.BlindMinion
         private Vector3 _progressTarget = new Vector3(float.NaN);
         private float _progressBest;
         private float _progressSince;
+
+        private readonly CombatDecisionArbiter _lungeArbiter = new CombatDecisionArbiter();
+        private readonly CombatDecisionArbiter _frenzy = new CombatDecisionArbiter();
+        private float _lungeUntil = float.NegativeInfinity;
 
         private float _alertPeak;
         private float _alertAt = float.NegativeInfinity;
@@ -271,6 +312,7 @@ namespace Alesa.Agents.BlindMinion
                         Enter(MinionState.Searching);
                         break;
                     }
+                    if (TryLunge(player, playerDistance)) break;
                     FollowRoute(HuntSpeed);
                     break;
 
@@ -554,9 +596,39 @@ namespace Alesa.Agents.BlindMinion
             }
 
             Intent = LookTowards(player);
-            if (_clock - _lastAttackAt < AttackCooldown) return;
+            float cooldown = IsFrenzied ? AttackCooldown * FrenzyCooldownMultiplier : AttackCooldown;
+            if (_clock - _lastAttackAt < cooldown) return;
             _lastAttackAt = _clock;
             Attacked?.Invoke();
+        }
+
+        /// <summary>
+        /// A hunter with the player just out of reach springs at them. Returns true when it is lunging this tick.
+        /// The arbiter decides whether the spring is worth it (a player backing away fast at the edge of reach is not),
+        /// and its own cooldown stops lunges chaining.
+        /// </summary>
+        private bool TryLunge(Vector3 player, float distance)
+        {
+            if (!LungeEnabled) return false;
+
+            if (IsLunging)
+            {
+                Intent = MovementIntent.MoveTo(StandPoint(player), LungeSpeed);
+                return true;
+            }
+
+            if (distance <= AttackRange || distance > LungeReach) return false;
+
+            _lungeArbiter.MeleeStrikeReach = AttackRange;
+            _lungeArbiter.LungeTriggerReach = LungeReach;
+            _lungeArbiter.BaseAttackCooldown = LungeCooldown;
+            var decision = _lungeArbiter.EvaluateAttack(CurrentPosition, player, _ctx.World.PlayerVelocity, _clock);
+            if (!decision.ShouldAttack || decision.IntentType != AttackIntentType.LeapingLunge) return false;
+
+            _lungeUntil = _clock + LungeSeconds;
+            Intent = MovementIntent.MoveTo(StandPoint(player), LungeSpeed);
+            Lunged?.Invoke();
+            return true;
         }
 
         // ------------------------------------------------------------------ search & memory behaviour

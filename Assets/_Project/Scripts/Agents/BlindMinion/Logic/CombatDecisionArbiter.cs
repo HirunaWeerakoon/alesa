@@ -113,8 +113,21 @@ namespace Alesa.Agents.BlindMinion
         /// </summary>
         public float CalculateHitProbability(float distance, float closingSpeed, AttackIntentType type)
         {
-            float reach = (type == AttackIntentType.LeapingLunge) ? LungeTriggerReach : MeleeStrikeReach;
-            float proximityFactor = Math.Max(0f, 1.0f - (distance / Math.Max(0.5f, reach)));
+            // A blow inside reach is a good bet even at the very edge of it, and a lunge is a decent bet
+            // across its whole band. The old formula fell to zero at the edge of each, so a strike at
+            // 1.5 m of 1.8 m scored about 0.2 and a lunge past 2.5 m was never taken.
+            float proximityFactor;
+            if (type == AttackIntentType.LeapingLunge)
+            {
+                float span = Math.Max(0.1f, LungeTriggerReach - MeleeStrikeReach);
+                float t = Math.Min(1f, Math.Max(0f, (distance - MeleeStrikeReach) / span));
+                proximityFactor = 0.7f - 0.4f * t;
+            }
+            else
+            {
+                float t = Math.Min(1f, Math.Max(0f, distance / Math.Max(0.5f, MeleeStrikeReach)));
+                proximityFactor = 1.0f - 0.4f * t;
+            }
 
             // Fast closing targets are easier to hit; fast retreating targets reduce hit probability
             float velocityFactor = Math.Min(1.2f, Math.Max(0.5f, 1.0f + 0.1f * closingSpeed));

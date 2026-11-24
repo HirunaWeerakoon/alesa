@@ -91,6 +91,22 @@ namespace Alesa.Agents.BlindMinion
         [Tooltip("A far less alarming noise does not pull it off a gunshot; it is checked afterwards.")]
         [SerializeField] private bool prioritizeThreats = true;
 
+        [Header("Combat")]
+        [Tooltip("A hunter springs at a player who is just out of swing reach. The blow is still the wind-up swing, so it can be dodged.")]
+        [SerializeField] private bool lungeEnabled = true;
+        [Tooltip("Furthest the player can be for a lunge (m). It starts where the swing reach ends.")]
+        [SerializeField, Min(0f)] private float lungeReach = 3.2f;
+        [SerializeField, Min(0f)] private float lungeSpeed = 8.5f;
+        [SerializeField, Min(0.05f)] private float lungeSeconds = 0.4f;
+        [Tooltip("Seconds before it can lunge again.")]
+        [SerializeField, Min(0f)] private float lungeCooldown = 4f;
+        [Tooltip("Two hits in a row make it attack faster for a few seconds.")]
+        [SerializeField] private bool frenzyEnabled = true;
+        [SerializeField, Range(0.2f, 1f)] private float frenzyCooldownMultiplier = 0.6f;
+        [SerializeField, Min(0.5f)] private float frenzyDuration = 5f;
+        [Tooltip("Animation speed while in a frenzy.")]
+        [SerializeField, Range(1f, 2f)] private float frenzyAnimationSpeed = 1.25f;
+
         [Header("Audio (optional)")]
         [SerializeField] private AudioSource voice;
         [SerializeField] private AudioClip alertScream;
@@ -181,6 +197,14 @@ namespace Alesa.Agents.BlindMinion
                 AlertDecayProfile = alertDecayProfile,
                 ExcitationHuntThreshold = excitationHuntThreshold,
                 PrioritizeThreats = prioritizeThreats,
+                LungeEnabled = lungeEnabled,
+                LungeReach = lungeReach,
+                LungeSpeed = lungeSpeed,
+                LungeSeconds = lungeSeconds,
+                LungeCooldown = lungeCooldown,
+                FrenzyEnabled = frenzyEnabled,
+                FrenzyCooldownMultiplier = frenzyCooldownMultiplier,
+                FrenzyDuration = frenzyDuration,
             };
             // The golden angle spreads consecutive ids almost evenly round a circle without any
             // minion needing to know about the others, so they close in from different sides
@@ -191,6 +215,7 @@ namespace Alesa.Agents.BlindMinion
             Brain.Acoustics.JunctionLoss = junctionLoss;
             Brain.Screamed += OnScreamed;
             Brain.Attacked += OnAttacked;
+            Brain.Lunged += OnLunged;
             _motor = GetComponent<AgentMotor>();
             _motor.Bind(Brain);
             if (GetComponent<HeadLookAt>() == null) gameObject.AddComponent<HeadLookAt>(); // older scenes
@@ -203,6 +228,7 @@ namespace Alesa.Agents.BlindMinion
             Brain.CurrentPosition = transform.position.ToCore();
             Brain.Tick(Time.deltaTime);
             SetBool(SearchingBool, Brain.State == MinionState.Searching);
+            UpdateCombatPresentation();
         }
 
         /// <summary>
@@ -237,6 +263,7 @@ namespace Alesa.Agents.BlindMinion
             if (Brain == null) return;
             Brain.Screamed -= OnScreamed;
             Brain.Attacked -= OnAttacked;
+            Brain.Lunged -= OnLunged;
             Brain.Dispose();
         }
 
@@ -267,6 +294,36 @@ namespace Alesa.Agents.BlindMinion
         /// right on top of the player, or when the player is standing still long enough to be
         /// taken hold of. Anything looser is an ordinary swipe.
         /// </summary>
+        private bool _chargeFlag, _lungeFlag, _frenzyFlag;
+
+        /// <summary>Raised the moment a lunge begins. For audio.</summary>
+        public event Action Lunged;
+
+        private void OnLunged() => Lunged?.Invoke();
+
+        /// <summary>
+        /// The lunge reuses the charge run, and a frenzy plays everything a little faster. The charge flag is
+        /// shared with the shot-at charge, so it is only cleared when neither wants it.
+        /// </summary>
+        private void UpdateCombatPresentation()
+        {
+            bool lunging = Brain.IsLunging;
+            if (lunging != _lungeFlag)
+            {
+                _lungeFlag = lunging;
+                SetBool(ChargingBool, _chargeFlag || _lungeFlag);
+                if (_lungeFlag && !_chargeFlag) SetBool(CrawlBool, false);
+            }
+
+            bool frenzied = Brain.IsFrenzied;
+            if (frenzied != _frenzyFlag)
+            {
+                _frenzyFlag = frenzied;
+                var animator = _motor != null ? _motor.Animator : null;
+                if (animator != null) animator.speed = frenzied ? frenzyAnimationSpeed : 1f;
+            }
+        }
+
         private void OnAttacked()
         {
             var world = ai.Context.World;
@@ -290,10 +347,12 @@ namespace Alesa.Agents.BlindMinion
 
             if (GapToPlayer() > attackGap + missTolerance)
             {
+                Brain.RegisterMiss();
                 Whiffed?.Invoke();
                 yield break;
             }
 
+            Brain.RegisterHit();
             Struck?.Invoke(neckBite);
             // Before AttackedPlayer, which is what applies the damage: the camera should already be
             // locked on when a fatal bite hands over to the death sequence.
@@ -316,13 +375,16 @@ namespace Alesa.Agents.BlindMinion
         /// </summary>
         public void SetCharging(bool charging, bool onAllFours)
         {
-            SetBool(ChargingBool, charging);
+            _chargeFlag = charging;
+            SetBool(ChargingBool, charging || _lungeFlag);
             if (charging) SetBool(CrawlBool, onAllFours);
         }
 
         /// <summary>Plays the death clip for the shot that killed it and stops the brain driving the body.</summary>
         public void PlayDeath(bool headshot)
         {
+            var deathAnimator = _motor != null ? _motor.Animator : null;
+            if (deathAnimator != null) deathAnimator.speed = 1f;
             SetTrigger(headshot ? DeathHeadTrigger : DeathTorsoTrigger);
             enabled = false;
             var motor = GetComponent<AgentMotor>();

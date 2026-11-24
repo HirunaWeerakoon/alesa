@@ -135,6 +135,7 @@ public sealed class MinionVoice : MonoBehaviour
         if (_agent == null) return;
         _agent.Screamed += OnAlert;
         _agent.SwingStarted += OnSwingStarted;
+        _agent.Lunged += OnLunged;
         _agent.Struck += OnStruck;
         _agent.Whiffed += OnWhiffed;
     }
@@ -144,6 +145,7 @@ public sealed class MinionVoice : MonoBehaviour
         if (_agent == null) return;
         _agent.Screamed -= OnAlert;
         _agent.SwingStarted -= OnSwingStarted;
+        _agent.Lunged -= OnLunged;
         _agent.Struck -= OnStruck;
         _agent.Whiffed -= OnWhiffed;
         if (_agent.Brain != null) _agent.Brain.StateChanged -= OnStateChanged;
@@ -264,6 +266,9 @@ public sealed class MinionVoice : MonoBehaviour
         if (Time.time < _suppressAlertUntil) return;
         Play(voice, alert);
     }
+
+    /// <summary>A hunter springing at the player: the attack snarl. The swing that follows has its own.</summary>
+    private void OnLunged() => Play(voice, attack);
 
     /// <summary>The swing has begun. Whether it lands is not known yet.</summary>
     private void OnSwingStarted(bool neckBite) => Play(voice, neckBite ? neckBiteVoice : attack);

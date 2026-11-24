@@ -60,7 +60,10 @@ namespace Alesa.Agents.BlindMinion.Tests
             {
                 CurrentPosition = _graph[_nodeA].Position,
                 ReactionTime = 0.5f,
-                SearchDuration = 2.0f
+                SearchDuration = 2.0f,
+                // Hear the noise clearly, so the minion's guess is exact and "arrived" does not depend on
+                // the random error a fainter noise would add.
+                ClearHearingLoudness = 5.0f
             };
 
             var stateHistory = new List<MinionState>();
@@ -82,7 +85,9 @@ namespace Alesa.Agents.BlindMinion.Tests
             brain.Tick(0.35f); // Total time in state > 0.5s
             Assert.AreEqual(MinionState.Investigating, brain.State, "Should transition to Investigating");
 
-            // Step 3: Minion follows route towards destination
+            // Step 3: Minion follows route towards destination. The tick that moves it from Alerted to
+            // Investigating only turns it to face the lead; the first move command comes on the next tick.
+            brain.Tick(0.05f);
             Assert.IsTrue(brain.Intent.HasTarget);
 
             // Simulate minion stepping along corridor until reaching target (Node B)
