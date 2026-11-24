@@ -15,7 +15,11 @@ public class PossessedBoss : MonoBehaviour
     public Collider[] bodyColliders = new Collider[0];
     public AudioSource voice;
     public AudioClip warningClip;
-    public float predictionTime = 2f, movementSpeed = 6.8f, appearanceWarning = 1.25f;
+    [Tooltip("Walking pace (m/s). 1.8 is the walk animation; the player walks at 5, so she cannot be outrun, only left behind.")]
+    public float movementSpeed = 1.8f;
+    public float predictionTime = 2f, appearanceWarning = 1.25f;
+    [Tooltip("Once the player is further than this (m) and out of sight, she lets go and the hive puts her somewhere ahead of them.")]
+    [Min(5f)] public float abandonDistance = 24f;
     public float grabReach = 1.35f, grabWindup = .85f, grabRecovery = 1.5f;
     public float sightMemory = 3f, commitmentSeconds = 1.5f;
     [Tooltip("Seconds the boss takes to fade out and sink when banished by a silver round.")]
@@ -91,9 +95,14 @@ public class PossessedBoss : MonoBehaviour
         nextPlan = Time.time + Mathf.Max(.5f, commitmentSeconds);
         if (Time.time - lastSight > sightMemory)
         {
-            if (FlatDistance(transform.position, lastSeen) < 2f || Time.time - lastSight > sightMemory + 4f)
+            // Lost sight. A player who has got well clear is not worth walking after: she lets go here and the
+            // hive puts her somewhere ahead of them instead of sending her back where she came from.
+            if (FlatDistance(transform.position, player.position) > abandonDistance)
             { Hide(BossState.Hidden); RelocationRequested?.Invoke(this); return; }
-            currentState = BossState.Pursuing; agent.SetDestination(lastSeen); return;
+            // Otherwise she keeps coming: to where she last saw them, then to wherever they are now.
+            currentState = BossState.Pursuing;
+            agent.SetDestination(FlatDistance(transform.position, lastSeen) < 2f ? player.position : lastSeen);
+            return;
         }
         Vector3 target = SelectIntercept();
         currentState = FlatDistance(target, player.position) > 2f ? BossState.Intercepting : BossState.Pursuing;

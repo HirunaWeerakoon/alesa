@@ -336,7 +336,7 @@ MonoBehaviour:
   voice: {fileID: 1847821410149152334}
   warningClip: {fileID: 8300000, guid: 3f9029ffc18f5eb4ca1a916f7e4312e9, type: 3}
   predictionTime: 2
-  movementSpeed: 6.8
+  movementSpeed: 1.8
   appearanceWarning: 1.25
   grabReach: 1.35
   grabWindup: 0.85

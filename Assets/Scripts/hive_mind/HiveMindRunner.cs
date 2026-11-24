@@ -25,6 +25,12 @@ public class HiveMindRunner : MonoBehaviour
     [Tooltip("Player transform. Left empty, it is taken from the AI world query or the Player tag.")]
     public Transform player;
 
+    [Tooltip("Minion pool the hive controls. Left empty, the scene's MinionSpawnDirector is used if there is one.")]
+    public MinionSpawnDirector spawnDirector;
+
+    [Tooltip("Let the hive decide how many minions may wake, and stage ambushes with them.")]
+    public bool controlMinions = true;
+
     [Tooltip("Seconds between decisions. The director does not need frame precision.")]
     [Min(0.05f)] public float tickInterval = 0.2f;
 
@@ -119,6 +125,7 @@ public class HiveMindRunner : MonoBehaviour
         Director.Pacing.RelaxSeconds = relaxSeconds;
 
         Director.Tick(Time.time, delta, GatherInputs(), ResolvePlayerNode());
+        if (controlMinions && spawnDirector != null) spawnDirector.AwakeBudget = Director.DesiredMinionCount;
         PublishStatus();
     }
 
@@ -137,6 +144,7 @@ public class HiveMindRunner : MonoBehaviour
         _graph = _bootstrap.Graph;
         if (_graph == null || _graph.Count == 0) return false;
 
+        if (spawnDirector == null) spawnDirector = FindFirstObjectByType<MinionSpawnDirector>();
         Director = new HiveMindDirector(_graph, _bootstrap.Blackboard);
 
         // Hear the world exactly as the minions do, so the hive never stages an ambush based on a
@@ -219,6 +227,14 @@ public class HiveMindRunner : MonoBehaviour
 
     private void OnAmbushStaged(AmbushCandidate candidate)
     {
+        // Put a minion where the director wants one waiting, unless the player would watch it appear.
+        if (controlMinions && spawnDirector != null)
+        {
+            Vector3 spot = _graph[candidate.Node].Position.ToUnity();
+            bool staged = !PlayerCouldSee(spot) && spawnDirector.StageAmbush(spot);
+            if (logDecisions) Debug.Log($"<color=#ff9f7f>[Hive mind]</color> ambush minion {(staged ? "staged" : "not staged")} at node {candidate.Node}", this);
+        }
+
         if (!logDecisions) return;
         Debug.Log($"<color=#ff9f7f>[Hive mind]</color> staging at node {candidate.Node} " +
                   $"({candidate.Distance:0.#} m away, on route: {candidate.OnRoute}, score {candidate.Score:0.00})", this);
@@ -229,6 +245,20 @@ public class HiveMindRunner : MonoBehaviour
         if (logDecisions) Debug.Log($"<color=#ff9f7f>[Hive mind]</color> pacing -> {state}", this);
     }
 
+    // True when a point is inside the player's view and not hidden behind anything.
+    private bool PlayerCouldSee(Vector3 point)
+    {
+        var camera = Camera.main;
+        if (camera == null) return false;
+        Vector3 chest = point + Vector3.up;
+        Vector3 viewport = camera.WorldToViewportPoint(chest);
+        if (viewport.z <= 0f || viewport.x < -0.1f || viewport.x > 1.1f || viewport.y < -0.1f || viewport.y > 1.1f) return false;
+        Vector3 origin = camera.transform.position;
+        Vector3 toPoint = chest - origin;
+        if (!Physics.Raycast(origin, toPoint.normalized, out RaycastHit hit, toPoint.magnitude, ~0, QueryTriggerInteraction.Ignore)) return true;
+        return hit.distance >= toPoint.magnitude - 0.3f;
+    }
+
     private void PublishStatus()
     {
         pacingState = Director.Pacing.State.ToString();
@@ -236,6 +266,52 @@ public class HiveMindRunner : MonoBehaviour
         hottestHeat = Director.Heat.HottestHeat;
         desiredMinions = Director.DesiredMinionCount;
         ambushNode = Director.CurrentAmbush.IsValid ? Director.CurrentAmbush.Node : -1;
+    }
+
+    // ------------------------------------------------------------------ queries for other systems
+
+    /// <summary>True once the director exists, which needs an initialised AIBootstrap with a graph.</summary>
+    public bool IsReady => EnsureDirector();
+
+    /// <summary>The scene's AI blackboard, or null before the AIBootstrap is up.</summary>
+    public SharedBlackboard Blackboard => _bootstrap != null && _bootstrap.IsInitialized ? _bootstrap.Blackboard : null;
+
+    /// <summary>Graph node nearest a world position, or -1 when none is within <paramref name="maxDistance"/> metres.</summary>
+    public int NodeNear(Vector3 world, float maxDistance)
+    {
+        if (!EnsureDirector()) return -1;
+        int node = _graph.NearestNode(world.ToCore());
+        if (node < 0) return -1;
+        return Vector3.Distance(_graph[node].Position.ToUnity(), world) <= maxDistance ? node : -1;
+    }
+
+    /// <summary>
+    /// Scores every graph node the hive could stage an encounter at right now, best first. It weighs what the
+    /// hive has heard (heat), how far the node is from the player, and how recently it was used. Nodes for which
+    /// <paramref name="isUsable"/> is false are left out, which is how the caller applies what only the scene
+    /// knows, such as whether the player can see the spot.
+    /// </summary>
+    public List<AmbushCandidate> RankAmbushNodes(System.Func<int, bool> isUsable)
+    {
+        var ranked = new List<AmbushCandidate>();
+        if (!EnsureDirector()) return ranked;
+        int playerNode = ResolvePlayerNode();
+        if (playerNode < 0) return ranked;
+
+        var scorer = Director.Ambush;
+        var previous = scorer.IsUnusable;
+        scorer.IsUnusable = node => isUsable != null && !isUsable(node);
+        try { ranked = scorer.Score(_graph, Director.Heat, _bootstrap.Blackboard.RecommendedRoute, playerNode, Time.time); }
+        finally { scorer.IsUnusable = previous; }
+
+        ranked.Sort((a, b) => b.Score.CompareTo(a.Score));
+        return ranked;
+    }
+
+    /// <summary>Records that something was staged at a node, so it is not picked again straight away.</summary>
+    public void NoteAmbushUsed(int node)
+    {
+        if (Director != null) Director.Ambush.NoteUsed(node, Time.time);
     }
 
     private void OnDrawGizmos()

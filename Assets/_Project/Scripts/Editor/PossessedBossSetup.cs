@@ -816,7 +816,7 @@ namespace Alesa.Editor
                 boss.voice = audioSource;
                 boss.warningClip = warningClip;
                 boss.predictionTime = 2f;
-                boss.movementSpeed = 6.8f;
+                boss.movementSpeed = 1.8f;
                 boss.appearanceWarning = 1.25f;
                 boss.grabReach = 1.35f;
                 boss.grabWindup = 0.85f;
