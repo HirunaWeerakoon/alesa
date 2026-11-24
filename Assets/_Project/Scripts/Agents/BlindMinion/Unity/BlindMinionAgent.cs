@@ -75,6 +75,22 @@ namespace Alesa.Agents.BlindMinion
         [Tooltip("Scream loudness when it starts hunting; wakes nearby minions in a chain.")]
         [SerializeField] private float screamLoudness = 30f;
 
+        [Header("Search & memory")]
+        [Tooltip("Places checked after losing the trail, nearest the last known position first. 0 = stand still for Search Duration.")]
+        [SerializeField, Min(0)] private int sweepNodeCount = 4;
+        [Tooltip("Longest a search lasts before the minion gives up and goes back to sleep.")]
+        [SerializeField, Min(1f)] private float sweepDuration = 18f;
+        [Tooltip("Seconds spent looking around at each place it checks.")]
+        [SerializeField, Min(0f)] private float sweepDwellSeconds = 1.2f;
+        [Tooltip("Smallest area searched, however sure it was where the noise came from (m).")]
+        [SerializeField, Min(0f)] private float sweepMinRadius = 4f;
+        [Tooltip("How suspicion cools off. Sigmoidal holds it high for a while, then rolls off; Linear is the original.")]
+        [SerializeField] private DecayProfile alertDecayProfile = DecayProfile.SigmoidalTension;
+        [Tooltip("Total noise over the last few seconds at which an investigation becomes a hunt. A run of footsteps adds up. 0 = off.")]
+        [SerializeField, Min(0f)] private float excitationHuntThreshold = 60f;
+        [Tooltip("A far less alarming noise does not pull it off a gunshot; it is checked afterwards.")]
+        [SerializeField] private bool prioritizeThreats = true;
+
         [Header("Audio (optional)")]
         [SerializeField] private AudioSource voice;
         [SerializeField] private AudioClip alertScream;
@@ -158,6 +174,13 @@ namespace Alesa.Agents.BlindMinion
                 MaxHearingError = maxHearingError,
                 AlertnessMemory = alertnessMemory,
                 AlertSensitivity = alertSensitivity,
+                SweepNodeCount = sweepNodeCount,
+                SweepDuration = sweepDuration,
+                SweepDwellSeconds = sweepDwellSeconds,
+                SweepMinRadius = sweepMinRadius,
+                AlertDecayProfile = alertDecayProfile,
+                ExcitationHuntThreshold = excitationHuntThreshold,
+                PrioritizeThreats = prioritizeThreats,
             };
             // The golden angle spreads consecutive ids almost evenly round a circle without any
             // minion needing to know about the others, so they close in from different sides
