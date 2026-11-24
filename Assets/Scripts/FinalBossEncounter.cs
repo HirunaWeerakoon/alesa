@@ -81,6 +81,8 @@ public sealed class FinalBossEncounter : MonoBehaviour
         if (point != null && boss.AppearAt(point.SpawnPoint.position,point.SpawnPoint.rotation))
         {
             LastAppearance = point; requireProgress = false;
+            // The lights near her go out as she arrives, before she is visible.
+            LightFlicker.DisturbNear(point.SpawnPoint.position, 11f, 2.5f);
             if (point.ambushAudioSource != null && point.ambushAudioSource.clip != null) point.ambushAudioSource.Play();
         }
     }

@@ -232,6 +232,8 @@ public class HiveMindRunner : MonoBehaviour
         {
             Vector3 spot = _graph[candidate.Node].Position.ToUnity();
             bool staged = !PlayerCouldSee(spot) && spawnDirector.StageAmbush(spot);
+            // The lights near the ambush stutter and die, so the dark is part of the warning.
+            if (staged) LightFlicker.DisturbNear(spot, 9f, Random.Range(1.5f, 3f));
             if (logDecisions) Debug.Log($"<color=#ff9f7f>[Hive mind]</color> ambush minion {(staged ? "staged" : "not staged")} at node {candidate.Node}", this);
         }
 
