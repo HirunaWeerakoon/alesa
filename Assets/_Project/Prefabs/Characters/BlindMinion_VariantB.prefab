@@ -1,5 +1,72 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2627091155456317127
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4714323699955122342}
+  - component: {fileID: 8797638899214655772}
+  - component: {fileID: 3292891669560185958}
+  m_Layer: 0
+  m_Name: HeadHitbox
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4714323699955122342
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2627091155456317127}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.0007216484, y: -0.03590421, z: -0.01683109, w: 0.9992133}
+  m_LocalPosition: {x: -0.012470663, y: 0.16011615, z: -0.12777856}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1340354421233043648}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &8797638899214655772
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2627091155456317127}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.15963471
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &3292891669560185958
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2627091155456317127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6219eb91aefdb264a89a8bf4a7d64a58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinionHeadHitbox
+  owner: {fileID: 0}
 --- !u!1001 &8543617544045939979
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18,11 +85,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8833805373484061153, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.20689462
+      value: 0.20689464
       objectReference: {fileID: 0}
     - target: {fileID: -8833805373484061153, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.01877084
+      value: 0.018770842
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.99493533
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.99493533
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.99493533
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       propertyPath: m_LocalPosition.x
@@ -66,11 +145,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -6881390770214846263, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.06510623
+      value: 0.065106235
       objectReference: {fileID: 0}
     - target: {fileID: -6881390770214846263, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.011180666
+      value: -0.011180667
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       propertyPath: m_Name
@@ -79,14 +158,17 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 58f4d146330296f418d4da8545a7c6e2, type: 2}
+      objectReference: {fileID: 9100000, guid: e6460f2d16d3cb74a83a84eb1061f654, type: 2}
     - target: {fileID: 5866666021909216657, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 7208261743932278219, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4714323699955122342}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       insertIndex: -1
@@ -106,7 +188,18 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7924751832853109466}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 832163672289219284}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1957147589523477655}
   m_SourcePrefab: {fileID: 100100000, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
+--- !u!4 &1340354421233043648 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7208261743932278219, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
+  m_PrefabInstance: {fileID: 8543617544045939979}
+  m_PrefabAsset: {fileID: 0}
 --- !u!95 &2881058332979228826 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
@@ -126,7 +219,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 8813666731532382298}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 0.35
+  m_Radius: 0.35178164
   m_Speed: 5.5
   m_Acceleration: 8
   avoidancePriority: 50
@@ -135,7 +228,7 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 1.75
+  m_Height: 1.9599264
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
@@ -165,6 +258,8 @@ MonoBehaviour:
   navMeshSampleRadius: 2
   navMeshAreaMask: -1
   syncAttachedNavMeshAgent: 1
+  separationRadius: 1.4
+  separationStrength: 2.5
   animator: {fileID: 2881058332979228826}
 --- !u!114 &2663076544000987420
 MonoBehaviour:
@@ -314,6 +409,15 @@ MonoBehaviour:
   investigateSpeed: 1.8
   huntSpeed: 5.5
   attackRange: 1.8
+  presenceRange: 6
+  attackDamage: 20
+  attackGap: 0.3
+  biteGap: 0.2
+  playerRadius: 0.325
+  playerIdleSpeed: 0.15
+  attackWindUp: 0.35
+  missTolerance: 0.35
+  huntOnLoudNoise: 0
   screamLoudness: 30
   voice: {fileID: 4671284911977203835}
   alertScream: {fileID: 0}
@@ -337,6 +441,75 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.35
-  m_Height: 1.75
+  m_Height: 1.4188309
   m_Direction: 1
-  m_Center: {x: 0, y: 0.875, z: 0}
+  m_Center: {x: 0, y: 0.70941544, z: 0}
+--- !u!114 &832163672289219284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8813666731532382298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bab9c9a3a9a02a64383552fe3c836097, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinionCombatant
+  torsoShotsToKill: 3
+  headShotsToKill: 2
+  nearMissRadius: 2.5
+  facingAngle: 70
+  chargeSeconds: 6
+  crawlChance: 0.5
+  corpseSeconds: 12
+  torsoHits: 0
+  headHits: 0
+  dead: 0
+  charging: 0
+--- !u!114 &1957147589523477655
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8813666731532382298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f887ebf55838b641a687de4ae6e648d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinionVoice
+  voice: {fileID: 0}
+  foley: {fileID: 0}
+  alert: {fileID: 8300000, guid: 2c536cff31c3a402898ac356ebd96aba, type: 3}
+  attack: {fileID: 8300000, guid: 7d76f8d46388e4a88a47beac2f2f0bc6, type: 3}
+  neckBiteVoice: {fileID: 8300000, guid: be16685415a4349d1b6616e9308ea495, type: 3}
+  death: {fileID: 8300000, guid: 5b29b0de6b62747e68ebf332c8811f35, type: 3}
+  dying: {fileID: 8300000, guid: 4ab62cbf20de44a4582c40ed442be13a, type: 3}
+  idleBreath: {fileID: 8300000, guid: 05f860bb66f844d89908829a80c6fe13, type: 3}
+  painGrunt: {fileID: 8300000, guid: ecff13b727eaf4888a9f6a3221bdb662, type: 3}
+  chargeVocal: {fileID: 8300000, guid: 556d8ff22c4fdac40a13eea03b72a956, type: 3}
+  chargeVocalMaxSeconds: 2
+  searchVocal: {fileID: 8300000, guid: 168c9a5ac7025814ea9c89e5098a3cad, type: 3}
+  neckBiteImpact: {fileID: 8300000, guid: 29726c349dbf64b0aadfe8c9ec00d728, type: 3}
+  bodyShotImpact: {fileID: 8300000, guid: 14adc7fbf27bb4b1c928053c1060edff, type: 3}
+  headShotImpact: {fileID: 8300000, guid: 7b8f7cd6c1ac44425bef51e36781b251, type: 3}
+  attackWhiff: {fileID: 8300000, guid: 7b8f7cd6c1ac44425bef51e36781b251, type: 3}
+  headshotKill: {fileID: 8300000, guid: 9dcd13733ae1542fba4664e841eb4fff, type: 3}
+  headshotKillTail: {fileID: 0}
+  bodyFallFar: {fileID: 8300000, guid: 326203e6dcd57467c92e2bcbf9c25e85, type: 3}
+  bodyFallNear: {fileID: 8300000, guid: 763a323b04dbb4cbf99082a82ef3cb54, type: 3}
+  footstepLeft: {fileID: 8300000, guid: cfaa31361f7ba4a23b747862467ff938, type: 3}
+  footstepRight: {fileID: 8300000, guid: dcfc7dfb0dfd04a50a68e5c5d29e67c0, type: 3}
+  footstepRunLeft: {fileID: 8300000, guid: dcfc7dfb0dfd04a50a68e5c5d29e67c0, type: 3}
+  footstepRunRight: {fileID: 8300000, guid: 80e9f3f626b53418ebb33bcc0bf2e7fd, type: 3}
+  footstepCrawl: {fileID: 8300000, guid: 044d3667ee0794e55b578fce018d748e, type: 3}
+  biteLeadSeconds: 0
+  nearDeathGap: 0.3
+  strideLength: 0.85
+  minStepSpeed: 0.2
+  runStepSpeed: 3.5
+  footstepPitchJitter: 0.08
+  idleBreathMinGap: 3.5
+  idleBreathMaxGap: 9
+  idleBreathHuntingScale: 0.45

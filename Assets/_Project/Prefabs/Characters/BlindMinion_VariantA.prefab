@@ -1,5 +1,72 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &546894207741256354
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2172762172184921753}
+  - component: {fileID: 4499342117813230927}
+  - component: {fileID: 7506345323061870367}
+  m_Layer: 0
+  m_Name: HeadHitbox
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2172762172184921753
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 546894207741256354}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.0011627973, y: -0.037282128, z: -0.018208222, w: 0.99913824}
+  m_LocalPosition: {x: -0.02050995, y: 0.14348124, z: -0.16037239}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8589809850441819039}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &4499342117813230927
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 546894207741256354}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.14279228
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7506345323061870367
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 546894207741256354}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6219eb91aefdb264a89a8bf4a7d64a58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinionHeadHitbox
+  owner: {fileID: 0}
 --- !u!1001 &1386476814484072020
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8,6 +75,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.0459374
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.0459374
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.0459374
+      objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -50,11 +129,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -3660331089067622499, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.139835
+      value: -0.13983501
       objectReference: {fileID: 0}
     - target: {fileID: -3660331089067622499, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.013077708
+      value: -0.013077709
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
       propertyPath: m_Name
@@ -63,14 +142,17 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 58f4d146330296f418d4da8545a7c6e2, type: 2}
+      objectReference: {fileID: 9100000, guid: e6460f2d16d3cb74a83a84eb1061f654, type: 2}
     - target: {fileID: 5866666021909216657, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 7208261743932278219, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2172762172184921753}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
       insertIndex: -1
@@ -90,6 +172,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1971526691193009955}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3150946242459737118}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1999564917765302965}
   m_SourcePrefab: {fileID: 100100000, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
 --- !u!1 &2304902380315892485 stripped
 GameObject:
@@ -105,7 +193,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 2304902380315892485}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 0.35
+  m_Radius: 0.33462805
   m_Speed: 5.5
   m_Acceleration: 8
   avoidancePriority: 50
@@ -114,7 +202,7 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 1.75
+  m_Height: 1.8643563
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
@@ -144,6 +232,8 @@ MonoBehaviour:
   navMeshSampleRadius: 2
   navMeshAreaMask: -1
   syncAttachedNavMeshAgent: 1
+  separationRadius: 1.4
+  separationStrength: 2.5
   animator: {fileID: 4780382957286448069}
 --- !u!114 &260722908137628447
 MonoBehaviour:
@@ -293,6 +383,15 @@ MonoBehaviour:
   investigateSpeed: 1.8
   huntSpeed: 5.5
   attackRange: 1.8
+  presenceRange: 6
+  attackDamage: 20
+  attackGap: 0.3
+  biteGap: 0.2
+  playerRadius: 0.325
+  playerIdleSpeed: 0.15
+  attackWindUp: 0.35
+  missTolerance: 0.35
+  huntOnLoudNoise: 0
   screamLoudness: 30
   voice: {fileID: 3525202155834351957}
   alertScream: {fileID: 0}
@@ -316,11 +415,85 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.35
-  m_Height: 1.75
+  m_Height: 1.4203011
   m_Direction: 1
-  m_Center: {x: 0, y: 0.875, z: 0}
+  m_Center: {x: 0, y: 0.71015054, z: 0}
+--- !u!114 &3150946242459737118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2304902380315892485}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bab9c9a3a9a02a64383552fe3c836097, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinionCombatant
+  torsoShotsToKill: 3
+  headShotsToKill: 2
+  nearMissRadius: 2.5
+  facingAngle: 70
+  chargeSeconds: 6
+  crawlChance: 0.5
+  corpseSeconds: 12
+  torsoHits: 0
+  headHits: 0
+  dead: 0
+  charging: 0
+--- !u!114 &1999564917765302965
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2304902380315892485}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f887ebf55838b641a687de4ae6e648d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinionVoice
+  voice: {fileID: 0}
+  foley: {fileID: 0}
+  alert: {fileID: 8300000, guid: ceb2474913e8b5e40b17213af473d784, type: 3}
+  attack: {fileID: 8300000, guid: b7284155518ed4dbe918cab5ae88013a, type: 3}
+  neckBiteVoice: {fileID: 8300000, guid: bc2baab908f1b004691a6ecf7044f61c, type: 3}
+  death: {fileID: 8300000, guid: 9df77b70cadc8384ca073a95aebc666f, type: 3}
+  dying: {fileID: 8300000, guid: 1d92c5ac0e056b045b4461b147f95be5, type: 3}
+  idleBreath: {fileID: 8300000, guid: f1ff3e33006a291449618f6fc613e928, type: 3}
+  painGrunt: {fileID: 8300000, guid: b771cd0787c16e64e8e8ba11c3c83734, type: 3}
+  chargeVocal: {fileID: 8300000, guid: facc33c2863f26344ae87a52d1200e57, type: 3}
+  chargeVocalMaxSeconds: 0
+  searchVocal: {fileID: 8300000, guid: 168c9a5ac7025814ea9c89e5098a3cad, type: 3}
+  neckBiteImpact: {fileID: 8300000, guid: 0f4df8bc62d9e4512ba322688123d96a, type: 3}
+  bodyShotImpact: {fileID: 8300000, guid: 14adc7fbf27bb4b1c928053c1060edff, type: 3}
+  headShotImpact: {fileID: 8300000, guid: 7b8f7cd6c1ac44425bef51e36781b251, type: 3}
+  attackWhiff: {fileID: 8300000, guid: 7b8f7cd6c1ac44425bef51e36781b251, type: 3}
+  headshotKill: {fileID: 8300000, guid: a876179e000ff4ff09b30761b1a88595, type: 3}
+  headshotKillTail: {fileID: 8300000, guid: 9df77b70cadc8384ca073a95aebc666f, type: 3}
+  bodyFallFar: {fileID: 8300000, guid: 326203e6dcd57467c92e2bcbf9c25e85, type: 3}
+  bodyFallNear: {fileID: 8300000, guid: 763a323b04dbb4cbf99082a82ef3cb54, type: 3}
+  footstepLeft: {fileID: 8300000, guid: cfaa31361f7ba4a23b747862467ff938, type: 3}
+  footstepRight: {fileID: 8300000, guid: dcfc7dfb0dfd04a50a68e5c5d29e67c0, type: 3}
+  footstepRunLeft: {fileID: 8300000, guid: dcfc7dfb0dfd04a50a68e5c5d29e67c0, type: 3}
+  footstepRunRight: {fileID: 8300000, guid: 80e9f3f626b53418ebb33bcc0bf2e7fd, type: 3}
+  footstepCrawl: {fileID: 8300000, guid: 044d3667ee0794e55b578fce018d748e, type: 3}
+  biteLeadSeconds: 0
+  nearDeathGap: 0.3
+  strideLength: 0.85
+  minStepSpeed: 0.2
+  runStepSpeed: 3.5
+  footstepPitchJitter: 0.08
+  idleBreathMinGap: 3.5
+  idleBreathMaxGap: 9
+  idleBreathHuntingScale: 0.45
 --- !u!95 &4780382957286448069 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
+  m_PrefabInstance: {fileID: 1386476814484072020}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8589809850441819039 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7208261743932278219, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
   m_PrefabInstance: {fileID: 1386476814484072020}
   m_PrefabAsset: {fileID: 0}
