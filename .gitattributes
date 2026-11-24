@@ -85,6 +85,8 @@ Packages/packages-lock.json linguist-generated
 *.dxf                   lfs
 *.FBX                   lfs
 *.fbx                   lfs
+*.glb                   lfs
+*.gltf                  lfs
 *.jas                   lfs
 *.lws                   lfs
 *.lxo                   lfs

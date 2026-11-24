@@ -1,0 +1,16 @@
+{
+    "name": "Alesa.HiveMind",
+    "rootNamespace": "Alesa.HiveMind",
+    "references": [
+        "Alesa.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
