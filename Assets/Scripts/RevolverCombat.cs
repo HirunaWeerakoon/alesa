@@ -41,6 +41,8 @@ public class RevolverCombat : MonoBehaviour
     [Min(0.01f)] public float reloadSeconds = 2f;
     [Min(0.01f)] public float shotInterval = 0.35f;
     public float damage = 35f;
+    [Tooltip("How far a gunshot carries along the corridors (m). At 28 it wakes the room it is fired in and its neighbour, not the whole wing; the old value was 40.")]
+    [Min(0f)] public float gunshotNoiseRadius = 28f;
     public float range = 60f;
     public LayerMask hitMask = ~0;
     [Header("Weapon presentation")]
@@ -194,7 +196,7 @@ public class RevolverCombat : MonoBehaviour
         }
         ShotFired?.Invoke(new ShotInfo(muzzle, trajectory.normalized, struck));
         player.Notify("Shot fired", 0.3f);
-        AcousticBus.EmitSound(muzzle, 40f, SoundType.Gunshot);
+        AcousticBus.EmitSound(muzzle, gunshotNoiseRadius, SoundType.Gunshot);
         onShot.Invoke();
         WeaponStatusChanged?.Invoke();
         return true;

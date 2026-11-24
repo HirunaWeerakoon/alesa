@@ -93,18 +93,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.99493533
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.99493533
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.99493533
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
-      propertyPath: m_LocalScale.x
       value: 1.25
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
@@ -202,10 +190,9 @@ PrefabInstance:
       addedObject: {fileID: 7924751832853109466}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 832163672289219284}
+      addedObject: {fileID: 1957147589523477655}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1957147589523477655}
       addedObject: {fileID: 4627735308355480198}
   m_SourcePrefab: {fileID: 100100000, guid: a61cf538c001fba44bce17768f4dc623, type: 3}
 --- !u!4 &1340354421233043648 stripped
@@ -431,7 +418,23 @@ MonoBehaviour:
   attackWindUp: 0.35
   missTolerance: 0.35
   huntOnLoudNoise: 0
-  screamLoudness: 30
+  screamLoudness: 22
+  sweepNodeCount: 4
+  sweepDuration: 18
+  sweepDwellSeconds: 1.2
+  sweepMinRadius: 4
+  alertDecayProfile: 2
+  excitationHuntThreshold: 60
+  prioritizeThreats: 1
+  lungeEnabled: 1
+  lungeReach: 3.2
+  lungeSpeed: 8.5
+  lungeSeconds: 0.4
+  lungeCooldown: 4
+  frenzyEnabled: 1
+  frenzyCooldownMultiplier: 0.6
+  frenzyDuration: 5
+  frenzyAnimationSpeed: 1.25
   voice: {fileID: 4671284911977203835}
   alertScream: {fileID: 0}
 --- !u!136 &7924751832853109466
@@ -457,29 +460,6 @@ CapsuleCollider:
   m_Height: 1.4188309
   m_Direction: 1
   m_Center: {x: 0, y: 0.875, z: 0}
---- !u!114 &4627735308355480198
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8813666731532382298}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bab9c9a3a9a02a64383552fe3c836097, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MinionCombatant
-  torsoShotsToKill: 3
-  headShotsToKill: 2
-  nearMissRadius: 2.5
-  facingAngle: 70
-  chargeSeconds: 6
-  crawlChance: 0.5
-  corpseSeconds: 12
-  torsoHits: 0
-  headHits: 0
-  dead: 0
-  charging: 0
 --- !u!114 &1957147589523477655
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -526,14 +506,26 @@ MonoBehaviour:
   idleBreathMinGap: 3.5
   idleBreathMaxGap: 9
   idleBreathHuntingScale: 0.45
-  m_Script: {fileID: 11500000, guid: 80d4962bb362ddf4eb1fbbd03a49af6c, type: 3}
+--- !u!114 &4627735308355480198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8813666731532382298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bab9c9a3a9a02a64383552fe3c836097, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MinionCombatBridge
-  health: 100
-  damagePerHit: 1
-  windupSeconds: 0.7
-  lungeDistance: 0
-  maxHitDistance: 3.2
-  fallSeconds: 0.9
-  deathClipSeconds: 3
-  corpseSeconds: 6
+  m_EditorClassIdentifier: Assembly-CSharp::MinionCombatant
+  torsoShotsToKill: 3
+  headShotsToKill: 2
+  nearMissRadius: 2.5
+  facingAngle: 70
+  chargeSeconds: 6
+  crawlChance: 0.5
+  corpseSeconds: 12
+  torsoHits: 0
+  headHits: 0
+  dead: 0
+  charging: 0

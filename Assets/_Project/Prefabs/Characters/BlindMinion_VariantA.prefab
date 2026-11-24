@@ -174,10 +174,10 @@ PrefabInstance:
       addedObject: {fileID: 1971526691193009955}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 3150946242459737118}
+      addedObject: {fileID: 1999564917765302965}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1999564917765302965}
+      addedObject: {fileID: 9210255204162256046}
   m_SourcePrefab: {fileID: 100100000, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
 --- !u!1 &2304902380315892485 stripped
 GameObject:
@@ -392,7 +392,23 @@ MonoBehaviour:
   attackWindUp: 0.35
   missTolerance: 0.35
   huntOnLoudNoise: 0
-  screamLoudness: 30
+  screamLoudness: 22
+  sweepNodeCount: 4
+  sweepDuration: 18
+  sweepDwellSeconds: 1.2
+  sweepMinRadius: 4
+  alertDecayProfile: 2
+  excitationHuntThreshold: 60
+  prioritizeThreats: 1
+  lungeEnabled: 1
+  lungeReach: 3.2
+  lungeSpeed: 8.5
+  lungeSeconds: 0.4
+  lungeCooldown: 4
+  frenzyEnabled: 1
+  frenzyCooldownMultiplier: 0.6
+  frenzyDuration: 5
+  frenzyAnimationSpeed: 1.25
   voice: {fileID: 3525202155834351957}
   alertScream: {fileID: 0}
 --- !u!136 &1971526691193009955
@@ -418,29 +434,6 @@ CapsuleCollider:
   m_Height: 1.4203011
   m_Direction: 1
   m_Center: {x: 0, y: 0.875, z: 0}
---- !u!114 &9210255204162256046
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2304902380315892485}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bab9c9a3a9a02a64383552fe3c836097, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MinionCombatant
-  torsoShotsToKill: 3
-  headShotsToKill: 2
-  nearMissRadius: 2.5
-  facingAngle: 70
-  chargeSeconds: 6
-  crawlChance: 0.5
-  corpseSeconds: 12
-  torsoHits: 0
-  headHits: 0
-  dead: 0
-  charging: 0
 --- !u!114 &1999564917765302965
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -487,17 +480,29 @@ MonoBehaviour:
   idleBreathMinGap: 3.5
   idleBreathMaxGap: 9
   idleBreathHuntingScale: 0.45
-  m_Script: {fileID: 11500000, guid: 80d4962bb362ddf4eb1fbbd03a49af6c, type: 3}
+--- !u!114 &9210255204162256046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2304902380315892485}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bab9c9a3a9a02a64383552fe3c836097, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MinionCombatBridge
-  health: 100
-  damagePerHit: 1
-  windupSeconds: 0.7
-  lungeDistance: 0
-  maxHitDistance: 3.2
-  fallSeconds: 0.9
-  deathClipSeconds: 3
-  corpseSeconds: 6
+  m_EditorClassIdentifier: Assembly-CSharp::MinionCombatant
+  torsoShotsToKill: 3
+  headShotsToKill: 2
+  nearMissRadius: 2.5
+  facingAngle: 70
+  chargeSeconds: 6
+  crawlChance: 0.5
+  corpseSeconds: 12
+  torsoHits: 0
+  headHits: 0
+  dead: 0
+  charging: 0
 --- !u!95 &4780382957286448069 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: f7d1130739b7a20478d961c3a0afe3cb, type: 3}
