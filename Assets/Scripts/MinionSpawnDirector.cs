@@ -101,6 +101,53 @@ public sealed class MinionSpawnDirector : MonoBehaviour
 
     public int TotalSpawned => _minions.Count;
 
+    /// <summary>
+    /// How many minions the hive mind wants awake right now. It only limits waking NEW minions: one that is
+    /// already awake is never parked because the budget dropped, since that would make a hunter vanish mid-chase.
+    /// Left at its default, the director behaves exactly as before.
+    /// </summary>
+    public int AwakeBudget { get; set; } = int.MaxValue;
+
+    /// <summary>Minions currently awake.</summary>
+    public int AwakeCount
+    {
+        get
+        {
+            int n = 0;
+            foreach (var m in _minions) if (m != null && m.activeSelf) n++;
+            return n;
+        }
+    }
+
+    /// <summary>
+    /// Puts a parked minion at a position, awake, so it is already waiting when the player arrives. Used by the
+    /// hive mind's ambushes. The nearest parked minion is used, so none is dragged across the hospital.
+    /// Returns false when nothing could be staged (none parked, the awake ceiling is reached, or no floor there).
+    /// </summary>
+    public bool StageAmbush(Vector3 worldPosition)
+    {
+        _minions.RemoveAll(m => m == null);
+        if (AwakeCount >= maxSimultaneouslyAwake) return false;
+        if (!NavMesh.SamplePosition(worldPosition, out NavMeshHit hit, 2f, NavMesh.AllAreas)) return false;
+
+        GameObject best = null;
+        float bestDistance = float.MaxValue;
+        foreach (var m in _minions)
+        {
+            if (m.activeSelf) continue;
+            float d = Vector3.Distance(m.transform.position, hit.position);
+            if (d < bestDistance) { bestDistance = d; best = m; }
+        }
+        if (best == null) return false;
+
+        best.transform.SetPositionAndRotation(hit.position, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
+        best.SetActive(true);
+        var motor = best.GetComponent<Alesa.Runtime.Motion.AgentMotor>();
+        if (motor != null) motor.Warp(hit.position);
+        if (logSpawns) Debug.Log("[Spawn] ambush staged: " + best.name + " at " + hit.position.ToString("F1"), best);
+        return true;
+    }
+
     private void Start()
     {
         if (deactivateDistance <= activateDistance) deactivateDistance = activateDistance + 8f;
@@ -230,7 +277,10 @@ public sealed class MinionSpawnDirector : MonoBehaviour
             bool active = m.activeSelf;
             float d = _distances[i];
 
-            bool shouldWake = awake < maxSimultaneouslyAwake && (active ? d <= deactivateDistance : d <= activateDistance);
+            int wakeCap = Mathf.Min(maxSimultaneouslyAwake, Mathf.Max(0, AwakeBudget));
+            bool shouldWake = active
+                ? awake < maxSimultaneouslyAwake && d <= deactivateDistance
+                : awake < wakeCap && d <= activateDistance;
             if (shouldWake) awake++;
             if (shouldWake != active) m.SetActive(shouldWake);
         }
