@@ -1,4 +1,3 @@
-#if ENABLE_GV_AGENT_RUNTIME
 using System;
 using Alesa.Runtime;
 using Alesa.Runtime.Motion;
@@ -171,4 +170,3 @@ namespace Alesa.Agents.BlindMinion
         }
     }
 }
-#endif
