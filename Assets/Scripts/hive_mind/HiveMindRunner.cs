@@ -65,13 +65,27 @@ public class HiveMindRunner : MonoBehaviour
 
     public static void UnregisterThreat(Transform t) => Threats.Remove(t);
 
-    /// <summary>Player health, 1 = untouched. Set this from a health system when one exists.</summary>
+    /// <summary>
+    /// Player health, 1 = untouched. Read from <see cref="PlayerVitals"/> when one is in the scene;
+    /// settable so tests and scenes without a health system can still drive pacing.
+    /// </summary>
     public float PlayerHealthFraction { get; set; } = 1f;
+
+    private PlayerVitals _vitals;
 
     private AIBootstrap _bootstrap;
     private MazeGraph _graph;
     private float _nextTick;
     private float _lastGunshotTime = float.NegativeInfinity;
+
+    /// <summary>
+    /// Minions discovered automatically, used when nothing has registered itself. Scanning rather
+    /// than requiring a component on each prefab keeps the hive mind out of the Agent Controller's
+    /// assets, so neither side has to edit the other's work to make this run.
+    /// </summary>
+    private Alesa.Agents.BlindMinion.BlindMinionAgent[] _foundMinions =
+        System.Array.Empty<Alesa.Agents.BlindMinion.BlindMinionAgent>();
+    private float _nextMinionScan;
 
     private void OnEnable()
     {
@@ -142,6 +156,8 @@ public class HiveMindRunner : MonoBehaviour
     private PacingInputs GatherInputs()
     {
         var inputs = PacingInputs.Calm;
+        if (_vitals == null) _vitals = FindFirstObjectByType<PlayerVitals>();
+        if (_vitals != null) PlayerHealthFraction = _vitals.HealthFraction;
         inputs.PlayerHealthFraction = PlayerHealthFraction;
         inputs.BossActive = _bootstrap.Blackboard.BossActive;
 
@@ -160,6 +176,25 @@ public class HiveMindRunner : MonoBehaviour
                 float d = Vector3.Distance(Threats[i].position, p.position);
                 if (d < nearest) nearest = d;
             }
+
+            // Nothing registered itself, so look for minions directly. Rescanned on a timer
+            // because FindObjectsByType is far too expensive to run every tick.
+            if (Threats.Count == 0)
+            {
+                if (Time.time >= _nextMinionScan)
+                {
+                    _nextMinionScan = Time.time + 1f;
+                    _foundMinions = FindObjectsByType<Alesa.Agents.BlindMinion.BlindMinionAgent>(
+                        FindObjectsSortMode.None);
+                }
+                foreach (var m in _foundMinions)
+                {
+                    if (m == null || !m.isActiveAndEnabled) continue;
+                    float d = Vector3.Distance(m.transform.position, p.position);
+                    if (d < nearest) nearest = d;
+                }
+            }
+
             inputs.NearestThreatDistance = nearest;
         }
 

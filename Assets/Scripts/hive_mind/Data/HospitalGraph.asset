@@ -1,0 +1,3396 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4b2955d6302c1e42b38270168bb40f6, type: 3}
+  m_Name: HospitalGraph
+  m_EditorClassIdentifier: Assembly-CSharp::MazeGraphAsset
+  nodes:
+  - position: {x: 166.06667, y: 24.659998, z: 62.100002}
+    label: N0
+    tags: 1
+  - position: {x: 167.86668, y: 24.659998, z: 52.63333}
+    label: N1
+    tags: 1
+  - position: {x: 172.23334, y: 24.659998, z: 52.63333}
+    label: N2
+    tags: 1
+  - position: {x: 175.03334, y: 24.659998, z: 52.399998}
+    label: N3
+    tags: 1
+  - position: {x: 170.40001, y: 24.659998, z: 60.566666}
+    label: N4
+    tags: 1
+  - position: {x: 175.53334, y: 24.659998, z: 59.766666}
+    label: N5
+    tags: 1
+  - position: {x: 172.70001, y: 24.659998, z: 59.033337}
+    label: N6
+    tags: 1
+  - position: {x: 167.33336, y: 24.659998, z: 59.899998}
+    label: N7
+    tags: 1
+  - position: {x: 191.3, y: 24.659998, z: 52.333332}
+    label: N8
+    tags: 1
+  - position: {x: 187.50002, y: 24.659998, z: 52.166668}
+    label: N9
+    tags: 1
+  - position: {x: 184.3, y: 24.659998, z: 52.333332}
+    label: N10
+    tags: 1
+  - position: {x: 180.76668, y: 24.659998, z: 59.833332}
+    label: N11
+    tags: 1
+  - position: {x: 184.5, y: 24.659998, z: 59.033337}
+    label: N12
+    tags: 1
+  - position: {x: 187.23335, y: 24.659998, z: 58.966663}
+    label: N13
+    tags: 1
+  - position: {x: 189.23334, y: 24.659998, z: 55.099995}
+    label: N14
+    tags: 1
+  - position: {x: 181.16667, y: 24.659998, z: 62.933334}
+    label: N15
+    tags: 1
+  - position: {x: 190.3, y: 24.659998, z: 59.86667}
+    label: N16
+    tags: 1
+  - position: {x: 201.16667, y: 24.659998, z: 62.933334}
+    label: N17
+    tags: 1
+  - position: {x: 198.3, y: 24.659998, z: 59.066666}
+    label: N18
+    tags: 1
+  - position: {x: 194.73334, y: 24.659998, z: 59.833332}
+    label: N19
+    tags: 1
+  - position: {x: 201.10002, y: 24.659998, z: 59.899998}
+    label: N20
+    tags: 1
+  - position: {x: 166.06667, y: 24.659998, z: 65.86667}
+    label: N21
+    tags: 1
+  - position: {x: 166.06667, y: 24.659998, z: 72.4}
+    label: N22
+    tags: 0
+  - position: {x: 167.26668, y: 24.659998, z: 75.333336}
+    label: N23
+    tags: 1
+  - position: {x: 175.43335, y: 24.659998, z: 71.833336}
+    label: N24
+    tags: 1
+  - position: {x: 171.16669, y: 24.659998, z: 71.066666}
+    label: N25
+    tags: 1
+  - position: {x: 179.53334, y: 24.659998, z: 71.833336}
+    label: N26
+    tags: 1
+  - position: {x: 181.93335, y: 24.659998, z: 66.03333}
+    label: N27
+    tags: 1
+  - position: {x: 182.06667, y: 24.659998, z: 71}
+    label: N28
+    tags: 1
+  - position: {x: 181.16667, y: 24.659998, z: 75.46667}
+    label: N29
+    tags: 1
+  - position: {x: 188.96667, y: 24.659998, z: 71.833336}
+    label: N30
+    tags: 1
+  - position: {x: 185.93335, y: 24.659998, z: 71.066666}
+    label: N31
+    tags: 1
+  - position: {x: 198.33336, y: 24.659998, z: 71.06667}
+    label: N32
+    tags: 1
+  - position: {x: 201.16669, y: 24.659998, z: 66.03333}
+    label: N33
+    tags: 1
+  - position: {x: 201.93335, y: 24.659998, z: 68.9}
+    label: N34
+    tags: 1
+  - position: {x: 192.36668, y: 24.659998, z: 71.76667}
+    label: N35
+    tags: 1
+  - position: {x: 195.36668, y: 24.659998, z: 71.76667}
+    label: N36
+    tags: 0
+  - position: {x: 201.93335, y: 24.659998, z: 75.666664}
+    label: N37
+    tags: 1
+  - position: {x: 158.06668, y: 24.659998, z: 78.93334}
+    label: N38
+    tags: 1
+  - position: {x: 161.16667, y: 24.659998, z: 86.36667}
+    label: N39
+    tags: 1
+  - position: {x: 161.93335, y: 24.659998, z: 82.299995}
+    label: N40
+    tags: 1
+  - position: {x: 161.10002, y: 24.659998, z: 79}
+    label: N41
+    tags: 1
+  - position: {x: 166.06667, y: 24.659998, z: 79.799995}
+    label: N42
+    tags: 1
+  - position: {x: 175.43335, y: 24.659998, z: 83.06667}
+    label: N43
+    tags: 1
+  - position: {x: 171.16669, y: 24.659998, z: 83.833336}
+    label: N44
+    tags: 1
+  - position: {x: 167.33336, y: 24.659998, z: 83.00001}
+    label: N45
+    tags: 1
+  - position: {x: 179.53334, y: 24.659998, z: 83.833336}
+    label: N46
+    tags: 1
+  - position: {x: 181.93335, y: 24.659998, z: 78.56667}
+    label: N47
+    tags: 1
+  - position: {x: 182.06667, y: 24.659998, z: 83.00001}
+    label: N48
+    tags: 1
+  - position: {x: 181.16667, y: 24.659998, z: 88}
+    label: N49
+    tags: 1
+  - position: {x: 188.96667, y: 24.659998, z: 83.833336}
+    label: N50
+    tags: 1
+  - position: {x: 185.93335, y: 24.659998, z: 83.06667}
+    label: N51
+    tags: 1
+  - position: {x: 201.16667, y: 24.659998, z: 88}
+    label: N52
+    tags: 1
+  - position: {x: 201.16669, y: 24.659998, z: 78.56667}
+    label: N53
+    tags: 1
+  - position: {x: 201.93335, y: 24.659998, z: 82.833336}
+    label: N54
+    tags: 1
+  - position: {x: 201.16669, y: 24.659998, z: 85.5}
+    label: N55
+    tags: 1
+  - position: {x: 194.73335, y: 24.659998, z: 83.833336}
+    label: N56
+    tags: 1
+  - position: {x: 197.46667, y: 24.659998, z: 83.06667}
+    label: N57
+    tags: 1
+  - position: {x: 161.93335, y: 24.659998, z: 89.76666}
+    label: N58
+    tags: 1
+  - position: {x: 165.23334, y: 24.659998, z: 91.06666}
+    label: N59
+    tags: 1
+  - position: {x: 161.93335, y: 24.659998, z: 95.333336}
+    label: N60
+    tags: 1
+  - position: {x: 165.23334, y: 24.659998, z: 101.666664}
+    label: N61
+    tags: 1
+  - position: {x: 161.93335, y: 24.659998, z: 98.63333}
+    label: N62
+    tags: 1
+  - position: {x: 162.00002, y: 24.659998, z: 101.6}
+    label: N63
+    tags: 1
+  - position: {x: 174.93335, y: 24.659998, z: 91.833336}
+    label: N64
+    tags: 1
+  - position: {x: 170.66669, y: 24.659998, z: 91.06666}
+    label: N65
+    tags: 1
+  - position: {x: 174.93335, y: 24.659998, z: 102.03333}
+    label: N66
+    tags: 1
+  - position: {x: 170.66669, y: 24.659998, z: 101.666664}
+    label: N67
+    tags: 1
+  - position: {x: 179.53334, y: 24.659998, z: 101.666664}
+    label: N68
+    tags: 1
+  - position: {x: 179.53334, y: 24.659998, z: 91.833336}
+    label: N69
+    tags: 1
+  - position: {x: 181.16667, y: 24.659998, z: 98.76666}
+    label: N70
+    tags: 1
+  - position: {x: 181.93335, y: 24.659998, z: 94.93333}
+    label: N71
+    tags: 1
+  - position: {x: 201.16669, y: 24.659998, z: 91.43333}
+    label: N72
+    tags: 1
+  - position: {x: 201.93335, y: 24.659998, z: 94.1}
+    label: N73
+    tags: 1
+  - position: {x: 195.00002, y: 24.659998, z: 96.06666}
+    label: N74
+    tags: 1
+  - position: {x: 198.43335, y: 24.659998, z: 96.833336}
+    label: N75
+    tags: 1
+  - position: {x: 181.53334, y: 24.659998, z: 103.200005}
+    label: N76
+    tags: 1
+  - position: {x: 100.76666, y: 24.648401, z: -0.2666669}
+    label: N77
+    tags: 1
+  - position: {x: 100.63333, y: 24.648401, z: -2.7666671}
+    label: N78
+    tags: 1
+  - position: {x: 101.36667, y: 24.648401, z: -5.333334}
+    label: N79
+    tags: 1
+  - position: {x: 81.56667, y: 24.648401, z: -5.8000007}
+    label: N80
+    tags: 1
+  - position: {x: 81.5, y: 24.648401, z: -2.3333337}
+    label: N81
+    tags: 1
+  - position: {x: 92.333336, y: 24.648401, z: -3.333334}
+    label: N82
+    tags: 1
+  - position: {x: 84.966675, y: 24.648401, z: -5.933334}
+    label: N83
+    tags: 1
+  - position: {x: 89.833336, y: 24.648401, z: -4.8000007}
+    label: N84
+    tags: 1
+  - position: {x: 87.1, y: 24.648401, z: -3.633334}
+    label: N85
+    tags: 1
+  - position: {x: 89.6, y: 24.648401, z: -0.5666671}
+    label: N86
+    tags: 1
+  - position: {x: 86.333336, y: 24.648401, z: -1.2333337}
+    label: N87
+    tags: 1
+  - position: {x: 82.933334, y: 24.648401, z: -0.06666692}
+    label: N88
+    tags: 1
+  - position: {x: 112.5, y: 24.648401, z: -0.3000002}
+    label: N89
+    tags: 1
+  - position: {x: 111.93333, y: 24.648401, z: -7.100001}
+    label: N90
+    tags: 1
+  - position: {x: 109.56667, y: 24.648401, z: -0.5333338}
+    label: N91
+    tags: 1
+  - position: {x: 126.333336, y: 24.648401, z: -7.0000005}
+    label: N92
+    tags: 1
+  - position: {x: 121.43334, y: 24.648401, z: -6.700001}
+    label: N93
+    tags: 1
+  - position: {x: 117.86667, y: 24.648401, z: -6.3000007}
+    label: N94
+    tags: 1
+  - position: {x: 108.200005, y: 24.648401, z: -4.0333343}
+    label: N95
+    tags: 1
+  - position: {x: 108.86667, y: 24.648401, z: -6.966667}
+    label: N96
+    tags: 1
+  - position: {x: 114.333336, y: 24.648401, z: -5.8666673}
+    label: N97
+    tags: 1
+  - position: {x: 120.43334, y: 24.648401, z: -2.8000004}
+    label: N98
+    tags: 1
+  - position: {x: 111.46667, y: 24.648401, z: -3.6666672}
+    label: N99
+    tags: 1
+  - position: {x: 116.86667, y: 24.648401, z: -2.8000004}
+    label: N100
+    tags: 1
+  - position: {x: 123.43333, y: 24.648401, z: -4.8}
+    label: N101
+    tags: 1
+  - position: {x: 125.466675, y: 24.648401, z: -3.1000004}
+    label: N102
+    tags: 1
+  - position: {x: 104.600006, y: 24.648401, z: -0.13333352}
+    label: N103
+    tags: 1
+  - position: {x: 122.966675, y: 24.648401, z: -1.766667}
+    label: N104
+    tags: 1
+  - position: {x: 105.06667, y: 24.648401, z: -4.833334}
+    label: N105
+    tags: 1
+  - position: {x: 92.53333, y: 24.648401, z: 0.6666667}
+    label: N106
+    tags: 1
+  - position: {x: 97.166664, y: 24.648401, z: 22.1}
+    label: N107
+    tags: 1
+  - position: {x: 92.6, y: 24.648401, z: 22.800001}
+    label: N108
+    tags: 1
+  - position: {x: 101.26667, y: 24.648401, z: 3.3000002}
+    label: N109
+    tags: 1
+  - position: {x: 85.06667, y: 24.648401, z: 2.2333333}
+    label: N110
+    tags: 1
+  - position: {x: 87.86667, y: 24.648401, z: 4.0333333}
+    label: N111
+    tags: 1
+  - position: {x: 83.100006, y: 24.765068, z: 3.8666668}
+    label: N112
+    tags: 1
+  - position: {x: 90.666664, y: 24.648401, z: 3.7666664}
+    label: N113
+    tags: 1
+  - position: {x: 87.36667, y: 24.648401, z: 22.1}
+    label: N114
+    tags: 1
+  - position: {x: 100.833336, y: 24.648401, z: 10.166667}
+    label: N115
+    tags: 1
+  - position: {x: 88.43333, y: 24.648401, z: 14.000001}
+    label: N116
+    tags: 1
+  - position: {x: 87.666664, y: 24.648401, z: 9.666667}
+    label: N117
+    tags: 1
+  - position: {x: 101.76666, y: 24.648401, z: 16.4}
+    label: N118
+    tags: 1
+  - position: {x: 101.03333, y: 24.648401, z: 22}
+    label: N119
+    tags: 1
+  - position: {x: 123.100006, y: 24.648401, z: 13.7}
+    label: N120
+    tags: 1
+  - position: {x: 123.200005, y: 24.648401, z: 4.5}
+    label: N121
+    tags: 1
+  - position: {x: 123.9, y: 24.648401, z: 9.099999}
+    label: N122
+    tags: 1
+  - position: {x: 110.600006, y: 24.648401, z: 2.1000001}
+    label: N123
+    tags: 1
+  - position: {x: 105.53333, y: 24.648401, z: 3.2}
+    label: N124
+    tags: 1
+  - position: {x: 108, y: 24.648401, z: 1.5333333}
+    label: N125
+    tags: 1
+  - position: {x: 120.00001, y: 24.648401, z: 12.833333}
+    label: N126
+    tags: 1
+  - position: {x: 116.833336, y: 24.7484, z: 12.133334}
+    label: N127
+    tags: 1
+  - position: {x: 118.43333, y: 24.648401, z: 16.266668}
+    label: N128
+    tags: 1
+  - position: {x: 123.100006, y: 24.648401, z: 22.700003}
+    label: N129
+    tags: 1
+  - position: {x: 123.9, y: 24.648401, z: 17.166666}
+    label: N130
+    tags: 1
+  - position: {x: 123.200005, y: 24.648401, z: 19.933334}
+    label: N131
+    tags: 1
+  - position: {x: 116.200005, y: 24.648401, z: 21.333334}
+    label: N132
+    tags: 1
+  - position: {x: 120.46667, y: 24.648401, z: 20.666666}
+    label: N133
+    tags: 1
+  - position: {x: 125.700005, y: 24.648401, z: 22.266668}
+    label: N134
+    tags: 1
+  - position: {x: 119.5, y: 24.648401, z: 23.066668}
+    label: N135
+    tags: 1
+  - position: {x: 116.6, y: 24.648401, z: 25.4}
+    label: N136
+    tags: 16
+  - position: {x: 132.66667, y: 24.648401, z: 20.533333}
+    label: N137
+    tags: 1
+  - position: {x: 137.33333, y: 24.648401, z: 20.533333}
+    label: N138
+    tags: 1
+  - position: {x: 140.66667, y: 24.648401, z: 20.533333}
+    label: N139
+    tags: 1
+  - position: {x: 144.33333, y: 24.648401, z: 20.466667}
+    label: N140
+    tags: 1
+  - position: {x: 128.7, y: 24.648401, z: 20.566668}
+    label: N141
+    tags: 1
+  - position: {x: 142.36667, y: 24.648401, z: 22.9}
+    label: N142
+    tags: 1
+  - position: {x: 136.16667, y: 24.648401, z: 23.933334}
+    label: N143
+    tags: 1
+  - position: {x: 148.33333, y: 24.648401, z: 22.233332}
+    label: N144
+    tags: 1
+  - position: {x: 150.96666, y: 24.648401, z: 21.533333}
+    label: N145
+    tags: 1
+  - position: {x: 168.1, y: 24.648401, z: 9.633333}
+    label: N146
+    tags: 0
+  - position: {x: 167.2, y: 24.648401, z: 24.699999}
+    label: N147
+    tags: 1
+  - position: {x: 166.59999, y: 24.648401, z: 13.266667}
+    label: N148
+    tags: 1
+  - position: {x: 167.40001, y: 24.648401, z: 18.533335}
+    label: N149
+    tags: 1
+  - position: {x: 157.8, y: 24.648401, z: 21.9}
+    label: N150
+    tags: 1
+  - position: {x: 162.00002, y: 24.648401, z: 21.199999}
+    label: N151
+    tags: 1
+  - position: {x: 166.3, y: 24.648401, z: 21.1}
+    label: N152
+    tags: 1
+  - position: {x: 171.76668, y: 24.648401, z: 19.9}
+    label: N153
+    tags: 1
+  - position: {x: 175.5, y: 24.648401, z: 18.233332}
+    label: N154
+    tags: 1
+  - position: {x: 178.06667, y: 24.648401, z: 20.566668}
+    label: N155
+    tags: 1
+  - position: {x: 171.40001, y: 24.648401, z: 24.033335}
+    label: N156
+    tags: 1
+  - position: {x: 176.03333, y: 24.648401, z: 25}
+    label: N157
+    tags: 1
+  - position: {x: 175.5, y: 24.648401, z: 21.6}
+    label: N158
+    tags: 1
+  - position: {x: 179.46666, y: 24.648401, z: 18.433334}
+    label: N159
+    tags: 1
+  - position: {x: 179.33333, y: 24.648401, z: 23.966667}
+    label: N160
+    tags: 1
+  - position: {x: 120.200005, y: 24.648401, z: 25.9}
+    label: N161
+    tags: 1
+  - position: {x: 123.86667, y: 24.648401, z: 41.7}
+    label: N162
+    tags: 1
+  - position: {x: 123.9, y: 24.648401, z: 35.766666}
+    label: N163
+    tags: 1
+  - position: {x: 123.200005, y: 24.648401, z: 31}
+    label: N164
+    tags: 1
+  - position: {x: 126.466675, y: 24.648401, z: 42.5}
+    label: N165
+    tags: 1
+  - position: {x: 127.166664, y: 24.648401, z: 36.333332}
+    label: N166
+    tags: 1
+  - position: {x: 126.333336, y: 24.648401, z: 30.366667}
+    label: N167
+    tags: 1
+  - position: {x: 139.06667, y: 24.648401, z: 37.533333}
+    label: N168
+    tags: 0
+  - position: {x: 133.53334, y: 24.648401, z: 31.566666}
+    label: N169
+    tags: 1
+  - position: {x: 153.56667, y: 24.648401, z: 50.766666}
+    label: N170
+    tags: 1
+  - position: {x: 153.56667, y: 24.648401, z: 46.5}
+    label: N171
+    tags: 1
+  - position: {x: 171.16667, y: 24.648401, z: 29.466667}
+    label: N172
+    tags: 1
+  - position: {x: 168.00002, y: 24.648401, z: 29.333334}
+    label: N173
+    tags: 1
+  - position: {x: 170.96667, y: 24.648401, z: 26.566666}
+    label: N174
+    tags: 1
+  - position: {x: 177.7, y: 24.648401, z: 28.1}
+    label: N175
+    tags: 1
+  - position: {x: 159.8, y: 24.648401, z: 49.8}
+    label: N176
+    tags: 1
+  - position: {x: 174.16667, y: 24.648401, z: 27.266668}
+    label: N177
+    tags: 1
+  - position: {x: 167.1, y: 24.648401, z: 39.7}
+    label: N178
+    tags: 1
+  - position: {x: 167.90001, y: 24.648401, z: 37.033337}
+    label: N179
+    tags: 1
+  - position: {x: 167.2, y: 24.648401, z: 33.600002}
+    label: N180
+    tags: 1
+  - position: {x: 175.40002, y: 24.648401, z: 30.833334}
+    label: N181
+    tags: 1
+  - position: {x: 154.66667, y: 24.648401, z: 41.133335}
+    label: N182
+    tags: 1
+  - position: {x: 162.06667, y: 24.648401, z: 48.333332}
+    label: N183
+    tags: 1
+  - position: {x: 159.76668, y: 24.648401, z: 43.400005}
+    label: N184
+    tags: 1
+  - position: {x: 155.96667, y: 24.648401, z: 43.400005}
+    label: N185
+    tags: 1
+  - position: {x: 167.86667, y: 24.648401, z: 43.966663}
+    label: N186
+    tags: 1
+  - position: {x: 167.16667, y: 24.648401, z: 47.63333}
+    label: N187
+    tags: 1
+  - position: {x: 162.13335, y: 24.648401, z: 39.466667}
+    label: N188
+    tags: 1
+  - position: {x: 158.26668, y: 24.648401, z: 39.100002}
+    label: N189
+    tags: 1
+  - position: {x: 178.2, y: 24.648401, z: 44.899998}
+    label: N190
+    tags: 1
+  - position: {x: 173.33336, y: 24.648401, z: 44.766666}
+    label: N191
+    tags: 1
+  - position: {x: 175.5, y: 24.648401, z: 46.333332}
+    label: N192
+    tags: 1
+  - position: {x: 159.23334, y: 24.648401, z: 46.233334}
+    label: N193
+    tags: 1
+  - position: {x: 172.36668, y: 24.648401, z: 48.13333}
+    label: N194
+    tags: 1
+  - position: {x: 178.36665, y: 24.648401, z: 48.63333}
+    label: N195
+    tags: 1
+  - position: {x: 156.66667, y: 24.648401, z: 46.833332}
+    label: N196
+    tags: 1
+  - position: {x: 179.3, y: 24.648401, z: 30.166666}
+    label: N197
+    tags: 1
+  - position: {x: 187.56667, y: 24.648401, z: 34.86667}
+    label: N198
+    tags: 1
+  - position: {x: 188.86665, y: 24.648401, z: 32.56667}
+    label: N199
+    tags: 1
+  - position: {x: 185.56665, y: 24.648401, z: 30.166666}
+    label: N200
+    tags: 1
+  - position: {x: 182.09999, y: 24.648401, z: 30.833334}
+    label: N201
+    tags: 1
+  - position: {x: 189.06667, y: 24.648401, z: 37.600002}
+    label: N202
+    tags: 1
+  - position: {x: 192.36665, y: 24.648401, z: 42.666668}
+    label: N203
+    tags: 1
+  - position: {x: 186.53333, y: 24.648401, z: 42.666668}
+    label: N204
+    tags: 1
+  - position: {x: 188.66667, y: 24.648401, z: 46.933334}
+    label: N205
+    tags: 1
+  - position: {x: 162.16667, y: 24.648401, z: 51.3}
+    label: N206
+    tags: 1
+  - position: {x: 178.33333, y: 24.648401, z: 53.333332}
+    label: N207
+    tags: 1
+  - position: {x: 165.40001, y: 24.66, z: 58.3}
+    label: N208
+    tags: 1
+  - position: {x: 166.40001, y: 24.66, z: 69.6}
+    label: N209
+    tags: 0
+  - position: {x: 202.70001, y: 24.66, z: 72.6}
+    label: N210
+    tags: 1
+  - position: {x: 165.40001, y: 24.66, z: 84.600006}
+    label: N211
+    tags: 1
+  - position: {x: 192.00002, y: 24.66, z: 84.600006}
+    label: N212
+    tags: 1
+  - position: {x: 162.70001, y: 24.66, z: 92.799995}
+    label: N213
+    tags: 1
+  - position: {x: 202.70001, y: 24.66, z: 97.6}
+    label: N214
+    tags: 1
+  - position: {x: 192.40001, y: 24.66, z: 95.299995}
+    label: N215
+    tags: 0
+  - position: {x: 160.40001, y: 24.66, z: 103.6}
+    label: N216
+    tags: 1
+  - position: {x: 105.1, y: 24.648401, z: -7.4000006}
+    label: N217
+    tags: 1
+  - position: {x: 107.1, y: 24.648401, z: -1.3000007}
+    label: N218
+    tags: 1
+  - position: {x: 88.1, y: 24.648401, z: 18.300001}
+    label: N219
+    tags: 1
+  - position: {x: 116.200005, y: 24.7984, z: 14.900001}
+    label: N220
+    tags: 1
+  - position: {x: 125.5, y: 24.648401, z: 25.6}
+    label: N221
+    tags: 1
+  - position: {x: 128, y: 24.648401, z: 25.6}
+    label: N222
+    tags: 1
+  - position: {x: 144.6, y: 24.648401, z: 25.6}
+    label: N223
+    tags: 1
+  - position: {x: 145.7, y: 24.648401, z: 22.6}
+    label: N224
+    tags: 1
+  - position: {x: 153.6, y: 24.648401, z: 22.6}
+    label: N225
+    tags: 1
+  - position: {x: 172.5, y: 24.648401, z: 17.5}
+    label: N226
+    tags: 1
+  - position: {x: 144.6, y: 24.648401, z: 43.5}
+    label: N227
+    tags: 16
+  - position: {x: 153.6, y: 24.648401, z: 38.4}
+    label: N228
+    tags: 1
+  - position: {x: 162.6, y: 24.648401, z: 45.6}
+    label: N229
+    tags: 1
+  - position: {x: 189.59999, y: 24.648401, z: 29.5}
+    label: N230
+    tags: 1
+  - position: {x: 193.59999, y: 24.648401, z: 51.2}
+    label: N231
+    tags: 1
+  - position: {x: 193.59999, y: 24.648401, z: 38.4}
+    label: N232
+    tags: 1
+  - position: {x: 182.5, y: 24.648401, z: 38.4}
+    label: N233
+    tags: 1
+  edges:
+  - a: 0
+    b: 7
+    hasDoor: 0
+    doorPath: 
+  - a: 0
+    b: 21
+    hasDoor: 0
+    doorPath: 
+  - a: 0
+    b: 208
+    hasDoor: 0
+    doorPath: 
+  - a: 0
+    b: 4
+    hasDoor: 0
+    doorPath: 
+  - a: 0
+    b: 6
+    hasDoor: 0
+    doorPath: 
+  - a: 0
+    b: 209
+    hasDoor: 0
+    doorPath: 
+  - a: 1
+    b: 2
+    hasDoor: 0
+    doorPath: 
+  - a: 1
+    b: 3
+    hasDoor: 0
+    doorPath: 
+  - a: 2
+    b: 3
+    hasDoor: 0
+    doorPath: 
+  - a: 2
+    b: 207
+    hasDoor: 0
+    doorPath: 
+  - a: 3
+    b: 207
+    hasDoor: 0
+    doorPath: 
+  - a: 4
+    b: 6
+    hasDoor: 0
+    doorPath: 
+  - a: 4
+    b: 7
+    hasDoor: 0
+    doorPath: 
+  - a: 4
+    b: 5
+    hasDoor: 0
+    doorPath: 
+  - a: 4
+    b: 208
+    hasDoor: 0
+    doorPath: 
+  - a: 4
+    b: 21
+    hasDoor: 0
+    doorPath: 
+  - a: 5
+    b: 6
+    hasDoor: 0
+    doorPath: 
+  - a: 5
+    b: 11
+    hasDoor: 0
+    doorPath: 
+  - a: 5
+    b: 15
+    hasDoor: 0
+    doorPath: 
+  - a: 5
+    b: 7
+    hasDoor: 0
+    doorPath: 
+  - a: 5
+    b: 27
+    hasDoor: 0
+    doorPath: 
+  - a: 6
+    b: 7
+    hasDoor: 0
+    doorPath: 
+  - a: 6
+    b: 208
+    hasDoor: 0
+    doorPath: 
+  - a: 6
+    b: 11
+    hasDoor: 0
+    doorPath: 
+  - a: 7
+    b: 208
+    hasDoor: 0
+    doorPath: 
+  - a: 7
+    b: 21
+    hasDoor: 0
+    doorPath: 
+  - a: 8
+    b: 14
+    hasDoor: 0
+    doorPath: 
+  - a: 8
+    b: 9
+    hasDoor: 0
+    doorPath: 
+  - a: 8
+    b: 10
+    hasDoor: 0
+    doorPath: 
+  - a: 8
+    b: 16
+    hasDoor: 0
+    doorPath: 
+  - a: 8
+    b: 13
+    hasDoor: 0
+    doorPath: 
+  - a: 8
+    b: 19
+    hasDoor: 0
+    doorPath: 
+  - a: 9
+    b: 10
+    hasDoor: 0
+    doorPath: 
+  - a: 9
+    b: 14
+    hasDoor: 0
+    doorPath: 
+  - a: 9
+    b: 13
+    hasDoor: 0
+    doorPath: 
+  - a: 9
+    b: 12
+    hasDoor: 0
+    doorPath: 
+  - a: 9
+    b: 16
+    hasDoor: 0
+    doorPath: 
+  - a: 10
+    b: 14
+    hasDoor: 0
+    doorPath: 
+  - a: 10
+    b: 13
+    hasDoor: 0
+    doorPath: 
+  - a: 11
+    b: 15
+    hasDoor: 0
+    doorPath: 
+  - a: 11
+    b: 12
+    hasDoor: 0
+    doorPath: 
+  - a: 11
+    b: 27
+    hasDoor: 0
+    doorPath: 
+  - a: 11
+    b: 13
+    hasDoor: 0
+    doorPath: 
+  - a: 12
+    b: 13
+    hasDoor: 0
+    doorPath: 
+  - a: 12
+    b: 15
+    hasDoor: 0
+    doorPath: 
+  - a: 12
+    b: 16
+    hasDoor: 0
+    doorPath: 
+  - a: 12
+    b: 14
+    hasDoor: 0
+    doorPath: 
+  - a: 12
+    b: 27
+    hasDoor: 0
+    doorPath: 
+  - a: 13
+    b: 16
+    hasDoor: 0
+    doorPath: 
+  - a: 13
+    b: 14
+    hasDoor: 0
+    doorPath: 
+  - a: 13
+    b: 15
+    hasDoor: 0
+    doorPath: 
+  - a: 14
+    b: 16
+    hasDoor: 0
+    doorPath: 
+  - a: 15
+    b: 27
+    hasDoor: 0
+    doorPath: 
+  - a: 15
+    b: 28
+    hasDoor: 0
+    doorPath: 
+  - a: 16
+    b: 19
+    hasDoor: 0
+    doorPath: 
+  - a: 16
+    b: 18
+    hasDoor: 0
+    doorPath: 
+  - a: 17
+    b: 20
+    hasDoor: 0
+    doorPath: 
+  - a: 17
+    b: 33
+    hasDoor: 0
+    doorPath: 
+  - a: 17
+    b: 18
+    hasDoor: 0
+    doorPath: 
+  - a: 17
+    b: 34
+    hasDoor: 0
+    doorPath: 
+  - a: 17
+    b: 19
+    hasDoor: 0
+    doorPath: 
+  - a: 17
+    b: 32
+    hasDoor: 0
+    doorPath: 
+  - a: 18
+    b: 20
+    hasDoor: 0
+    doorPath: 
+  - a: 18
+    b: 19
+    hasDoor: 0
+    doorPath: 
+  - a: 18
+    b: 33
+    hasDoor: 0
+    doorPath: 
+  - a: 19
+    b: 20
+    hasDoor: 0
+    doorPath: 
+  - a: 14
+    b: 19
+    hasDoor: 0
+    doorPath: 
+  - a: 13
+    b: 19
+    hasDoor: 0
+    doorPath: 
+  - a: 20
+    b: 33
+    hasDoor: 0
+    doorPath: 
+  - a: 21
+    b: 209
+    hasDoor: 0
+    doorPath: 
+  - a: 21
+    b: 208
+    hasDoor: 0
+    doorPath: 
+  - a: 22
+    b: 23
+    hasDoor: 0
+    doorPath: 
+  - a: 22
+    b: 25
+    hasDoor: 0
+    doorPath: 
+  - a: 23
+    b: 25
+    hasDoor: 0
+    doorPath: 
+  - a: 23
+    b: 24
+    hasDoor: 0
+    doorPath: 
+  - a: 24
+    b: 26
+    hasDoor: 0
+    doorPath: 
+  - a: 24
+    b: 25
+    hasDoor: 0
+    doorPath: 
+  - a: 24
+    b: 28
+    hasDoor: 0
+    doorPath: 
+  - a: 24
+    b: 29
+    hasDoor: 0
+    doorPath: 
+  - a: 24
+    b: 27
+    hasDoor: 0
+    doorPath: 
+  - a: 25
+    b: 26
+    hasDoor: 0
+    doorPath: 
+  - a: 26
+    b: 28
+    hasDoor: 0
+    doorPath: 
+  - a: 26
+    b: 29
+    hasDoor: 0
+    doorPath: 
+  - a: 26
+    b: 27
+    hasDoor: 0
+    doorPath: 
+  - a: 26
+    b: 31
+    hasDoor: 0
+    doorPath: 
+  - a: 26
+    b: 47
+    hasDoor: 0
+    doorPath: 
+  - a: 27
+    b: 28
+    hasDoor: 0
+    doorPath: 
+  - a: 27
+    b: 31
+    hasDoor: 0
+    doorPath: 
+  - a: 28
+    b: 31
+    hasDoor: 0
+    doorPath: 
+  - a: 28
+    b: 29
+    hasDoor: 0
+    doorPath: 
+  - a: 28
+    b: 30
+    hasDoor: 0
+    doorPath: 
+  - a: 29
+    b: 47
+    hasDoor: 0
+    doorPath: 
+  - a: 29
+    b: 31
+    hasDoor: 0
+    doorPath: 
+  - a: 29
+    b: 48
+    hasDoor: 0
+    doorPath: 
+  - a: 30
+    b: 31
+    hasDoor: 0
+    doorPath: 
+  - a: 30
+    b: 35
+    hasDoor: 0
+    doorPath: 
+  - a: 30
+    b: 36
+    hasDoor: 0
+    doorPath: 
+  - a: 29
+    b: 30
+    hasDoor: 0
+    doorPath: 
+  - a: 31
+    b: 35
+    hasDoor: 0
+    doorPath: 
+  - a: 32
+    b: 34
+    hasDoor: 0
+    doorPath: 
+  - a: 32
+    b: 210
+    hasDoor: 0
+    doorPath: 
+  - a: 32
+    b: 33
+    hasDoor: 0
+    doorPath: 
+  - a: 33
+    b: 34
+    hasDoor: 0
+    doorPath: 
+  - a: 33
+    b: 210
+    hasDoor: 0
+    doorPath: 
+  - a: 34
+    b: 210
+    hasDoor: 0
+    doorPath: 
+  - a: 35
+    b: 36
+    hasDoor: 0
+    doorPath: 
+  - a: 37
+    b: 53
+    hasDoor: 0
+    doorPath: 
+  - a: 37
+    b: 54
+    hasDoor: 0
+    doorPath: 
+  - a: 37
+    b: 57
+    hasDoor: 0
+    doorPath: 
+  - a: 38
+    b: 41
+    hasDoor: 0
+    doorPath: 
+  - a: 38
+    b: 40
+    hasDoor: 0
+    doorPath: 
+  - a: 38
+    b: 39
+    hasDoor: 0
+    doorPath: 
+  - a: 39
+    b: 58
+    hasDoor: 0
+    doorPath: 
+  - a: 39
+    b: 40
+    hasDoor: 0
+    doorPath: 
+  - a: 39
+    b: 59
+    hasDoor: 0
+    doorPath: 
+  - a: 39
+    b: 213
+    hasDoor: 0
+    doorPath: 
+  - a: 39
+    b: 41
+    hasDoor: 0
+    doorPath: 
+  - a: 40
+    b: 41
+    hasDoor: 0
+    doorPath: 
+  - a: 40
+    b: 58
+    hasDoor: 0
+    doorPath: 
+  - a: 42
+    b: 45
+    hasDoor: 0
+    doorPath: 
+  - a: 42
+    b: 211
+    hasDoor: 0
+    doorPath: 
+  - a: 42
+    b: 44
+    hasDoor: 0
+    doorPath: 
+  - a: 43
+    b: 46
+    hasDoor: 0
+    doorPath: 
+  - a: 43
+    b: 44
+    hasDoor: 0
+    doorPath: 
+  - a: 43
+    b: 48
+    hasDoor: 0
+    doorPath: 
+  - a: 43
+    b: 49
+    hasDoor: 0
+    doorPath: 
+  - a: 43
+    b: 47
+    hasDoor: 0
+    doorPath: 
+  - a: 43
+    b: 45
+    hasDoor: 0
+    doorPath: 
+  - a: 44
+    b: 45
+    hasDoor: 0
+    doorPath: 
+  - a: 44
+    b: 211
+    hasDoor: 0
+    doorPath: 
+  - a: 44
+    b: 46
+    hasDoor: 0
+    doorPath: 
+  - a: 45
+    b: 211
+    hasDoor: 0
+    doorPath: 
+  - a: 46
+    b: 48
+    hasDoor: 0
+    doorPath: 
+  - a: 46
+    b: 49
+    hasDoor: 0
+    doorPath: 
+  - a: 46
+    b: 47
+    hasDoor: 0
+    doorPath: 
+  - a: 46
+    b: 51
+    hasDoor: 0
+    doorPath: 
+  - a: 46
+    b: 69
+    hasDoor: 0
+    doorPath: 
+  - a: 47
+    b: 48
+    hasDoor: 0
+    doorPath: 
+  - a: 47
+    b: 51
+    hasDoor: 0
+    doorPath: 
+  - a: 28
+    b: 47
+    hasDoor: 0
+    doorPath: 
+  - a: 48
+    b: 51
+    hasDoor: 0
+    doorPath: 
+  - a: 48
+    b: 49
+    hasDoor: 0
+    doorPath: 
+  - a: 48
+    b: 50
+    hasDoor: 0
+    doorPath: 
+  - a: 49
+    b: 69
+    hasDoor: 0
+    doorPath: 
+  - a: 49
+    b: 51
+    hasDoor: 0
+    doorPath: 
+  - a: 49
+    b: 71
+    hasDoor: 0
+    doorPath: 
+  - a: 49
+    b: 64
+    hasDoor: 0
+    doorPath: 
+  - a: 50
+    b: 51
+    hasDoor: 0
+    doorPath: 
+  - a: 50
+    b: 212
+    hasDoor: 0
+    doorPath: 
+  - a: 50
+    b: 56
+    hasDoor: 0
+    doorPath: 
+  - a: 50
+    b: 57
+    hasDoor: 0
+    doorPath: 
+  - a: 47
+    b: 50
+    hasDoor: 0
+    doorPath: 
+  - a: 51
+    b: 212
+    hasDoor: 0
+    doorPath: 
+  - a: 52
+    b: 55
+    hasDoor: 0
+    doorPath: 
+  - a: 52
+    b: 72
+    hasDoor: 0
+    doorPath: 
+  - a: 52
+    b: 54
+    hasDoor: 0
+    doorPath: 
+  - a: 52
+    b: 73
+    hasDoor: 0
+    doorPath: 
+  - a: 52
+    b: 57
+    hasDoor: 0
+    doorPath: 
+  - a: 52
+    b: 56
+    hasDoor: 0
+    doorPath: 
+  - a: 53
+    b: 54
+    hasDoor: 0
+    doorPath: 
+  - a: 53
+    b: 57
+    hasDoor: 0
+    doorPath: 
+  - a: 53
+    b: 55
+    hasDoor: 0
+    doorPath: 
+  - a: 53
+    b: 56
+    hasDoor: 0
+    doorPath: 
+  - a: 54
+    b: 55
+    hasDoor: 0
+    doorPath: 
+  - a: 54
+    b: 57
+    hasDoor: 0
+    doorPath: 
+  - a: 54
+    b: 56
+    hasDoor: 0
+    doorPath: 
+  - a: 55
+    b: 57
+    hasDoor: 0
+    doorPath: 
+  - a: 55
+    b: 72
+    hasDoor: 0
+    doorPath: 
+  - a: 55
+    b: 56
+    hasDoor: 0
+    doorPath: 
+  - a: 56
+    b: 57
+    hasDoor: 0
+    doorPath: 
+  - a: 56
+    b: 212
+    hasDoor: 0
+    doorPath: 
+  - a: 57
+    b: 212
+    hasDoor: 0
+    doorPath: 
+  - a: 58
+    b: 213
+    hasDoor: 0
+    doorPath: 
+  - a: 58
+    b: 59
+    hasDoor: 0
+    doorPath: 
+  - a: 58
+    b: 60
+    hasDoor: 0
+    doorPath: 
+  - a: 58
+    b: 65
+    hasDoor: 0
+    doorPath: 
+  - a: 59
+    b: 213
+    hasDoor: 0
+    doorPath: 
+  - a: 59
+    b: 60
+    hasDoor: 0
+    doorPath: 
+  - a: 59
+    b: 65
+    hasDoor: 0
+    doorPath: 
+  - a: 60
+    b: 213
+    hasDoor: 0
+    doorPath: 
+  - a: 39
+    b: 60
+    hasDoor: 0
+    doorPath: 
+  - a: 61
+    b: 63
+    hasDoor: 0
+    doorPath: 
+  - a: 61
+    b: 62
+    hasDoor: 0
+    doorPath: 
+  - a: 61
+    b: 216
+    hasDoor: 0
+    doorPath: 
+  - a: 61
+    b: 67
+    hasDoor: 0
+    doorPath: 
+  - a: 62
+    b: 63
+    hasDoor: 0
+    doorPath: 
+  - a: 62
+    b: 216
+    hasDoor: 0
+    doorPath: 
+  - a: 63
+    b: 216
+    hasDoor: 0
+    doorPath: 
+  - a: 63
+    b: 67
+    hasDoor: 0
+    doorPath: 
+  - a: 64
+    b: 65
+    hasDoor: 0
+    doorPath: 
+  - a: 64
+    b: 69
+    hasDoor: 0
+    doorPath: 
+  - a: 64
+    b: 71
+    hasDoor: 0
+    doorPath: 
+  - a: 65
+    b: 213
+    hasDoor: 0
+    doorPath: 
+  - a: 65
+    b: 69
+    hasDoor: 0
+    doorPath: 
+  - a: 66
+    b: 67
+    hasDoor: 0
+    doorPath: 
+  - a: 66
+    b: 68
+    hasDoor: 0
+    doorPath: 
+  - a: 66
+    b: 76
+    hasDoor: 0
+    doorPath: 
+  - a: 66
+    b: 70
+    hasDoor: 0
+    doorPath: 
+  - a: 67
+    b: 68
+    hasDoor: 0
+    doorPath: 
+  - a: 68
+    b: 76
+    hasDoor: 0
+    doorPath: 
+  - a: 68
+    b: 70
+    hasDoor: 0
+    doorPath: 
+  - a: 68
+    b: 71
+    hasDoor: 0
+    doorPath: 
+  - a: 69
+    b: 71
+    hasDoor: 0
+    doorPath: 
+  - a: 69
+    b: 70
+    hasDoor: 0
+    doorPath: 
+  - a: 70
+    b: 71
+    hasDoor: 0
+    doorPath: 
+  - a: 70
+    b: 76
+    hasDoor: 0
+    doorPath: 
+  - a: 71
+    b: 76
+    hasDoor: 0
+    doorPath: 
+  - a: 72
+    b: 73
+    hasDoor: 0
+    doorPath: 
+  - a: 72
+    b: 75
+    hasDoor: 0
+    doorPath: 
+  - a: 72
+    b: 214
+    hasDoor: 0
+    doorPath: 
+  - a: 72
+    b: 74
+    hasDoor: 0
+    doorPath: 
+  - a: 73
+    b: 214
+    hasDoor: 0
+    doorPath: 
+  - a: 73
+    b: 75
+    hasDoor: 0
+    doorPath: 
+  - a: 73
+    b: 74
+    hasDoor: 0
+    doorPath: 
+  - a: 55
+    b: 73
+    hasDoor: 0
+    doorPath: 
+  - a: 74
+    b: 215
+    hasDoor: 0
+    doorPath: 
+  - a: 74
+    b: 75
+    hasDoor: 0
+    doorPath: 
+  - a: 74
+    b: 214
+    hasDoor: 0
+    doorPath: 
+  - a: 75
+    b: 214
+    hasDoor: 0
+    doorPath: 
+  - a: 75
+    b: 215
+    hasDoor: 0
+    doorPath: 
+  - a: 77
+    b: 78
+    hasDoor: 0
+    doorPath: 
+  - a: 77
+    b: 109
+    hasDoor: 0
+    doorPath: 
+  - a: 77
+    b: 103
+    hasDoor: 0
+    doorPath: 
+  - a: 77
+    b: 79
+    hasDoor: 0
+    doorPath: 
+  - a: 77
+    b: 124
+    hasDoor: 0
+    doorPath: 
+  - a: 77
+    b: 105
+    hasDoor: 0
+    doorPath: 
+  - a: 78
+    b: 79
+    hasDoor: 0
+    doorPath: 
+  - a: 78
+    b: 103
+    hasDoor: 0
+    doorPath: 
+  - a: 78
+    b: 105
+    hasDoor: 0
+    doorPath: 
+  - a: 78
+    b: 109
+    hasDoor: 0
+    doorPath: 
+  - a: 78
+    b: 217
+    hasDoor: 0
+    doorPath: 
+  - a: 79
+    b: 105
+    hasDoor: 0
+    doorPath: 
+  - a: 79
+    b: 217
+    hasDoor: 0
+    doorPath: 
+  - a: 79
+    b: 103
+    hasDoor: 0
+    doorPath: 
+  - a: 79
+    b: 95
+    hasDoor: 0
+    doorPath: 
+  - a: 80
+    b: 83
+    hasDoor: 0
+    doorPath: 
+  - a: 80
+    b: 81
+    hasDoor: 0
+    doorPath: 
+  - a: 80
+    b: 88
+    hasDoor: 0
+    doorPath: 
+  - a: 80
+    b: 85
+    hasDoor: 0
+    doorPath: 
+  - a: 80
+    b: 87
+    hasDoor: 0
+    doorPath: 
+  - a: 80
+    b: 84
+    hasDoor: 0
+    doorPath: 
+  - a: 81
+    b: 88
+    hasDoor: 0
+    doorPath: 
+  - a: 81
+    b: 87
+    hasDoor: 0
+    doorPath: 
+  - a: 81
+    b: 83
+    hasDoor: 0
+    doorPath: 
+  - a: 81
+    b: 85
+    hasDoor: 0
+    doorPath: 
+  - a: 81
+    b: 110
+    hasDoor: 0
+    doorPath: 
+  - a: 82
+    b: 84
+    hasDoor: 0
+    doorPath: 
+  - a: 82
+    b: 86
+    hasDoor: 0
+    doorPath: 
+  - a: 82
+    b: 106
+    hasDoor: 0
+    doorPath: 
+  - a: 82
+    b: 85
+    hasDoor: 0
+    doorPath: 
+  - a: 82
+    b: 87
+    hasDoor: 0
+    doorPath: 
+  - a: 82
+    b: 113
+    hasDoor: 0
+    doorPath: 
+  - a: 83
+    b: 85
+    hasDoor: 0
+    doorPath: 
+  - a: 83
+    b: 87
+    hasDoor: 0
+    doorPath: 
+  - a: 83
+    b: 84
+    hasDoor: 0
+    doorPath: 
+  - a: 83
+    b: 88
+    hasDoor: 0
+    doorPath: 
+  - a: 84
+    b: 85
+    hasDoor: 0
+    doorPath: 
+  - a: 84
+    b: 86
+    hasDoor: 0
+    doorPath: 
+  - a: 84
+    b: 87
+    hasDoor: 0
+    doorPath: 
+  - a: 84
+    b: 106
+    hasDoor: 0
+    doorPath: 
+  - a: 85
+    b: 87
+    hasDoor: 0
+    doorPath: 
+  - a: 85
+    b: 86
+    hasDoor: 0
+    doorPath: 
+  - a: 85
+    b: 88
+    hasDoor: 0
+    doorPath: 
+  - a: 86
+    b: 106
+    hasDoor: 0
+    doorPath: 
+  - a: 86
+    b: 87
+    hasDoor: 0
+    doorPath: 
+  - a: 86
+    b: 113
+    hasDoor: 0
+    doorPath: 
+  - a: 87
+    b: 88
+    hasDoor: 0
+    doorPath: 
+  - a: 87
+    b: 110
+    hasDoor: 0
+    doorPath: 
+  - a: 88
+    b: 110
+    hasDoor: 0
+    doorPath: 
+  - a: 88
+    b: 112
+    hasDoor: 0
+    doorPath: 
+  - a: 89
+    b: 91
+    hasDoor: 0
+    doorPath: 
+  - a: 89
+    b: 99
+    hasDoor: 0
+    doorPath: 
+  - a: 89
+    b: 125
+    hasDoor: 0
+    doorPath: 
+  - a: 89
+    b: 218
+    hasDoor: 0
+    doorPath: 
+  - a: 89
+    b: 95
+    hasDoor: 0
+    doorPath: 
+  - a: 89
+    b: 97
+    hasDoor: 0
+    doorPath: 
+  - a: 90
+    b: 97
+    hasDoor: 0
+    doorPath: 
+  - a: 90
+    b: 96
+    hasDoor: 0
+    doorPath: 
+  - a: 90
+    b: 99
+    hasDoor: 0
+    doorPath: 
+  - a: 90
+    b: 95
+    hasDoor: 0
+    doorPath: 
+  - a: 90
+    b: 94
+    hasDoor: 0
+    doorPath: 
+  - a: 90
+    b: 100
+    hasDoor: 0
+    doorPath: 
+  - a: 91
+    b: 218
+    hasDoor: 0
+    doorPath: 
+  - a: 91
+    b: 125
+    hasDoor: 0
+    doorPath: 
+  - a: 91
+    b: 123
+    hasDoor: 0
+    doorPath: 
+  - a: 91
+    b: 99
+    hasDoor: 0
+    doorPath: 
+  - a: 91
+    b: 95
+    hasDoor: 0
+    doorPath: 
+  - a: 92
+    b: 101
+    hasDoor: 0
+    doorPath: 
+  - a: 92
+    b: 102
+    hasDoor: 0
+    doorPath: 
+  - a: 92
+    b: 93
+    hasDoor: 0
+    doorPath: 
+  - a: 92
+    b: 104
+    hasDoor: 0
+    doorPath: 
+  - a: 92
+    b: 98
+    hasDoor: 0
+    doorPath: 
+  - a: 92
+    b: 94
+    hasDoor: 0
+    doorPath: 
+  - a: 93
+    b: 101
+    hasDoor: 0
+    doorPath: 
+  - a: 93
+    b: 94
+    hasDoor: 0
+    doorPath: 
+  - a: 93
+    b: 98
+    hasDoor: 0
+    doorPath: 
+  - a: 93
+    b: 104
+    hasDoor: 0
+    doorPath: 
+  - a: 93
+    b: 102
+    hasDoor: 0
+    doorPath: 
+  - a: 94
+    b: 97
+    hasDoor: 0
+    doorPath: 
+  - a: 94
+    b: 100
+    hasDoor: 0
+    doorPath: 
+  - a: 94
+    b: 98
+    hasDoor: 0
+    doorPath: 
+  - a: 94
+    b: 101
+    hasDoor: 0
+    doorPath: 
+  - a: 95
+    b: 218
+    hasDoor: 0
+    doorPath: 
+  - a: 95
+    b: 96
+    hasDoor: 0
+    doorPath: 
+  - a: 95
+    b: 105
+    hasDoor: 0
+    doorPath: 
+  - a: 95
+    b: 99
+    hasDoor: 0
+    doorPath: 
+  - a: 95
+    b: 217
+    hasDoor: 0
+    doorPath: 
+  - a: 96
+    b: 217
+    hasDoor: 0
+    doorPath: 
+  - a: 96
+    b: 99
+    hasDoor: 0
+    doorPath: 
+  - a: 96
+    b: 105
+    hasDoor: 0
+    doorPath: 
+  - a: 96
+    b: 97
+    hasDoor: 0
+    doorPath: 
+  - a: 97
+    b: 99
+    hasDoor: 0
+    doorPath: 
+  - a: 97
+    b: 100
+    hasDoor: 0
+    doorPath: 
+  - a: 98
+    b: 104
+    hasDoor: 0
+    doorPath: 
+  - a: 98
+    b: 100
+    hasDoor: 0
+    doorPath: 
+  - a: 98
+    b: 101
+    hasDoor: 0
+    doorPath: 
+  - a: 98
+    b: 102
+    hasDoor: 0
+    doorPath: 
+  - a: 99
+    b: 100
+    hasDoor: 0
+    doorPath: 
+  - a: 93
+    b: 100
+    hasDoor: 0
+    doorPath: 
+  - a: 100
+    b: 104
+    hasDoor: 0
+    doorPath: 
+  - a: 101
+    b: 102
+    hasDoor: 0
+    doorPath: 
+  - a: 101
+    b: 104
+    hasDoor: 0
+    doorPath: 
+  - a: 102
+    b: 104
+    hasDoor: 0
+    doorPath: 
+  - a: 102
+    b: 121
+    hasDoor: 0
+    doorPath: 
+  - a: 103
+    b: 218
+    hasDoor: 0
+    doorPath: 
+  - a: 103
+    b: 124
+    hasDoor: 0
+    doorPath: 
+  - a: 103
+    b: 125
+    hasDoor: 0
+    doorPath: 
+  - a: 103
+    b: 105
+    hasDoor: 0
+    doorPath: 
+  - a: 105
+    b: 217
+    hasDoor: 0
+    doorPath: 
+  - a: 105
+    b: 218
+    hasDoor: 0
+    doorPath: 
+  - a: 106
+    b: 113
+    hasDoor: 0
+    doorPath: 
+  - a: 106
+    b: 111
+    hasDoor: 0
+    doorPath: 
+  - a: 87
+    b: 106
+    hasDoor: 0
+    doorPath: 
+  - a: 107
+    b: 119
+    hasDoor: 0
+    doorPath: 
+  - a: 107
+    b: 108
+    hasDoor: 0
+    doorPath: 
+  - a: 107
+    b: 118
+    hasDoor: 0
+    doorPath: 
+  - a: 108
+    b: 114
+    hasDoor: 0
+    doorPath: 
+  - a: 108
+    b: 219
+    hasDoor: 0
+    doorPath: 
+  - a: 108
+    b: 119
+    hasDoor: 0
+    doorPath: 
+  - a: 109
+    b: 124
+    hasDoor: 0
+    doorPath: 
+  - a: 103
+    b: 109
+    hasDoor: 0
+    doorPath: 
+  - a: 109
+    b: 115
+    hasDoor: 0
+    doorPath: 
+  - a: 109
+    b: 125
+    hasDoor: 0
+    doorPath: 
+  - a: 110
+    b: 112
+    hasDoor: 0
+    doorPath: 
+  - a: 110
+    b: 111
+    hasDoor: 0
+    doorPath: 
+  - a: 86
+    b: 110
+    hasDoor: 0
+    doorPath: 
+  - a: 111
+    b: 113
+    hasDoor: 0
+    doorPath: 
+  - a: 111
+    b: 112
+    hasDoor: 0
+    doorPath: 
+  - a: 86
+    b: 111
+    hasDoor: 0
+    doorPath: 
+  - a: 87
+    b: 111
+    hasDoor: 0
+    doorPath: 
+  - a: 111
+    b: 117
+    hasDoor: 0
+    doorPath: 
+  - a: 87
+    b: 112
+    hasDoor: 0
+    doorPath: 
+  - a: 81
+    b: 112
+    hasDoor: 0
+    doorPath: 
+  - a: 112
+    b: 117
+    hasDoor: 0
+    doorPath: 
+  - a: 110
+    b: 113
+    hasDoor: 0
+    doorPath: 
+  - a: 87
+    b: 113
+    hasDoor: 0
+    doorPath: 
+  - a: 113
+    b: 117
+    hasDoor: 0
+    doorPath: 
+  - a: 114
+    b: 219
+    hasDoor: 0
+    doorPath: 
+  - a: 114
+    b: 116
+    hasDoor: 0
+    doorPath: 
+  - a: 115
+    b: 118
+    hasDoor: 0
+    doorPath: 
+  - a: 115
+    b: 124
+    hasDoor: 0
+    doorPath: 
+  - a: 116
+    b: 219
+    hasDoor: 0
+    doorPath: 
+  - a: 116
+    b: 117
+    hasDoor: 0
+    doorPath: 
+  - a: 110
+    b: 117
+    hasDoor: 0
+    doorPath: 
+  - a: 117
+    b: 219
+    hasDoor: 0
+    doorPath: 
+  - a: 118
+    b: 119
+    hasDoor: 0
+    doorPath: 
+  - a: 120
+    b: 126
+    hasDoor: 0
+    doorPath: 
+  - a: 120
+    b: 130
+    hasDoor: 0
+    doorPath: 
+  - a: 120
+    b: 122
+    hasDoor: 0
+    doorPath: 
+  - a: 120
+    b: 128
+    hasDoor: 0
+    doorPath: 
+  - a: 120
+    b: 131
+    hasDoor: 0
+    doorPath: 
+  - a: 120
+    b: 127
+    hasDoor: 0
+    doorPath: 
+  - a: 121
+    b: 122
+    hasDoor: 0
+    doorPath: 
+  - a: 104
+    b: 121
+    hasDoor: 0
+    doorPath: 
+  - a: 98
+    b: 121
+    hasDoor: 0
+    doorPath: 
+  - a: 121
+    b: 126
+    hasDoor: 0
+    doorPath: 
+  - a: 122
+    b: 126
+    hasDoor: 0
+    doorPath: 
+  - a: 122
+    b: 127
+    hasDoor: 0
+    doorPath: 
+  - a: 122
+    b: 130
+    hasDoor: 0
+    doorPath: 
+  - a: 123
+    b: 125
+    hasDoor: 0
+    doorPath: 
+  - a: 123
+    b: 218
+    hasDoor: 0
+    doorPath: 
+  - a: 123
+    b: 124
+    hasDoor: 0
+    doorPath: 
+  - a: 99
+    b: 123
+    hasDoor: 0
+    doorPath: 
+  - a: 103
+    b: 123
+    hasDoor: 0
+    doorPath: 
+  - a: 124
+    b: 125
+    hasDoor: 0
+    doorPath: 
+  - a: 124
+    b: 218
+    hasDoor: 0
+    doorPath: 
+  - a: 91
+    b: 124
+    hasDoor: 0
+    doorPath: 
+  - a: 125
+    b: 218
+    hasDoor: 0
+    doorPath: 
+  - a: 126
+    b: 127
+    hasDoor: 0
+    doorPath: 
+  - a: 126
+    b: 128
+    hasDoor: 0
+    doorPath: 
+  - a: 126
+    b: 220
+    hasDoor: 0
+    doorPath: 
+  - a: 126
+    b: 130
+    hasDoor: 0
+    doorPath: 
+  - a: 127
+    b: 128
+    hasDoor: 0
+    doorPath: 
+  - a: 127
+    b: 130
+    hasDoor: 0
+    doorPath: 
+  - a: 128
+    b: 220
+    hasDoor: 0
+    doorPath: 
+  - a: 128
+    b: 130
+    hasDoor: 0
+    doorPath: 
+  - a: 129
+    b: 131
+    hasDoor: 0
+    doorPath: 
+  - a: 129
+    b: 133
+    hasDoor: 0
+    doorPath: 
+  - a: 129
+    b: 135
+    hasDoor: 0
+    doorPath: 
+  - a: 129
+    b: 161
+    hasDoor: 0
+    doorPath: 
+  - a: 129
+    b: 130
+    hasDoor: 0
+    doorPath: 
+  - a: 129
+    b: 132
+    hasDoor: 0
+    doorPath: 
+  - a: 130
+    b: 131
+    hasDoor: 0
+    doorPath: 
+  - a: 130
+    b: 135
+    hasDoor: 0
+    doorPath: 
+  - a: 131
+    b: 135
+    hasDoor: 0
+    doorPath: 
+  - a: 131
+    b: 161
+    hasDoor: 0
+    doorPath: 
+  - a: 131
+    b: 132
+    hasDoor: 0
+    doorPath: 
+  - a: 132
+    b: 135
+    hasDoor: 0
+    doorPath: 
+  - a: 132
+    b: 133
+    hasDoor: 0
+    doorPath: 
+  - a: 132
+    b: 161
+    hasDoor: 0
+    doorPath: 
+  - a: 130
+    b: 132
+    hasDoor: 0
+    doorPath: 
+  - a: 133
+    b: 135
+    hasDoor: 0
+    doorPath: 
+  - a: 133
+    b: 161
+    hasDoor: 0
+    doorPath: 
+  - a: 134
+    b: 221
+    hasDoor: 0
+    doorPath: 
+  - a: 134
+    b: 141
+    hasDoor: 0
+    doorPath: 
+  - a: 134
+    b: 222
+    hasDoor: 0
+    doorPath: 
+  - a: 134
+    b: 137
+    hasDoor: 0
+    doorPath: 
+  - a: 134
+    b: 167
+    hasDoor: 0
+    doorPath: 
+  - a: 135
+    b: 161
+    hasDoor: 0
+    doorPath: 
+  - a: 137
+    b: 141
+    hasDoor: 0
+    doorPath: 
+  - a: 137
+    b: 138
+    hasDoor: 0
+    doorPath: 
+  - a: 137
+    b: 143
+    hasDoor: 0
+    doorPath: 
+  - a: 137
+    b: 222
+    hasDoor: 0
+    doorPath: 
+  - a: 137
+    b: 139
+    hasDoor: 0
+    doorPath: 
+  - a: 138
+    b: 139
+    hasDoor: 0
+    doorPath: 
+  - a: 138
+    b: 143
+    hasDoor: 0
+    doorPath: 
+  - a: 138
+    b: 142
+    hasDoor: 0
+    doorPath: 
+  - a: 138
+    b: 140
+    hasDoor: 0
+    doorPath: 
+  - a: 138
+    b: 224
+    hasDoor: 0
+    doorPath: 
+  - a: 139
+    b: 142
+    hasDoor: 0
+    doorPath: 
+  - a: 139
+    b: 140
+    hasDoor: 0
+    doorPath: 
+  - a: 139
+    b: 224
+    hasDoor: 0
+    doorPath: 
+  - a: 139
+    b: 143
+    hasDoor: 0
+    doorPath: 
+  - a: 139
+    b: 223
+    hasDoor: 0
+    doorPath: 
+  - a: 140
+    b: 224
+    hasDoor: 0
+    doorPath: 
+  - a: 140
+    b: 142
+    hasDoor: 0
+    doorPath: 
+  - a: 140
+    b: 144
+    hasDoor: 0
+    doorPath: 
+  - a: 140
+    b: 223
+    hasDoor: 0
+    doorPath: 
+  - a: 140
+    b: 145
+    hasDoor: 0
+    doorPath: 
+  - a: 141
+    b: 222
+    hasDoor: 0
+    doorPath: 
+  - a: 141
+    b: 221
+    hasDoor: 0
+    doorPath: 
+  - a: 141
+    b: 143
+    hasDoor: 0
+    doorPath: 
+  - a: 138
+    b: 141
+    hasDoor: 0
+    doorPath: 
+  - a: 142
+    b: 224
+    hasDoor: 0
+    doorPath: 
+  - a: 142
+    b: 223
+    hasDoor: 0
+    doorPath: 
+  - a: 142
+    b: 144
+    hasDoor: 0
+    doorPath: 
+  - a: 142
+    b: 143
+    hasDoor: 0
+    doorPath: 
+  - a: 143
+    b: 169
+    hasDoor: 0
+    doorPath: 
+  - a: 144
+    b: 224
+    hasDoor: 0
+    doorPath: 
+  - a: 144
+    b: 145
+    hasDoor: 0
+    doorPath: 
+  - a: 144
+    b: 223
+    hasDoor: 0
+    doorPath: 
+  - a: 144
+    b: 225
+    hasDoor: 0
+    doorPath: 
+  - a: 145
+    b: 225
+    hasDoor: 0
+    doorPath: 
+  - a: 145
+    b: 224
+    hasDoor: 0
+    doorPath: 
+  - a: 145
+    b: 150
+    hasDoor: 0
+    doorPath: 
+  - a: 145
+    b: 223
+    hasDoor: 0
+    doorPath: 
+  - a: 146
+    b: 148
+    hasDoor: 0
+    doorPath: 
+  - a: 146
+    b: 149
+    hasDoor: 0
+    doorPath: 
+  - a: 147
+    b: 152
+    hasDoor: 0
+    doorPath: 
+  - a: 147
+    b: 173
+    hasDoor: 0
+    doorPath: 
+  - a: 147
+    b: 149
+    hasDoor: 0
+    doorPath: 
+  - a: 147
+    b: 172
+    hasDoor: 0
+    doorPath: 
+  - a: 147
+    b: 151
+    hasDoor: 0
+    doorPath: 
+  - a: 147
+    b: 180
+    hasDoor: 0
+    doorPath: 
+  - a: 148
+    b: 149
+    hasDoor: 0
+    doorPath: 
+  - a: 148
+    b: 152
+    hasDoor: 0
+    doorPath: 
+  - a: 149
+    b: 152
+    hasDoor: 0
+    doorPath: 
+  - a: 149
+    b: 151
+    hasDoor: 0
+    doorPath: 
+  - a: 150
+    b: 225
+    hasDoor: 0
+    doorPath: 
+  - a: 150
+    b: 151
+    hasDoor: 0
+    doorPath: 
+  - a: 150
+    b: 152
+    hasDoor: 0
+    doorPath: 
+  - a: 151
+    b: 152
+    hasDoor: 0
+    doorPath: 
+  - a: 151
+    b: 225
+    hasDoor: 0
+    doorPath: 
+  - a: 152
+    b: 173
+    hasDoor: 0
+    doorPath: 
+  - a: 153
+    b: 226
+    hasDoor: 0
+    doorPath: 
+  - a: 153
+    b: 158
+    hasDoor: 0
+    doorPath: 
+  - a: 153
+    b: 156
+    hasDoor: 0
+    doorPath: 
+  - a: 153
+    b: 155
+    hasDoor: 0
+    doorPath: 
+  - a: 153
+    b: 157
+    hasDoor: 0
+    doorPath: 
+  - a: 153
+    b: 174
+    hasDoor: 0
+    doorPath: 
+  - a: 154
+    b: 158
+    hasDoor: 0
+    doorPath: 
+  - a: 154
+    b: 155
+    hasDoor: 0
+    doorPath: 
+  - a: 154
+    b: 159
+    hasDoor: 0
+    doorPath: 
+  - a: 154
+    b: 157
+    hasDoor: 0
+    doorPath: 
+  - a: 154
+    b: 160
+    hasDoor: 0
+    doorPath: 
+  - a: 154
+    b: 156
+    hasDoor: 0
+    doorPath: 
+  - a: 155
+    b: 158
+    hasDoor: 0
+    doorPath: 
+  - a: 155
+    b: 160
+    hasDoor: 0
+    doorPath: 
+  - a: 155
+    b: 157
+    hasDoor: 0
+    doorPath: 
+  - a: 155
+    b: 156
+    hasDoor: 0
+    doorPath: 
+  - a: 156
+    b: 174
+    hasDoor: 0
+    doorPath: 
+  - a: 156
+    b: 177
+    hasDoor: 0
+    doorPath: 
+  - a: 156
+    b: 157
+    hasDoor: 0
+    doorPath: 
+  - a: 156
+    b: 158
+    hasDoor: 0
+    doorPath: 
+  - a: 156
+    b: 226
+    hasDoor: 0
+    doorPath: 
+  - a: 157
+    b: 158
+    hasDoor: 0
+    doorPath: 
+  - a: 157
+    b: 160
+    hasDoor: 0
+    doorPath: 
+  - a: 157
+    b: 175
+    hasDoor: 0
+    doorPath: 
+  - a: 157
+    b: 181
+    hasDoor: 0
+    doorPath: 
+  - a: 158
+    b: 160
+    hasDoor: 0
+    doorPath: 
+  - a: 158
+    b: 159
+    hasDoor: 0
+    doorPath: 
+  - a: 159
+    b: 160
+    hasDoor: 0
+    doorPath: 
+  - a: 157
+    b: 159
+    hasDoor: 0
+    doorPath: 
+  - a: 153
+    b: 159
+    hasDoor: 0
+    doorPath: 
+  - a: 160
+    b: 175
+    hasDoor: 0
+    doorPath: 
+  - a: 160
+    b: 197
+    hasDoor: 0
+    doorPath: 
+  - a: 162
+    b: 165
+    hasDoor: 0
+    doorPath: 
+  - a: 162
+    b: 163
+    hasDoor: 0
+    doorPath: 
+  - a: 162
+    b: 166
+    hasDoor: 0
+    doorPath: 
+  - a: 163
+    b: 164
+    hasDoor: 0
+    doorPath: 
+  - a: 163
+    b: 165
+    hasDoor: 0
+    doorPath: 
+  - a: 129
+    b: 164
+    hasDoor: 0
+    doorPath: 
+  - a: 135
+    b: 164
+    hasDoor: 0
+    doorPath: 
+  - a: 165
+    b: 166
+    hasDoor: 0
+    doorPath: 
+  - a: 166
+    b: 167
+    hasDoor: 0
+    doorPath: 
+  - a: 166
+    b: 169
+    hasDoor: 0
+    doorPath: 
+  - a: 167
+    b: 221
+    hasDoor: 0
+    doorPath: 
+  - a: 167
+    b: 222
+    hasDoor: 0
+    doorPath: 
+  - a: 167
+    b: 169
+    hasDoor: 0
+    doorPath: 
+  - a: 168
+    b: 169
+    hasDoor: 0
+    doorPath: 
+  - a: 168
+    b: 227
+    hasDoor: 0
+    doorPath: 
+  - a: 169
+    b: 222
+    hasDoor: 0
+    doorPath: 
+  - a: 170
+    b: 171
+    hasDoor: 0
+    doorPath: 
+  - a: 170
+    b: 196
+    hasDoor: 0
+    doorPath: 
+  - a: 170
+    b: 176
+    hasDoor: 0
+    doorPath: 
+  - a: 170
+    b: 193
+    hasDoor: 0
+    doorPath: 
+  - a: 170
+    b: 185
+    hasDoor: 0
+    doorPath: 
+  - a: 170
+    b: 206
+    hasDoor: 0
+    doorPath: 
+  - a: 171
+    b: 196
+    hasDoor: 0
+    doorPath: 
+  - a: 171
+    b: 185
+    hasDoor: 0
+    doorPath: 
+  - a: 171
+    b: 182
+    hasDoor: 0
+    doorPath: 
+  - a: 171
+    b: 193
+    hasDoor: 0
+    doorPath: 
+  - a: 171
+    b: 184
+    hasDoor: 0
+    doorPath: 
+  - a: 172
+    b: 173
+    hasDoor: 0
+    doorPath: 
+  - a: 172
+    b: 181
+    hasDoor: 0
+    doorPath: 
+  - a: 172
+    b: 180
+    hasDoor: 0
+    doorPath: 
+  - a: 172
+    b: 175
+    hasDoor: 0
+    doorPath: 
+  - a: 172
+    b: 197
+    hasDoor: 0
+    doorPath: 
+  - a: 173
+    b: 180
+    hasDoor: 0
+    doorPath: 
+  - a: 173
+    b: 181
+    hasDoor: 0
+    doorPath: 
+  - a: 173
+    b: 179
+    hasDoor: 0
+    doorPath: 
+  - a: 174
+    b: 177
+    hasDoor: 0
+    doorPath: 
+  - a: 158
+    b: 174
+    hasDoor: 0
+    doorPath: 
+  - a: 160
+    b: 174
+    hasDoor: 0
+    doorPath: 
+  - a: 175
+    b: 197
+    hasDoor: 0
+    doorPath: 
+  - a: 175
+    b: 201
+    hasDoor: 0
+    doorPath: 
+  - a: 158
+    b: 175
+    hasDoor: 0
+    doorPath: 
+  - a: 176
+    b: 193
+    hasDoor: 0
+    doorPath: 
+  - a: 176
+    b: 196
+    hasDoor: 0
+    doorPath: 
+  - a: 176
+    b: 229
+    hasDoor: 0
+    doorPath: 
+  - a: 176
+    b: 184
+    hasDoor: 0
+    doorPath: 
+  - a: 171
+    b: 176
+    hasDoor: 0
+    doorPath: 
+  - a: 153
+    b: 177
+    hasDoor: 0
+    doorPath: 
+  - a: 178
+    b: 179
+    hasDoor: 0
+    doorPath: 
+  - a: 178
+    b: 186
+    hasDoor: 0
+    doorPath: 
+  - a: 178
+    b: 188
+    hasDoor: 0
+    doorPath: 
+  - a: 178
+    b: 180
+    hasDoor: 0
+    doorPath: 
+  - a: 178
+    b: 187
+    hasDoor: 0
+    doorPath: 
+  - a: 178
+    b: 189
+    hasDoor: 0
+    doorPath: 
+  - a: 179
+    b: 180
+    hasDoor: 0
+    doorPath: 
+  - a: 179
+    b: 188
+    hasDoor: 0
+    doorPath: 
+  - a: 179
+    b: 186
+    hasDoor: 0
+    doorPath: 
+  - a: 172
+    b: 179
+    hasDoor: 0
+    doorPath: 
+  - a: 180
+    b: 188
+    hasDoor: 0
+    doorPath: 
+  - a: 180
+    b: 181
+    hasDoor: 0
+    doorPath: 
+  - a: 181
+    b: 197
+    hasDoor: 0
+    doorPath: 
+  - a: 181
+    b: 201
+    hasDoor: 0
+    doorPath: 
+  - a: 160
+    b: 181
+    hasDoor: 0
+    doorPath: 
+  - a: 182
+    b: 185
+    hasDoor: 0
+    doorPath: 
+  - a: 182
+    b: 228
+    hasDoor: 0
+    doorPath: 
+  - a: 182
+    b: 189
+    hasDoor: 0
+    doorPath: 
+  - a: 182
+    b: 184
+    hasDoor: 0
+    doorPath: 
+  - a: 182
+    b: 196
+    hasDoor: 0
+    doorPath: 
+  - a: 183
+    b: 229
+    hasDoor: 0
+    doorPath: 
+  - a: 183
+    b: 206
+    hasDoor: 0
+    doorPath: 
+  - a: 183
+    b: 193
+    hasDoor: 0
+    doorPath: 
+  - a: 183
+    b: 184
+    hasDoor: 0
+    doorPath: 
+  - a: 183
+    b: 196
+    hasDoor: 0
+    doorPath: 
+  - a: 183
+    b: 185
+    hasDoor: 0
+    doorPath: 
+  - a: 184
+    b: 193
+    hasDoor: 0
+    doorPath: 
+  - a: 184
+    b: 229
+    hasDoor: 0
+    doorPath: 
+  - a: 184
+    b: 185
+    hasDoor: 0
+    doorPath: 
+  - a: 184
+    b: 196
+    hasDoor: 0
+    doorPath: 
+  - a: 185
+    b: 196
+    hasDoor: 0
+    doorPath: 
+  - a: 185
+    b: 193
+    hasDoor: 0
+    doorPath: 
+  - a: 185
+    b: 189
+    hasDoor: 0
+    doorPath: 
+  - a: 186
+    b: 187
+    hasDoor: 0
+    doorPath: 
+  - a: 186
+    b: 188
+    hasDoor: 0
+    doorPath: 
+  - a: 1
+    b: 186
+    hasDoor: 0
+    doorPath: 
+  - a: 1
+    b: 187
+    hasDoor: 0
+    doorPath: 
+  - a: 188
+    b: 189
+    hasDoor: 0
+    doorPath: 
+  - a: 185
+    b: 188
+    hasDoor: 0
+    doorPath: 
+  - a: 182
+    b: 188
+    hasDoor: 0
+    doorPath: 
+  - a: 189
+    b: 228
+    hasDoor: 0
+    doorPath: 
+  - a: 189
+    b: 193
+    hasDoor: 0
+    doorPath: 
+  - a: 189
+    b: 196
+    hasDoor: 0
+    doorPath: 
+  - a: 190
+    b: 192
+    hasDoor: 0
+    doorPath: 
+  - a: 190
+    b: 195
+    hasDoor: 0
+    doorPath: 
+  - a: 190
+    b: 191
+    hasDoor: 0
+    doorPath: 
+  - a: 190
+    b: 194
+    hasDoor: 0
+    doorPath: 
+  - a: 190
+    b: 207
+    hasDoor: 0
+    doorPath: 
+  - a: 191
+    b: 192
+    hasDoor: 0
+    doorPath: 
+  - a: 191
+    b: 194
+    hasDoor: 0
+    doorPath: 
+  - a: 191
+    b: 195
+    hasDoor: 0
+    doorPath: 
+  - a: 192
+    b: 194
+    hasDoor: 0
+    doorPath: 
+  - a: 192
+    b: 195
+    hasDoor: 0
+    doorPath: 
+  - a: 192
+    b: 207
+    hasDoor: 0
+    doorPath: 
+  - a: 193
+    b: 196
+    hasDoor: 0
+    doorPath: 
+  - a: 193
+    b: 229
+    hasDoor: 0
+    doorPath: 
+  - a: 194
+    b: 195
+    hasDoor: 0
+    doorPath: 
+  - a: 194
+    b: 207
+    hasDoor: 0
+    doorPath: 
+  - a: 195
+    b: 207
+    hasDoor: 0
+    doorPath: 
+  - a: 197
+    b: 201
+    hasDoor: 0
+    doorPath: 
+  - a: 157
+    b: 197
+    hasDoor: 0
+    doorPath: 
+  - a: 197
+    b: 200
+    hasDoor: 0
+    doorPath: 
+  - a: 198
+    b: 199
+    hasDoor: 0
+    doorPath: 
+  - a: 198
+    b: 202
+    hasDoor: 1
+    doorPath: Room I Entrance/Room I Door
+  - a: 198
+    b: 200
+    hasDoor: 0
+    doorPath: 
+  - a: 198
+    b: 230
+    hasDoor: 0
+    doorPath: 
+  - a: 198
+    b: 233
+    hasDoor: 0
+    doorPath: 
+  - a: 198
+    b: 201
+    hasDoor: 0
+    doorPath: 
+  - a: 199
+    b: 230
+    hasDoor: 0
+    doorPath: 
+  - a: 199
+    b: 200
+    hasDoor: 0
+    doorPath: 
+  - a: 199
+    b: 202
+    hasDoor: 1
+    doorPath: Room I Entrance/Room I Door
+  - a: 199
+    b: 201
+    hasDoor: 0
+    doorPath: 
+  - a: 199
+    b: 232
+    hasDoor: 0
+    doorPath: 
+  - a: 200
+    b: 201
+    hasDoor: 0
+    doorPath: 
+  - a: 200
+    b: 230
+    hasDoor: 0
+    doorPath: 
+  - a: 175
+    b: 200
+    hasDoor: 0
+    doorPath: 
+  - a: 202
+    b: 232
+    hasDoor: 0
+    doorPath: 
+  - a: 202
+    b: 204
+    hasDoor: 0
+    doorPath: 
+  - a: 202
+    b: 203
+    hasDoor: 0
+    doorPath: 
+  - a: 202
+    b: 233
+    hasDoor: 0
+    doorPath: 
+  - a: 203
+    b: 232
+    hasDoor: 0
+    doorPath: 
+  - a: 203
+    b: 205
+    hasDoor: 0
+    doorPath: 
+  - a: 203
+    b: 204
+    hasDoor: 0
+    doorPath: 
+  - a: 203
+    b: 231
+    hasDoor: 0
+    doorPath: 
+  - a: 204
+    b: 205
+    hasDoor: 0
+    doorPath: 
+  - a: 204
+    b: 233
+    hasDoor: 0
+    doorPath: 
+  - a: 198
+    b: 204
+    hasDoor: 1
+    doorPath: Room I Entrance/Room I Door
+  - a: 204
+    b: 232
+    hasDoor: 0
+    doorPath: 
+  - a: 9
+    b: 205
+    hasDoor: 0
+    doorPath: 
+  - a: 8
+    b: 205
+    hasDoor: 0
+    doorPath: 
+  - a: 205
+    b: 231
+    hasDoor: 0
+    doorPath: 
+  - a: 10
+    b: 205
+    hasDoor: 0
+    doorPath: 
+  - a: 206
+    b: 229
+    hasDoor: 0
+    doorPath: 
+  - a: 193
+    b: 206
+    hasDoor: 0
+    doorPath: 
+  - a: 196
+    b: 206
+    hasDoor: 0
+    doorPath: 
+  - a: 184
+    b: 206
+    hasDoor: 0
+    doorPath: 
+  - a: 217
+    b: 218
+    hasDoor: 0
+    doorPath: 
+  - a: 120
+    b: 220
+    hasDoor: 0
+    doorPath: 
+  - a: 130
+    b: 220
+    hasDoor: 0
+    doorPath: 
+  - a: 131
+    b: 220
+    hasDoor: 0
+    doorPath: 
+  - a: 221
+    b: 222
+    hasDoor: 0
+    doorPath: 
+  - a: 137
+    b: 221
+    hasDoor: 0
+    doorPath: 
+  - a: 223
+    b: 224
+    hasDoor: 0
+    doorPath: 
+  - a: 224
+    b: 225
+    hasDoor: 0
+    doorPath: 
+  - a: 157
+    b: 226
+    hasDoor: 0
+    doorPath: 
+  - a: 185
+    b: 228
+    hasDoor: 0
+    doorPath: 
+  - a: 184
+    b: 228
+    hasDoor: 0
+    doorPath: 
+  - a: 171
+    b: 228
+    hasDoor: 0
+    doorPath: 
+  - a: 188
+    b: 228
+    hasDoor: 0
+    doorPath: 
+  - a: 196
+    b: 229
+    hasDoor: 0
+    doorPath: 
+  - a: 201
+    b: 230
+    hasDoor: 0
+    doorPath: 
+  - a: 202
+    b: 230
+    hasDoor: 0
+    doorPath: 
+  - a: 8
+    b: 231
+    hasDoor: 0
+    doorPath: 
+  - a: 9
+    b: 231
+    hasDoor: 0
+    doorPath: 
+  - a: 198
+    b: 232
+    hasDoor: 1
+    doorPath: Room I Entrance/Room I Door
+  - a: 199
+    b: 233
+    hasDoor: 0
+    doorPath: 
+  provenance: Built from NavMesh 2026-11-24 00:39, bounds 122x111 m, node spacing
+    2.5 m

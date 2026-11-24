@@ -270,6 +270,15 @@ namespace Alesa.Editor
                 return true;
             }
 
+            // Exclude swinging doors. Only immovable geometry belongs in a baked NavMesh: a door
+            // baked while shut cuts the level in two permanently, and opening it in play would not
+            // bring the navigation back. The door still blocks the player physically, and the AI
+            // learns it is shut through MazeEdge.HasClosedDoor instead.
+            if (go.GetComponentInParent<HospitalDoor>() != null)
+            {
+                return true;
+            }
+
             // Exclude barrier/door leaves so rescue cell & corridors remain traversable
             string name = go.name;
             if (name.IndexOf("Alesa access barrier", StringComparison.OrdinalIgnoreCase) >= 0 ||
