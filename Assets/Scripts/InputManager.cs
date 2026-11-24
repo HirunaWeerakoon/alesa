@@ -8,7 +8,8 @@ public class InputManager : MonoBehaviour
     [SerializeField] private Flashlight flashlight;
     private PlayerInputs playerInput;
     private InputActionMap onFoot;
-    private InputAction interact, aim, shoot, reload, pause, switchAmmo;
+    private InputAction interact, aim, shoot, reload, pause, switchAmmo, escapeGrab;
+    private NeckBiteCameraLock grabCamera;
     private InputAction movement, jump, crouch, quickTurn, sprint, flashlightToggle, flashlightFlicker;
     private PlayerMotor motor;
     private PlayerGameplay gameplay;
@@ -28,6 +29,8 @@ public class InputManager : MonoBehaviour
         shoot = Action("Shoot", "<Mouse>/leftButton");
         reload = Action("Reload", "<Keyboard>/r");
         switchAmmo = Action("SwitchAmmo", "<Keyboard>/v");
+        escapeGrab = Action("EscapeGrab", "<Keyboard>/q");
+        grabCamera = GetComponent<NeckBiteCameraLock>();
         movement = onFoot.FindAction("Movement", true);
         jump = onFoot.FindAction("Jump", true);
         crouch = onFoot.FindAction("Crouch", true);
@@ -48,6 +51,15 @@ public class InputManager : MonoBehaviour
     private void Update()
     {
         if (pause.WasPressedThisFrame()) gameplay.HandleEscape();
+
+        // Read before the BlocksControls gate below: shaking off a grab has to keep working even
+        // when something else has taken the player's controls away.
+        if (escapeGrab.WasPressedThisFrame())
+        {
+            if (grabCamera == null) grabCamera = GetComponent<NeckBiteCameraLock>();
+            if (grabCamera != null) grabCamera.RequestEscape();
+        }
+
         if (gameplay.BlocksControls)
         {
             if (onFoot.enabled) onFoot.Disable();
