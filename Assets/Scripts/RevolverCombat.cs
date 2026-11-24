@@ -6,6 +6,29 @@ public class RevolverCombat : MonoBehaviour
 {
     /// <summary>Inventory/ammunition changed; HUD consumers can refresh without polling.</summary>
     public event System.Action WeaponStatusChanged;
+
+    /// <summary>Where a shot went and what, if anything, it struck.</summary>
+    public readonly struct ShotInfo
+    {
+        public readonly Vector3 Origin;
+        public readonly Vector3 Direction;
+        /// <summary>The collider's GameObject, or null when the shot hit nothing.</summary>
+        public readonly GameObject Struck;
+
+        public ShotInfo(Vector3 origin, Vector3 direction, GameObject struck)
+        {
+            Origin = origin;
+            Direction = direction;
+            Struck = struck;
+        }
+    }
+
+    /// <summary>
+    /// Raised on every shot that leaves the barrel. Static so enemies can react to being shot *at*
+    /// — a bullet cracking past is information even when it misses — without the weapon having to
+    /// know they exist.
+    /// </summary>
+    public static event System.Action<ShotInfo> ShotFired;
     public enum AmmunitionType { Ordinary, Silver }
     public RevolverAmmo ammo = new RevolverAmmo();
     public RevolverAmmo silverAmmo = new RevolverAmmo();
@@ -107,11 +130,12 @@ public class RevolverCombat : MonoBehaviour
         hasRevolver = true;
         ammo.LoadPickup(rounds);
         if (weaponView == null) CreateWeaponView();
-        player.Notify("Revolver acquired. Hold RMB to aim; LMB to fire; R to reload; V to switch ammunition.");
+        player.Notify("Revolver acquired. LMB to hip fire; hold RMB to aim; R to reload; V to switch ammunition.");
+        WeaponStatusChanged?.Invoke();
     }
 
-    public void AddAmmo(int amount) { ammo.AddSpare(amount); }
-    public void AddSilverAmmo(int amount) { silverAmmo.AddSpare(amount); }
+    public void AddAmmo(int amount) { ammo.AddSpare(amount); WeaponStatusChanged?.Invoke(); }
+    public void AddSilverAmmo(int amount) { silverAmmo.AddSpare(amount); WeaponStatusChanged?.Invoke(); }
 
     public bool SwitchAmmo()
     {
@@ -136,6 +160,7 @@ public class RevolverCombat : MonoBehaviour
         selectedAmmo = selectedAmmo == AmmunitionType.Ordinary ? AmmunitionType.Silver : AmmunitionType.Ordinary;
         player.State.EndReload(); reloadRoutine = null; reloadProgress = 0f;
         onReloaded.Invoke();
+        WeaponStatusChanged?.Invoke();
         player.Notify(AmmoName + " rounds selected. R to reload.", 2f);
     }
 
@@ -158,13 +183,16 @@ public class RevolverCombat : MonoBehaviour
         Vector3 trajectory = aimPoint - muzzle;
         // Resolve the shot from the actual muzzle towards the crosshair target so
         // a wall beside the camera still blocks the projectile path.
+        GameObject struck = null;
         if (player.RaycastFromPoint(muzzle, trajectory.normalized, Mathf.Min(range, trajectory.magnitude) + 0.01f, hitMask, out RaycastHit hit))
         {
+            struck = hit.collider.gameObject;
             var boss = hit.collider.GetComponentInParent<PossessedBoss>();
             if (boss != null) { if (selectedAmmo == AmmunitionType.Silver) boss.HitBySilverBullet(); }
             else foreach (var behaviour in hit.collider.GetComponentsInParent<MonoBehaviour>())
                 if (behaviour is IDamageable target) { target.TakeDamage(damage); break; }
         }
+        ShotFired?.Invoke(new ShotInfo(muzzle, trajectory.normalized, struck));
         player.Notify("Shot fired", 0.3f);
         AcousticBus.EmitSound(muzzle, 40f, SoundType.Gunshot);
         onShot.Invoke();

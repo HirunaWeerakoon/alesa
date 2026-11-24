@@ -166,6 +166,23 @@ public class PlayerMotor : MonoBehaviour
     }
 
     public void quickTurn() { if (ControlsEnabled) transform.Rotate(0, 180, 0); }
+
+    /// <summary>Current pitch in degrees, as ProcessLook maintains it.</summary>
+    public float LookPitch => xRotation;
+
+    /// <summary>
+    /// Writes the look angles directly. For scripted camera moves: they have to leave the stored
+    /// pitch agreeing with where the camera ended up, or the next mouse movement snaps the view
+    /// back to wherever the player was looking before the script took over.
+    /// </summary>
+    public void SetLook(float pitchDegrees, float yawDegrees)
+    {
+        xRotation = Mathf.Clamp(pitchDegrees, -maxLookAngle, maxLookAngle);
+        if (playerCamera != null) playerCamera.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+        Vector3 euler = transform.eulerAngles;
+        euler.y = yawDegrees;
+        transform.eulerAngles = euler;
+    }
     public void ProcessLook(Vector2 delta)
     {
         if (!ControlsEnabled) return;
