@@ -46,6 +46,42 @@ namespace Alesa.Agents.BlindMinion
         public float AttackCooldown { get; set; } = 1.5f;
 
         /// <summary>
+        /// Distance at which the minion feels the player's presence and hunts without hearing a
+        /// noise. Keep it short: hearing should still be how it usually finds you. 0 disables it.
+        /// </summary>
+        public float PresenceRange { get; set; } = 6f;
+
+        /// <summary>
+        /// When false, no noise — however loud — escalates past <see cref="MinionState.Investigating"/>,
+        /// so the minion walks to a gunshot instead of sprinting at it. Only feeling the player
+        /// (<see cref="PresenceRange"/>) or being shot at still makes it run. Defaults to the
+        /// original behaviour so existing tests and scenes are unchanged.
+        /// </summary>
+        public bool HuntOnLoudNoise { get; set; } = true;
+
+        /// <summary>
+        /// Radius of the ring this minion aims for around the player instead of the player's exact
+        /// position. Several minions all pathing to one point end up standing inside each other;
+        /// each taking its own angle on a ring keeps them apart and surrounds the player instead of
+        /// queueing behind one another. 0 walks straight at the player.
+        /// </summary>
+        public float AttackStandoff { get; set; }
+
+        /// <summary>Degrees around the player this minion approaches from. The adapter spreads these.</summary>
+        public float AttackAngle { get; set; }
+
+        /// <summary>Where to stand to reach the player, which is not the same as where the player is.</summary>
+        private Vector3 StandPoint(Vector3 player)
+        {
+            if (AttackStandoff <= 0f) return player;
+            double radians = AttackAngle * Math.PI / 180.0;
+            return player + new Vector3(
+                (float)Math.Cos(radians) * AttackStandoff,
+                0f,
+                (float)Math.Sin(radians) * AttackStandoff);
+        }
+
+        /// <summary>
         /// Loudness of the scream a minion lets out when it starts hunting. Other minions hear it like
         /// any other noise: close ones (perceived ≥ HuntThreshold) hunt and scream in turn, further ones
         /// only investigate. The ripple dies out by itself because loudness falls with distance and
@@ -143,6 +179,7 @@ namespace Alesa.Agents.BlindMinion
             float playerDistance = FlatMath.Distance(CurrentPosition, player);
             float reach = State == MinionState.Dormant ? TouchRange : AttackRange;
             if (State != MinionState.Attacking && playerDistance <= reach) Enter(MinionState.Attacking);
+            else if (State != MinionState.Attacking) SensePlayer(player, playerDistance);
 
             switch (State)
             {
@@ -206,7 +243,7 @@ namespace Alesa.Agents.BlindMinion
             _lastHeardAt = _clock;
             BuildRoute(sound, heardThrough, GuessSourcePosition(noise.Position, perceived));
 
-            bool alarming = noise.Type == NoiseType.Gunshot || perceived >= HuntThreshold;
+            bool alarming = HuntOnLoudNoise && (noise.Type == NoiseType.Gunshot || perceived >= HuntThreshold);
             var desired = alarming || State == MinionState.Hunting ? MinionState.Hunting : MinionState.Investigating;
 
             switch (State)
@@ -341,6 +378,64 @@ namespace Alesa.Agents.BlindMinion
             return true;
         }
 
+        /// <summary>
+        /// Blind, not oblivious. Inside <see cref="PresenceRange"/> the minion feels the player —
+        /// breath, warmth, the floor shifting — and hunts them directly without waiting for a noise.
+        /// </summary>
+        /// <remarks>
+        /// Without this a minion that has lost its lead stands still while the player walks up and
+        /// stares at it, because hearing is the only sense it has and standing still is silent.
+        /// The range is deliberately short so the hearing model, not this, is what normally finds
+        /// the player. Set <see cref="PresenceRange"/> to 0 to turn it off.
+        /// </remarks>
+        private void SensePlayer(Vector3 player, float playerDistance)
+        {
+            if (PresenceRange <= 0f || playerDistance > PresenceRange) return;
+
+            _lastHeardAt = _clock;
+            HearingErrorRadius = 0f;
+            HasFinalTarget = true;
+
+            // Chase the player's live position: clear the acoustic route, which points at where a
+            // noise was, not at where they are now. Aim for this minion's own slot on the ring
+            // around them, not the player's exact spot, or every minion converges on one point.
+            Vector3 stand = StandPoint(player);
+            if (FlatMath.Distance(FinalTarget, stand) > ArriveRadius)
+            {
+                _route.Clear();
+                RouteIndex = 0;
+                FinalTarget = stand;
+                ResetProgress();
+            }
+
+            if (State != MinionState.Hunting) Enter(MinionState.Hunting);
+        }
+
+        /// <summary>
+        /// Drops whatever it was doing and runs at the player's current position. A bullet cracking
+        /// past tells a blind thing exactly where you are, so this bypasses the acoustic route
+        /// entirely. Safe to call every frame while charging: it just refreshes the target.
+        /// </summary>
+        public void HuntPlayer()
+        {
+            if (State == MinionState.Attacking) return;
+
+            Vector3 stand = StandPoint(_ctx.World.PlayerPosition);
+            if (FlatMath.Distance(FinalTarget, stand) > ArriveRadius || !HasFinalTarget)
+            {
+                _route.Clear();
+                RouteIndex = 0;
+                FinalTarget = stand;
+                ResetProgress();
+            }
+
+            HasFinalTarget = true;
+            HearingErrorRadius = 0f;
+            Alertness = 1f;
+            _lastHeardAt = _clock;
+            if (State != MinionState.Hunting) Enter(MinionState.Hunting);
+        }
+
         private void TickAttack(Vector3 player, float playerDistance)
         {
             if (playerDistance > AttackRange * 1.5f)
@@ -348,13 +443,22 @@ namespace Alesa.Agents.BlindMinion
                 // Lost contact: it felt where the player was, so hunt that spot.
                 _route.Clear();
                 RouteIndex = 0;
-                FinalTarget = player;
+                FinalTarget = StandPoint(player);
                 HasFinalTarget = true;
                 HearingErrorRadius = 0f;
                 ResetProgress();
                 _lastHeardAt = _clock;
                 Enter(MinionState.Hunting);
                 FollowRoute(HuntSpeed);
+                return;
+            }
+
+            // AttackRange is where it commits to the player, not where it stops walking: halting
+            // there left the minion standing an arm's length away staring. It keeps closing until
+            // TouchRange, and only swings once it is actually in contact.
+            if (playerDistance > TouchRange)
+            {
+                Intent = MovementIntent.MoveTo(StandPoint(player), HuntSpeed);
                 return;
             }
 
