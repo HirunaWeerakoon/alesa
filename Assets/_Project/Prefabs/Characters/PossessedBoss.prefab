@@ -109,6 +109,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9466884bc793870448d24dd78f6787ae, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7735790702094011736}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9466884bc793870448d24dd78f6787ae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9007548984196861990}
   m_SourcePrefab: {fileID: 100100000, guid: 9466884bc793870448d24dd78f6787ae, type: 3}
 --- !u!137 &2834932200950794693 stripped
 SkinnedMeshRenderer:
@@ -387,6 +390,32 @@ MonoBehaviour:
   syncNavMeshAgent: 1
   grabTurnSpeed: 540
   destinationUpdateThreshold: 0.05
+--- !u!114 &9007548984196861990
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3361296582013604166}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d4dec723a87e8844a867d2684e3cdd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossLevitation
+  hoverHeight: 0.7
+  bobAmount: 0.08
+  bobPeriod: 3.2
+  blendSeconds: 0.6
+  headTilt: 28
+  headDroop: 18
+  spineLean: 10
+  armReach: 45
+  armSpread: 12
+  elbowBend: 20
+  kneeBend: 22
+  toePoint: 45
+  driftAmount: 7
+  driftSpeed: 0.35
 --- !u!137 &6171203354280269960 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: -594382249341094753, guid: 9466884bc793870448d24dd78f6787ae, type: 3}
