@@ -410,6 +410,10 @@ MonoBehaviour:
   huntSpeed: 5.5
   attackRange: 1.8
   presenceRange: 6
+  sightRange: 14
+  sightHalfAngle: 70
+  walkTowardsSeenPlayer: 1
+  screamHoldSeconds: 2.2
   attackDamage: 20
   attackGap: 0.3
   biteGap: 0.2
@@ -492,14 +496,12 @@ MonoBehaviour:
   headshotKillTail: {fileID: 0}
   bodyFallFar: {fileID: 8300000, guid: 326203e6dcd57467c92e2bcbf9c25e85, type: 3}
   bodyFallNear: {fileID: 8300000, guid: 763a323b04dbb4cbf99082a82ef3cb54, type: 3}
-  footstepLeft: {fileID: 8300000, guid: cfaa31361f7ba4a23b747862467ff938, type: 3}
-  footstepRight: {fileID: 8300000, guid: dcfc7dfb0dfd04a50a68e5c5d29e67c0, type: 3}
-  footstepRunLeft: {fileID: 8300000, guid: dcfc7dfb0dfd04a50a68e5c5d29e67c0, type: 3}
-  footstepRunRight: {fileID: 8300000, guid: 80e9f3f626b53418ebb33bcc0bf2e7fd, type: 3}
+  footstepWalk: {fileID: 8300000, guid: cfaa31361f7ba4a23b747862467ff938, type: 3}
+  footstepRun: {fileID: 8300000, guid: 80e9f3f626b53418ebb33bcc0bf2e7fd, type: 3}
   footstepCrawl: {fileID: 8300000, guid: 044d3667ee0794e55b578fce018d748e, type: 3}
   biteLeadSeconds: 0
   nearDeathGap: 0.3
-  strideLength: 0.85
+  cycleLength: 1.7
   minStepSpeed: 0.2
   runStepSpeed: 3.5
   footstepPitchJitter: 0.08

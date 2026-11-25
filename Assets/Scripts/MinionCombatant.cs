@@ -47,6 +47,7 @@ public sealed class MinionCombatant : MonoBehaviour, IDamageable
     private Transform _player;
     private float _chargeEndsAt;
     private bool _onAllFours;
+    private bool _runStarted;
 
     public bool IsDead => dead;
     public bool IsCharging => charging;
@@ -67,17 +68,30 @@ public sealed class MinionCombatant : MonoBehaviour, IDamageable
     private void Update()
     {
         if (!charging || dead) return;
+        if (_agent == null || _agent.Brain == null) return;
 
-        if (Time.time >= _chargeEndsAt)
+        // The run animation is held back until the scream has finished, or the Charging bool would
+        // cut straight from the scream into a sprint and the howl would never be seen. The brain
+        // roots the body for the same stretch, so it screams where it stands and only then moves.
+        if (!_runStarted && !_agent.Brain.IsScreaming)
+        {
+            _runStarted = true;
+            _agent.SetCharging(true, _onAllFours);
+            // The clock starts here, not at the scream, so the hold never eats into the chase.
+            _chargeEndsAt = Time.time + chargeSeconds;
+        }
+
+        if (_runStarted && Time.time >= _chargeEndsAt)
         {
             charging = false;
-            if (_agent != null) _agent.SetCharging(false, false);
+            _runStarted = false;
+            _agent.SetCharging(false, false);
             return;
         }
 
         // Refresh the target every frame so the charge tracks a player who keeps moving, rather
         // than sprinting to where they stood when the shot was fired.
-        if (_agent != null && _agent.Brain != null) _agent.Brain.HuntPlayer();
+        _agent.Brain.HuntPlayer();
     }
 
     // ------------------------------------------------------------------ damage
@@ -89,6 +103,7 @@ public sealed class MinionCombatant : MonoBehaviour, IDamageable
         torsoHits++;
         if (torsoHits >= torsoShotsToKill) { Die(false); return; }
         if (_voice != null) _voice.PlayBodyShot();
+        BeginCharge();
     }
 
     /// <summary>Head shot, from <see cref="MinionHeadHitbox"/>.</summary>
@@ -98,6 +113,7 @@ public sealed class MinionCombatant : MonoBehaviour, IDamageable
         headHits++;
         if (headHits >= headShotsToKill) { Die(true); return; }
         if (_voice != null) _voice.PlayHeadShot();
+        BeginCharge();
     }
 
     private void Die(bool headshot)
@@ -146,10 +162,27 @@ public sealed class MinionCombatant : MonoBehaviour, IDamageable
         if (toPlayer.sqrMagnitude < 1e-4f || facing.sqrMagnitude < 1e-4f) return;
         if (Vector3.Angle(facing, toPlayer) > facingAngle) return;
 
+        BeginCharge();
+    }
+
+    /// <summary>
+    /// Screams where it stands, then runs the player down. Raised by a bullet that landed and by
+    /// one that cracked past, because from the minion's side those are the same message.
+    /// </summary>
+    /// <remarks>
+    /// Note what is <em>not</em> set here: <see cref="BlindMinionAgent.SetCharging"/>. The Charging
+    /// bool starts the run animation, and starting it now would cut the scream off at the first
+    /// frame. <see cref="Update"/> raises it once the brain reports the scream is over.
+    /// </remarks>
+    private void BeginCharge()
+    {
+        if (dead || charging || _agent == null || _agent.Brain == null) return;
+
         charging = true;
+        _runStarted = false;
         _onAllFours = Random.value < crawlChance;
-        _chargeEndsAt = Time.time + chargeSeconds;
-        _agent.SetCharging(true, _onAllFours);
+        _chargeEndsAt = float.MaxValue; // set properly once the scream ends and the run starts
+
         // Before HuntPlayer: entering Hunting screams, and PlayCharge silences that scream so the
         // two vocals do not land together.
         if (_voice != null) _voice.PlayCharge();

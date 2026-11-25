@@ -58,11 +58,10 @@ public sealed class MinionVoice : MonoBehaviour
     [SerializeField] private AudioClip headshotKillTail;
     [SerializeField] private AudioClip bodyFallFar;
     [SerializeField] private AudioClip bodyFallNear;
-    [SerializeField] private AudioClip footstepLeft;
-    [SerializeField] private AudioClip footstepRight;
-    [Tooltip("Heavier steps used above runStepSpeed.")]
-    [SerializeField] private AudioClip footstepRunLeft;
-    [SerializeField] private AudioClip footstepRunRight;
+    [Tooltip("One clip covering a whole left-and-right cycle at walking pace. Plays once per cycle, not once per foot.")]
+    [SerializeField] private AudioClip footstepWalk;
+    [Tooltip("The same, for running.")]
+    [SerializeField] private AudioClip footstepRun;
     [Tooltip("Used instead of footsteps while charging on all fours.")]
     [SerializeField] private AudioClip footstepCrawl;
 
@@ -74,13 +73,13 @@ public sealed class MinionVoice : MonoBehaviour
     [SerializeField, Min(0f)] private float nearDeathGap = 0.3f;
 
     [Header("Footsteps")]
-    [Tooltip("Metres of travel per step. Scaled down automatically while sprinting.")]
-    [SerializeField, Min(0.1f)] private float strideLength = 0.85f;
+    [Tooltip("Metres of travel per complete cycle — left and right together. One clip covers the whole cycle, so it fires once per this distance. Shortens automatically while sprinting.")]
+    [SerializeField, Min(0.1f)] private float cycleLength = 1.7f;
 
     [Tooltip("Speed (m/s) below which it is standing still and takes no steps.")]
     [SerializeField, Min(0f)] private float minStepSpeed = 0.2f;
 
-    [Tooltip("Speed (m/s) at or above which the heavier run steps are used instead of the walk pair.")]
+    [Tooltip("Speed (m/s) at or above which the run cycle is used instead of the walk cycle.")]
     [SerializeField, Min(0f)] private float runStepSpeed = 3.5f;
 
     [Tooltip("Random pitch spread on footsteps, so a long corridor does not sound like a metronome.")]
@@ -99,7 +98,6 @@ public sealed class MinionVoice : MonoBehaviour
     private Transform _player;
     private Vector3 _lastStepPosition;
     private float _strideAccumulated;
-    private bool _leftFoot;
     private bool _dead;
     private float _nextBreathAt;
     private bool _subscribedToBrain;
@@ -188,14 +186,13 @@ public sealed class MinionVoice : MonoBehaviour
 
         _strideAccumulated += travelled.magnitude;
 
-        // A sprint covers ground faster per step, not just more often, so the stride shortens
-        // with speed — otherwise a running zombie sounds like it is gliding between footfalls.
-        float stride = strideLength * Mathf.Clamp(1f - (speed - 1.8f) * 0.06f, 0.55f, 1f);
-        if (_strideAccumulated < stride) return;
+        // A sprint covers ground faster per step, not just more often, so the cycle shortens with
+        // speed — otherwise a running zombie sounds like it is gliding between footfalls.
+        float cycle = cycleLength * Mathf.Clamp(1f - (speed - 1.8f) * 0.06f, 0.55f, 1f);
+        if (_strideAccumulated < cycle) return;
 
         _strideAccumulated = 0f;
-        PlayFootstep(_leftFoot);
-        _leftFoot = !_leftFoot;
+        PlayFootstep();
     }
 
     /// <summary>
@@ -236,7 +233,12 @@ public sealed class MinionVoice : MonoBehaviour
         }
     }
 
-    private void PlayFootstep(bool left)
+    /// <summary>
+    /// One clip per complete footstep cycle. The supplied recordings already contain a full
+    /// left-and-right pass, so alternating two clips per foot doubled them up and read as a
+    /// four-legged thing.
+    /// </summary>
+    private void PlayFootstep()
     {
         if (_combatant == null) _combatant = GetComponent<MinionCombatant>();
         bool crawling = _combatant != null && _combatant.IsCrawlCharge;
@@ -244,9 +246,8 @@ public sealed class MinionVoice : MonoBehaviour
 
         AudioClip clip;
         if (crawling && footstepCrawl != null) clip = footstepCrawl;
-        else if (speed >= runStepSpeed && footstepRunLeft != null)
-            clip = left ? footstepRunLeft : footstepRunRight;
-        else clip = left ? footstepLeft : footstepRight;
+        else if (speed >= runStepSpeed && footstepRun != null) clip = footstepRun;
+        else clip = footstepWalk;
 
         if (clip == null || foley == null) return;
         foley.pitch = 1f + Random.Range(-footstepPitchJitter, footstepPitchJitter);
