@@ -53,6 +53,24 @@ namespace Alesa.Agents.BlindMinion
         [SerializeField] private float attackRange = 1.8f;
         [Tooltip("Distance at which it feels the player and hunts without hearing anything. 0 = hearing only.")]
         [SerializeField] private float presenceRange = 6f;
+
+        [Header("Sight")]
+        [Tooltip("How far it can see the player, in front of it and with a clear line. 0 = blind, hearing only.")]
+        [SerializeField, Min(0f)] private float sightRange = 14f;
+
+        [Tooltip("Half-angle of the vision cone, in degrees either side of the way it is facing.")]
+        [SerializeField, Range(5f, 180f)] private float sightHalfAngle = 70f;
+
+        [Tooltip("Seeing the player makes it walk over, not run. Only a bullet turns the walk into a charge.")]
+        [SerializeField] private bool walkTowardsSeenPlayer = true;
+
+        [Tooltip("Seconds it is rooted to the spot while the scream plays. The Scream clip is 2.75 s; " +
+                 "this stops just short so the run blends over its tail instead of waiting out the recovery.")]
+        [SerializeField, Min(0f)] private float screamHoldSeconds = 2.2f;
+
+        [Tooltip("Needs clear air to the player before closing in or swinging. Off, a minion the other " +
+                 "side of a partition wall counts as being in reach and hits straight through it.")]
+        [SerializeField] private bool requireClearReachToAttack = true;
         [Tooltip("Damage dealt to the player on each hit. 0 = harmless.")]
         [SerializeField] private float attackDamage = 20f;
 
@@ -182,6 +200,12 @@ namespace Alesa.Agents.BlindMinion
                 HuntSpeed = huntSpeed,
                 AttackRange = attackRange,
                 PresenceRange = presenceRange,
+                SightRange = sightRange,
+                SightHalfAngle = sightHalfAngle,
+                WalkTowardsSeenPlayer = walkTowardsSeenPlayer,
+                ScreamHoldSeconds = screamHoldSeconds,
+                RequireClearReachToAttack = requireClearReachToAttack,
+                ReachStopShort = playerRadius + 0.075f, // just outside the player's own capsule
                 HuntOnLoudNoise = huntOnLoudNoise,
                 TouchRange = BodyRadius + playerRadius + attackGap,
                 AttackStandoff = BodyRadius + playerRadius + attackGap,
@@ -225,7 +249,15 @@ namespace Alesa.Agents.BlindMinion
 
         private void Update()
         {
+            // Awake leaves Brain null and disables this when there is no AIBootstrap, but a minion
+            // switched off and on again, or spawned while the director is being torn down, can still
+            // reach here without one and throw on every frame from then on.
+            if (Brain == null) return;
+
             Brain.CurrentPosition = transform.position.ToCore();
+            // The vision cone needs a direction, and only the transform knows which way the body
+            // actually ended up pointing after the motor turned it.
+            Brain.CurrentFacing = transform.forward.ToCore();
             Brain.Tick(Time.deltaTime);
             SetBool(SearchingBool, Brain.State == MinionState.Searching);
             UpdateCombatPresentation();
@@ -392,6 +424,24 @@ namespace Alesa.Agents.BlindMinion
             var nav = GetComponent<UnityEngine.AI.NavMeshAgent>();
             if (nav != null) nav.enabled = false;
         }
+
+        /// <summary>
+        /// Plays the neck-bite animation with no attack behind it: something already dead being fed on.
+        /// </summary>
+        /// <remarks>
+        /// Deliberately separate from <c>OnAttacked</c>, which also raises SwingStarted, applies damage
+        /// and starts the hit/miss resolution. Feeding is only the pose.
+        /// </remarks>
+        public void PlayFeedingBite() => SetTrigger(NeckBiteTrigger);
+
+        /// <summary>Parks the locomotion blend so a held pose is not blended against a stale walk speed.</summary>
+        public void StopLocomotionAnimation()
+        {
+            var animator = _motor != null ? _motor.Animator : null;
+            if (HasParameter(animator, SpeedHash)) animator.SetFloat(SpeedHash, 0f);
+        }
+
+        private static readonly int SpeedHash = Animator.StringToHash("Speed");
 
         private void SetTrigger(int id)
         {

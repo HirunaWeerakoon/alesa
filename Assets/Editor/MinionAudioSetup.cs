@@ -27,13 +27,11 @@ namespace Alesa.Editor
         {
             { "bodyFallFar",     Horror + "BodyFall/Foley_BodyFall_001.wav" },
             { "bodyFallNear",    Horror + "BodyFall/Foley_BodyFall_002.wav" },
-            { "footstepLeft",    Horror + "Footsteps/Footsteps_Zombie_concret_001.wav" },
-            { "footstepRight",   Horror + "Footsteps/Footsteps_Zombie_concret_002.wav" },
+            { "footstepWalk",    Horror + "Footsteps/Footsteps_Zombie_concret_001.wav" },
             { "bodyShotImpact",  Horror + "Impact/Impact_Flesh_001.wav" },
             { "headShotImpact",  Horror + "Impact/Impact_Flesh_Gory_Light_001.wav" },
             { "attackWhiff",     Horror + "Impact/Impact_Flesh_Gory_Light_001.wav" },
-            { "footstepRunLeft", Horror + "Footsteps/Footsteps_Zombie_concret_002.wav" },
-            { "footstepRunRight",Horror + "Footsteps/Footsteps_Zombie_concret_003.wav" },
+            { "footstepRun",     Horror + "Footsteps/Footsteps_Zombie_concret_003.wav" },
             { "footstepCrawl",   Horror + "Foley/Foley_Crawling_A_002.wav" },
             { "searchVocal",     Tybug  + "Zombie Hiss/zombie_hiss_010.wav" },
         };

@@ -52,6 +52,81 @@ namespace Alesa.Agents.BlindMinion
         public float PresenceRange { get; set; } = 6f;
 
         /// <summary>
+        /// How far the minion can see the player, with a clear line and the player inside
+        /// <see cref="SightHalfAngle"/> of its own facing. 0 disables sight entirely.
+        /// </summary>
+        public float SightRange { get; set; }
+
+        /// <summary>Half-angle of the vision cone in degrees, measured from <see cref="CurrentFacing"/>.</summary>
+        public float SightHalfAngle { get; set; } = 70f;
+
+        /// <summary>
+        /// Height above its own feet that the minion looks from, and the height on the player it
+        /// looks at.
+        /// </summary>
+        /// <remarks>
+        /// Both positions are foot positions. Casting between them runs the line along the floor,
+        /// where the floor collider and every low prop block it, so sight would never work.
+        /// </remarks>
+        public float SightEyeHeight { get; set; } = 1.5f;
+        public float SightTargetHeight { get; set; } = 1.2f;
+
+        /// <summary>
+        /// Metres short of the player the sight line stops.
+        /// </summary>
+        /// <remarks>
+        /// The scene's line-of-sight mask covers the Default layer, which is what the player's own
+        /// capsule is on, so a line drawn all the way to them is blocked by them. Stopping outside
+        /// their body tests the room between the two instead, which is the actual question.
+        /// </remarks>
+        public float SightStopShort { get; set; } = 0.7f;
+
+        /// <summary>
+        /// Require nothing solid between the two bodies before closing to attack or swinging.
+        /// </summary>
+        /// <remarks>
+        /// Reach used to be distance alone, so a minion standing on the far side of a partition wall
+        /// was "within 1.8 m of the player" and swung straight through it. Two rooms either side of
+        /// one wall are both walkable, so this happens wherever the level is thin.
+        /// Off by default, so a brain built without it behaves as it always did.
+        /// </remarks>
+        public bool RequireClearReachToAttack { get; set; }
+
+        /// <summary>Height above the feet at which the reach check is drawn — chest height, clear of the floor.</summary>
+        public float ReachCheckHeight { get; set; } = 1.0f;
+
+        /// <summary>
+        /// Metres short of the player the reach line stops, for the same reason as
+        /// <see cref="SightStopShort"/>. Smaller than it, because at contact range there is barely
+        /// any line left to test: just outside the player's own 0.325 m capsule.
+        /// </summary>
+        public float ReachStopShort { get; set; } = 0.4f;
+
+        /// <summary>
+        /// Which way the body is pointing. Fed by the Unity adapter each frame; without it the
+        /// vision cone has no direction and sight degenerates to a plain radius.
+        /// </summary>
+        public Vector3 CurrentFacing { get; set; }
+
+        /// <summary>
+        /// Seeing or feeling the player leads to a walk (<see cref="MinionState.Investigating"/>)
+        /// rather than a screaming run. Catching sight of something is not the same as being shot
+        /// at: only a bullet should turn a walk into a charge.
+        /// </summary>
+        public bool WalkTowardsSeenPlayer { get; set; }
+
+        /// <summary>
+        /// Seconds the minion is rooted to the spot while its scream plays. It throws its head back
+        /// and howls; it does not howl on the move. 0 keeps the old behaviour of screaming mid-stride.
+        /// </summary>
+        public float ScreamHoldSeconds { get; set; }
+
+        /// <summary>True while the scream has it rooted.</summary>
+        public bool IsScreaming => ScreamHoldSeconds > 0f && _clock < _screamUntil;
+
+        private float _screamUntil = float.NegativeInfinity;
+
+        /// <summary>
         /// When false, no noise — however loud — escalates past <see cref="MinionState.Investigating"/>,
         /// so the minion walks to a gunshot instead of sprinting at it. Only feeling the player
         /// (<see cref="PresenceRange"/>) or being shot at still makes it run. Defaults to the
@@ -288,7 +363,8 @@ namespace Alesa.Agents.BlindMinion
             var player = _ctx.World.PlayerPosition;
             float playerDistance = FlatMath.Distance(CurrentPosition, player);
             float reach = State == MinionState.Dormant ? TouchRange : AttackRange;
-            if (State != MinionState.Attacking && playerDistance <= reach) Enter(MinionState.Attacking);
+            if (State != MinionState.Attacking && playerDistance <= reach && HasClearReach(player))
+                Enter(MinionState.Attacking);
             else if (State != MinionState.Attacking) SensePlayer(player, playerDistance);
 
             switch (State)
@@ -324,6 +400,11 @@ namespace Alesa.Agents.BlindMinion
                     TickAttack(player, playerDistance);
                     break;
             }
+
+            // Rooted while the scream plays. Applied after the switch so it overrides whatever the
+            // state decided: the scream is the one thing that stops a hunt dead. Attacking is exempt
+            // — a minion with its hands already on the player does not pause to perform.
+            if (IsScreaming && State != MinionState.Attacking) Intent = LookTowards(player);
         }
 
         private float TimeInState => _clock - _stateEnteredAt;
@@ -520,7 +601,9 @@ namespace Alesa.Agents.BlindMinion
         /// </remarks>
         private void SensePlayer(Vector3 player, float playerDistance)
         {
-            if (PresenceRange <= 0f || playerDistance > PresenceRange) return;
+            bool felt = PresenceRange > 0f && playerDistance <= PresenceRange;
+            bool seen = CanSeePlayer(player, playerDistance);
+            if (!felt && !seen) return;
 
             _lastHeardAt = _clock;
             HearingErrorRadius = 0f;
@@ -539,7 +622,69 @@ namespace Alesa.Agents.BlindMinion
                 ResetProgress();
             }
 
-            if (State != MinionState.Hunting) Enter(MinionState.Hunting);
+            // A minion already running at the player is not slowed down by then catching sight of
+            // them — only a scream-worthy event promotes a walk, and nothing demotes a run.
+            if (State == MinionState.Hunting) return;
+
+            // Seeing something is not being shot at. Entering Investigating walks at
+            // InvestigateSpeed and, unlike Hunting, does not scream.
+            Enter(WalkTowardsSeenPlayer ? MinionState.Investigating : MinionState.Hunting);
+        }
+
+        /// <summary>
+        /// Whether the player is in front of this minion, close enough, and not behind a wall.
+        /// </summary>
+        /// <remarks>
+        /// The facing test uses <see cref="CurrentFacing"/>, which the Unity adapter refreshes from
+        /// the transform each frame. Left unset it is the zero vector, and the cone is skipped
+        /// rather than silently blinding every minion.
+        /// </remarks>
+        private bool CanSeePlayer(Vector3 player, float playerDistance)
+        {
+            if (SightRange <= 0f || playerDistance > SightRange) return false;
+
+            Vector3 toPlayer = player - CurrentPosition;
+            toPlayer.Y = 0f;
+            if (toPlayer.LengthSquared() < 1e-4f) return true; // on top of it
+
+            Vector3 facing = CurrentFacing;
+            facing.Y = 0f;
+            if (facing.LengthSquared() > 1e-4f && SightHalfAngle < 180f)
+            {
+                float dot = Vector3.Dot(Vector3.Normalize(facing), Vector3.Normalize(toPlayer));
+                if (dot < (float)Math.Cos(SightHalfAngle * Math.PI / 180.0)) return false;
+            }
+
+            Vector3 eye = CurrentPosition; eye.Y += SightEyeHeight;
+            Vector3 chest = player; chest.Y += SightTargetHeight;
+            Vector3 line = chest - eye;
+            float length = line.Length();
+            if (length <= SightStopShort) return true; // already inside arm's reach
+
+            Vector3 stop = eye + line * ((length - SightStopShort) / length);
+            return _ctx.World.HasLineOfSight(eye, stop);
+        }
+
+        /// <summary>
+        /// Whether there is open air between the two bodies, rather than merely a short distance.
+        /// </summary>
+        /// <remarks>
+        /// Drawn at chest height so the floor does not block it, and stopped just outside the
+        /// player's own capsule, which is on a layer the scene's sight mask includes and would
+        /// otherwise register as the wall it is looking for.
+        /// </remarks>
+        private bool HasClearReach(Vector3 player)
+        {
+            if (!RequireClearReachToAttack) return true;
+
+            Vector3 from = CurrentPosition; from.Y += ReachCheckHeight;
+            Vector3 to = player; to.Y += ReachCheckHeight;
+            Vector3 line = to - from;
+            float length = line.Length();
+            if (length <= ReachStopShort) return true; // bodies overlapping; nothing left to test
+
+            Vector3 stop = from + line * ((length - ReachStopShort) / length);
+            return _ctx.World.HasLineOfSight(from, stop);
         }
 
         /// <summary>
@@ -598,6 +743,9 @@ namespace Alesa.Agents.BlindMinion
             Intent = LookTowards(player);
             float cooldown = IsFrenzied ? AttackCooldown * FrenzyCooldownMultiplier : AttackCooldown;
             if (_clock - _lastAttackAt < cooldown) return;
+            // Checked again at the swing, not just on the way in: the player can back round a corner
+            // between committing and connecting, and a blow that lands through the corner is the bug.
+            if (!HasClearReach(player)) return;
             _lastAttackAt = _clock;
             Attacked?.Invoke();
         }
@@ -618,6 +766,8 @@ namespace Alesa.Agents.BlindMinion
             }
 
             if (distance <= AttackRange || distance > LungeReach) return false;
+            // No leaping through a wall at someone it cannot reach.
+            if (!HasClearReach(player)) return false;
 
             _lungeArbiter.MeleeStrikeReach = AttackRange;
             _lungeArbiter.LungeTriggerReach = LungeReach;
@@ -801,6 +951,7 @@ namespace Alesa.Agents.BlindMinion
 
         private void Scream()
         {
+            _screamUntil = _clock + ScreamHoldSeconds;
             Screamed?.Invoke();
             _ctx.Noise.Emit(new NoiseEvent(CurrentPosition, ScreamLoudness, NoiseType.Scream, _clock, Id));
         }

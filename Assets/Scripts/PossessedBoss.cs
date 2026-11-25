@@ -15,12 +15,37 @@ public class PossessedBoss : MonoBehaviour
     public Collider[] bodyColliders = new Collider[0];
     public AudioSource voice;
     public AudioClip warningClip;
+    [Tooltip("One of these plays each time she appears in the maze — one clip per appearance, never two at once. " +
+             "With two or more, the same one is never used twice running.")]
+    public AudioClip[] appearanceVoices = new AudioClip[0];
+    [Tooltip("Volume of the appearance voice, separate from the warning cue.")]
+    [Range(0f, 1f)] public float appearanceVoiceVolume = 1f;
+    [Tooltip("Mostly 2D on purpose. She appears 8-45 m away by design, and the body's own voice source is " +
+             "3D with a 22 m falloff, so an appearance stinger played on it is inaudible at the very " +
+             "distances it exists for. A little blend keeps a hint of direction.")]
+    [Range(0f, 1f)] public float appearanceVoiceSpatialBlend = 0.25f;
+    [Tooltip("Audible range of the appearance voice. Must comfortably exceed the furthest she can appear.")]
+    [Min(10f)] public float appearanceVoiceRange = 90f;
     [Tooltip("Walking pace (m/s). 1.8 is the walk animation; the player walks at 5, so she cannot be outrun, only left behind.")]
     public float movementSpeed = 1.8f;
     public float predictionTime = 2f, appearanceWarning = 1.25f;
     [Tooltip("Once the player is further than this (m) and out of sight, she lets go and the hive puts her somewhere ahead of them.")]
     [Min(5f)] public float abandonDistance = 24f;
     public float grabReach = 1.35f, grabWindup = .85f, grabRecovery = 1.5f;
+
+    [Header("Finishers")]
+    [Tooltip("Chance a kill is the Superhuman Choke Lift rather than the Brutal Assassination.")]
+    [Range(0f, 1f)] public float superAttackChance = 0.4f;
+    [Tooltip("Seconds of Brutal Assassination (3.17 s) before the death screen.")]
+    [Min(0.1f)] public float normalAttackSeconds = 2.3f;
+    [Tooltip("Seconds of Superhuman Choke Lift (5.93 s) before the death screen. The lift reads best " +
+             "if the screen lands while she still has the player off the ground.")]
+    [Min(0.1f)] public float superAttackSeconds = 4.6f;
+    [Tooltip("Nathan's dying groan, played as the finisher starts.")]
+    public AudioClip playerDeathGroan;
+    [Range(0f, 1f)] public float playerDeathGroanVolume = 1f;
+    [Tooltip("Seconds the camera takes to swing onto her as she takes hold.")]
+    [Min(0.01f)] public float killCameraBlendSeconds = 0.3f;
     public float sightMemory = 3f, commitmentSeconds = 1.5f;
     [Tooltip("Seconds the boss takes to fade out and sink when banished by a silver round.")]
     [Min(0f)] public float vanishSeconds = 1.1f;
@@ -63,6 +88,11 @@ public class PossessedBoss : MonoBehaviour
         if (player == null || gameplay == null || Time.deltaTime <= 0f || gameplay.BlocksControls) return;
         Vector3 velocity = (player.position - previousPlayer) / Time.deltaTime; previousPlayer = player.position; velocity.y = 0;
         ObservedVelocity = Vector3.Lerp(ObservedVelocity, Vector3.ClampMagnitude(velocity, 9f), 1f - Mathf.Exp(-5f * Time.deltaTime));
+
+        // Her controller takes idle-to-walk from a bool, not from the Speed blend: she only ever
+        // travels at 1.8 m/s, which is the Female Walk clip's own pace, so there is nothing to blend.
+        SetBool("Moving", agent != null && agent.enabled && agent.isOnNavMesh
+                          && !agent.isStopped && agent.velocity.sqrMagnitude > 0.04f);
         if (currentState == BossState.Appearing)
         {
             if (Time.time >= deadline)
@@ -85,12 +115,18 @@ public class PossessedBoss : MonoBehaviour
         {
             if (Time.time < deadline) return;
             if (seesPlayer && FlatDistance(transform.position, player.position) <= grabReach)
-            { currentState = BossState.Finished; gameplay.EndRun(false); }
+            { currentState = BossState.Finished; StartCoroutine(Finish(_superGrab)); }
             else { currentState = BossState.Pursuing; nextGrab = Time.time + grabRecovery; agent.isStopped = false; }
             return;
         }
         if (seesPlayer && Time.time >= nextGrab && FlatDistance(transform.position, player.position) <= grabReach)
-        { currentState = BossState.Grabbing; deadline = Time.time + grabWindup; agent.isStopped = true; Cue(.8f); return; }
+        {
+            currentState = BossState.Grabbing; deadline = Time.time + grabWindup; agent.isStopped = true; Cue(.8f);
+            // Decided as she takes hold, not when it lands, so the right animation plays through the grab.
+            _superGrab = UnityEngine.Random.value < superAttackChance;
+            SetTrigger(_superGrab ? "SuperAttack" : "Attack");
+            return;
+        }
         if (Time.time < nextPlan) return;
         nextPlan = Time.time + Mathf.Max(.5f, commitmentSeconds);
         if (Time.time - lastSight > sightMemory)
@@ -151,7 +187,7 @@ public class PossessedBoss : MonoBehaviour
         if (!agent.Warp(hit.position)) { agent.enabled = false; return false; }
         transform.rotation = rotation; agent.isStopped = true; agent.ResetPath();
         currentState = BossState.Appearing; deadline = Time.time + Mathf.Max(1f, appearanceWarning);
-        lastSeen = player != null ? player.position : hit.position; Cue(.65f); return true;
+        lastSeen = player != null ? player.position : hit.position; Cue(.65f); PlayAppearanceVoice(); return true;
     }
     public void HitBySilverBullet()
     {
@@ -277,6 +313,148 @@ public class PossessedBoss : MonoBehaviour
         foreach (var c in bodyColliders) if (c != null) c.enabled = visible;
     }
     void Cue(float pitch) { if (voice != null && warningClip != null) { voice.pitch = pitch; voice.PlayOneShot(warningClip); } }
+
+    // ---- finishers -------------------------------------------------------------------------------
+    bool _superGrab;
+    Animator _animator;
+
+    Animator Anim
+    {
+        get
+        {
+            if (_animator == null) _animator = GetComponentInChildren<Animator>(true);
+            return _animator;
+        }
+    }
+
+    void SetTrigger(string name)
+    {
+        var a = Anim;
+        if (a == null || a.runtimeAnimatorController == null) return;
+        foreach (var p in a.parameters) if (p.name == name) { a.SetTrigger(name); return; }
+    }
+
+    void SetBool(string name, bool value)
+    {
+        var a = Anim;
+        if (a == null || a.runtimeAnimatorController == null) return;
+        foreach (var p in a.parameters) if (p.name == name) { a.SetBool(name, value); return; }
+    }
+
+    /// <summary>
+    /// The kill: she holds the player while the finisher plays, the camera is dragged onto her, the
+    /// dying groan runs, and only then does the death screen come up.
+    /// </summary>
+    /// <remarks>
+    /// Ending the run on the frame the grab lands, which is what this replaces, cut both the
+    /// animation and the sound off before either was heard.
+    /// </remarks>
+    IEnumerator Finish(bool super)
+    {
+        if (agent != null && agent.enabled && agent.isOnNavMesh) { agent.isStopped = true; agent.ResetPath(); }
+
+        PlayDeathGroan();
+
+        float hold = super ? superAttackSeconds : normalAttackSeconds;
+        yield return LookAtHer(hold);
+
+        if (gameplay != null) gameplay.EndRun(false);
+    }
+
+    void PlayDeathGroan()
+    {
+        if (playerDeathGroan == null) return;
+        // On its own object so it outlives anything that gets switched off by the death screen, and
+        // 2D because it is Nathan's own throat.
+        var host = new GameObject("Nathan death groan");
+        var src = host.AddComponent<AudioSource>();
+        src.playOnAwake = false;
+        src.spatialBlend = 0f;
+        src.volume = playerDeathGroanVolume;
+        src.clip = playerDeathGroan;
+        if (playerDeathGroan.loadState != AudioDataLoadState.Loaded) playerDeathGroan.LoadAudioData();
+        src.Play();
+        Destroy(host, playerDeathGroan.length + 1f);
+    }
+
+    /// <summary>Swings the view onto her and holds it there for the length of the finisher.</summary>
+    IEnumerator LookAtHer(float seconds)
+    {
+        Camera view = gameplay != null ? gameplay.View : Camera.main;
+        if (view == null) { yield return new WaitForSeconds(seconds); yield break; }
+
+        var motor = gameplay != null ? gameplay.Motor : null;
+        if (motor != null) motor.SetControlsEnabled(false);
+
+        Transform head = Anim != null && Anim.isHuman
+            ? Anim.GetBoneTransform(HumanBodyBones.Head)
+            : null;
+
+        Transform cam = view.transform;
+        Quaternion start = cam.rotation;
+        float elapsed = 0f;
+
+        while (elapsed < seconds)
+        {
+            elapsed += Time.deltaTime;
+            Vector3 target = head != null ? head.position : transform.position + Vector3.up * 1.6f;
+            Vector3 toTarget = target - cam.position;
+            if (toTarget.sqrMagnitude > 0.0001f)
+            {
+                Quaternion want = Quaternion.LookRotation(toTarget.normalized);
+                // Snapping would read as a cut; this swings onto her and then tracks.
+                float k = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, killCameraBlendSeconds));
+                cam.rotation = k >= 1f ? want : Quaternion.Slerp(start, want, k);
+            }
+            yield return null;
+        }
+    }
+
+    // ---- appearance voice ------------------------------------------------------------------------------------
+    // Its own AudioSource, because Cue() leaves `voice` pitched down to .65 for the warning sting and a
+    // one-shot on that source would be dragged down with it.
+    AudioSource appearanceSource;
+    int lastAppearanceVoice = -1;
+
+    void PlayAppearanceVoice()
+    {
+        if (appearanceVoices == null || appearanceVoices.Length == 0) return;
+
+        int index;
+        if (appearanceVoices.Length == 1) index = 0;
+        else
+        {
+            // Never the same line twice running: hearing it repeat tells the player it is a recording.
+            do { index = UnityEngine.Random.Range(0, appearanceVoices.Length); }
+            while (index == lastAppearanceVoice);
+        }
+        lastAppearanceVoice = index;
+
+        AudioClip clip = appearanceVoices[index];
+        if (clip == null) return;
+
+        if (appearanceSource == null)
+        {
+            appearanceSource = gameObject.AddComponent<AudioSource>();
+            appearanceSource.playOnAwake = false;
+            appearanceSource.rolloffMode = AudioRolloffMode.Linear;
+            appearanceSource.minDistance = 5f;
+        }
+        // Set every time, not just on creation, so tuning these in the Inspector takes effect at once.
+        appearanceSource.spatialBlend = appearanceVoiceSpatialBlend;
+        appearanceSource.maxDistance = appearanceVoiceRange;
+        // A clip imported without Preload Audio Data is not in memory, and Play on it starts an
+        // asynchronous load and makes no sound at all for this appearance. Cheap insurance.
+        if (clip.loadState != AudioDataLoadState.Loaded) clip.LoadAudioData();
+
+        appearanceSource.pitch = 1f;
+        appearanceSource.volume = appearanceVoiceVolume;
+        // Stop first: she may be relocated while a previous line is still running, and two
+        // overlapping voices from the same throat read as two bosses.
+        appearanceSource.Stop();
+        appearanceSource.clip = clip;
+        appearanceSource.Play();
+    }
     bool HasClearSight(Vector3 target)
     {
         if (sightHits == null) sightHits = new RaycastHit[32];

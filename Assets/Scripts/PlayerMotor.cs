@@ -20,7 +20,9 @@ public class PlayerMotor : MonoBehaviour
     public float mouseSensivity = 25f, maxLookAngle = 80f;
     public bool IsCrouching => crouching;
     public bool IsGrounded { get; private set; }
-    public bool IsSprinting => sprinting && !crouching && !aiming && (gameplay == null || gameplay.State.CanSprint);
+    /// <summary>Held to a walk by a scripted moment. Not serialised: it must never survive a scene save.</summary>
+    [System.NonSerialized] public bool sprintLocked;
+    public bool IsSprinting => sprinting && !crouching && !aiming && !sprintLocked && (gameplay == null || gameplay.State.CanSprint);
     public bool ControlsEnabled => controlsEnabled && (gameplay == null || gameplay.State.CanMove);
     public bool HasMovementInput => input.sqrMagnitude > 0.01f;
     public event System.Action Jumped;

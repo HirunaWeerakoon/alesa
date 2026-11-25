@@ -124,6 +124,16 @@ namespace Alesa.Runtime
         /// </summary>
         public bool IsHoldingPosition => _parked;
 
+        /// <summary>
+        /// Held still by a scripted animation — the stop, turn and start-walking sequence. Separate
+        /// from <see cref="_parked"/>, which is her own decision to wait; this is imposed from outside
+        /// and must not disturb the follow logic that parking drives.
+        /// </summary>
+        public bool AnimationHold { get; set; }
+
+        /// <summary>Metres per second she is currently being asked to travel at.</summary>
+        public float CurrentTargetSpeed => currentTargetSpeed;
+
         public CompanionStateMachine StateMachine => _stateMachine ??= new CompanionStateMachine(autoFreeInTestScene ? CompanionState.Following : CompanionState.Dormant);
         public ArrivalSteeringCalculator SteeringCalculator => _steeringCalculator ??= new ArrivalSteeringCalculator(stoppingDistance, slowingRadius, acceleration, deceleration);
         public FollowerRecoveryController RecoveryController => _recoveryController ??= new FollowerRecoveryController(stuckDetectionTime, minDisplacementRate, extremeSeparationDistance);
@@ -518,11 +528,13 @@ namespace Alesa.Runtime
 
             currentDistanceToAnchor = Vector3.Distance(transform.position, currentAnchorPosition);
 
-            // Update calculator properties
-            _steeringCalculator.StoppingDistance = stoppingDistance;
-            _steeringCalculator.SlowingRadius = slowingRadius;
-            _steeringCalculator.Acceleration = acceleration;
-            _steeringCalculator.Deceleration = deceleration;
+            // Through the property, not the field: only the property creates the calculator, and the
+            // field is still null on the first call, which threw here on every single frame.
+            var steering = SteeringCalculator;
+            steering.StoppingDistance = stoppingDistance;
+            steering.SlowingRadius = slowingRadius;
+            steering.Acceleration = acceleration;
+            steering.Deceleration = deceleration;
 
             // Determine target speed depending on companion state
             float maxSpeed = _stateMachine != null ? _stateMachine.GetTargetSpeed() : ((currentState == CompanionState.Sprinting) ? maxSprintSpeed : maxWalkSpeed);
@@ -536,9 +548,11 @@ namespace Alesa.Runtime
                 return;
             }
 
-            currentTargetSpeed = _parked ? 0f : _steeringCalculator.CalculateDesiredSpeed(currentDistanceToAnchor, maxSpeed);
+            currentTargetSpeed = (_parked || AnimationHold)
+                ? 0f
+                : steering.CalculateDesiredSpeed(currentDistanceToAnchor, maxSpeed);
 
-            if (_parked || currentDistanceToAnchor <= stoppingDistance)
+            if (_parked || AnimationHold || currentDistanceToAnchor <= stoppingDistance)
             {
                 if (_motorDrivesTransform) return;
                 agent.isStopped = true;
