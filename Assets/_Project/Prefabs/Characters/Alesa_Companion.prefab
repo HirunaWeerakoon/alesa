@@ -10,11 +10,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2083976439396082105, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.0068589193
+      value: 0.0068589197
       objectReference: {fileID: 0}
     - target: {fileID: 2083976439396082105, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.006674903
+      value: -0.0066749034
       objectReference: {fileID: 0}
     - target: {fileID: 2721558332436076453, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
       propertyPath: m_LocalScale.x
@@ -74,16 +74,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4837878502717858909, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.0033776585
+      value: 0.003377658
       objectReference: {fileID: 0}
     - target: {fileID: 4837878502717858909, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.003370126
+      value: -0.0033701255
       objectReference: {fileID: 0}
     - target: {fileID: 8296974352195685855, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 58f4d146330296f418d4da8545a7c6e2, type: 2}
+      objectReference: {fileID: 9100000, guid: 2b034f1f724e50c4cbdb506b326f0f23, type: 2}
     - target: {fileID: 8296974352195685855, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
@@ -113,6 +113,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3354964357634788639, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 32124434525796046}
+    - targetCorrespondingSourceObject: {fileID: 3354964357634788639, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2847190667338069513}
   m_SourcePrefab: {fileID: 100100000, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
 --- !u!1 &151240992709685281 stripped
 GameObject:
@@ -174,7 +177,7 @@ MonoBehaviour:
   extremeSeparationDistance: 18
   teleportTimeout: 5.5
   currentState: 0
-  currentAnchorPosition: {x: 84.54, y: 24.626638, z: -2.1799998}
+  currentAnchorPosition: {x: 85.79, y: 24.626638, z: -2.1799998}
   currentDistanceToAnchor: 0
   currentTargetSpeed: 0
   hasValidAnchor: 0
@@ -297,6 +300,29 @@ MonoBehaviour:
   teleportSyncThresholdSqr: 4
   destinationUpdateThreshold: 0.05
   lifecycle: {fileID: 5740020889975490840}
+--- !u!114 &2847190667338069513
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 151240992709685281}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcee873ec0414314d8312a1102d71b39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AlesaAnimationDirector
+  animator: {fileID: 0}
+  player: {fileID: 0}
+  playerMotor: {fileID: 0}
+  turnThreshold: 55
+  headingSpeedFloor: 1.2
+  turnCooldown: 2.5
+  stopWalkSeconds: 1.1
+  stopRunSeconds: 0.7
+  turnSeconds: 0.95
+  jogThreshold: 6
+  movingThreshold: 0.25
 --- !u!95 &6895763755578011873 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 8296974352195685855, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
