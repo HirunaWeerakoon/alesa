@@ -79,7 +79,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: 9466884bc793870448d24dd78f6787ae, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 58f4d146330296f418d4da8545a7c6e2, type: 2}
+      objectReference: {fileID: 9100000, guid: 32ac06c3c34278a4b898f6c012ef938f, type: 2}
     - target: {fileID: 5866666021909216657, guid: 9466884bc793870448d24dd78f6787ae, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
@@ -168,6 +168,8 @@ MonoBehaviour:
   navMeshSampleRadius: 2
   navMeshAreaMask: -1
   syncAttachedNavMeshAgent: 1
+  separationRadius: 1.4
+  separationStrength: 2.5
   animator: {fileID: 8290639927719907718}
 --- !u!114 &7348634331343245016
 MonoBehaviour:
@@ -335,12 +337,25 @@ MonoBehaviour:
   - {fileID: 8192052966422156965}
   voice: {fileID: 1847821410149152334}
   warningClip: {fileID: 8300000, guid: 3f9029ffc18f5eb4ca1a916f7e4312e9, type: 3}
-  predictionTime: 2
+  appearanceVoices:
+  - {fileID: 8300000, guid: 2601484a76e5ac8429717ed51c70532e, type: 3}
+  - {fileID: 8300000, guid: 72077270b0c223e49b66cf06e93a45ec, type: 3}
+  appearanceVoiceVolume: 1
+  appearanceVoiceSpatialBlend: 0.25
+  appearanceVoiceRange: 90
   movementSpeed: 1.8
+  predictionTime: 2
   appearanceWarning: 1.25
+  abandonDistance: 24
   grabReach: 1.35
   grabWindup: 0.85
   grabRecovery: 1.5
+  superAttackChance: 0.4
+  normalAttackSeconds: 2.3
+  superAttackSeconds: 4.6
+  playerDeathGroan: {fileID: 8300000, guid: fc35c116502b5b74daee61f5ca0fa5d5, type: 3}
+  playerDeathGroanVolume: 1
+  killCameraBlendSeconds: 0.3
   sightMemory: 3
   commitmentSeconds: 1.5
   vanishSeconds: 1.1
