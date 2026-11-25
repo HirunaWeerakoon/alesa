@@ -46,6 +46,18 @@ namespace Alesa.Runtime
         [Tooltip("Voice clip: 'We reached the exit! Keep moving!'")]
         public AudioClip clipDestinationReached;
 
+        [Header("How much she talks")]
+        [Tooltip("Guidance lines (which way to turn) allowed in one playthrough. Blocked-route warnings get a couple more.")]
+        [Min(0)] public int maxGuidanceLines = 8;
+        [Tooltip("Seconds that must pass after any line before another guidance line.")]
+        [Min(0f)] public float minGapSeconds = 8f;
+        [Tooltip("Seconds before the same line can be said again.")]
+        [Min(0f)] public float repeatGapSeconds = 40f;
+        [Tooltip("Most times one line is said in a playthrough.")]
+        [Min(1)] public int maxPerLine = 2;
+        [Tooltip("Chance a guidance line that passes every other check is actually said.")]
+        [Range(0f, 1f)] public float guidanceChance = 0.85f;
+
         [Header("Playback Settings")]
         [Range(0f, 1f)]
         public float voiceVolume = 1.0f;
@@ -54,10 +66,10 @@ namespace Alesa.Runtime
         public bool enable3DSpatialAudio = true;
 
         [Tooltip("Minimum distance in meters where Alesa's voice is at full volume.")]
-        public float min3DDistance = 1.5f;
+        public float min3DDistance = 4f;
 
         [Tooltip("Maximum distance in meters before Alesa's voice fades out.")]
-        public float max3DDistance = 25.0f;
+        public float max3DDistance = 40f;
 
         [Header("Debug Status (Read-Only)")]
         [SerializeField] private VoiceCueId activeVoiceCue = VoiceCueId.None;
@@ -71,6 +83,23 @@ namespace Alesa.Runtime
         public int TotalVoiceLinesPlayed => totalVoiceLinesPlayed;
 
         public event Action<string, VoiceCueId> OnVoiceSpoken;
+
+        private DialogueBudget _budget;
+
+        /// <summary>Decides whether a line may be spoken, so she does not talk non-stop.</summary>
+        public DialogueBudget Budget
+        {
+            get
+            {
+                if (_budget == null) _budget = new DialogueBudget(UnityEngine.Random.Range(1, int.MaxValue));
+                _budget.MaxGuidanceLines = maxGuidanceLines;
+                _budget.MinGapSeconds = minGapSeconds;
+                _budget.RepeatGapSeconds = repeatGapSeconds;
+                _budget.MaxPerCue = maxPerLine;
+                _budget.GuidanceChance = guidanceChance;
+                return _budget;
+            }
+        }
 
         private void Awake()
         {
@@ -157,10 +186,23 @@ namespace Alesa.Runtime
         /// Plays the voice instruction corresponding to a GuidanceDecision.
         /// Arbitrates interruption priority, sets 3D audio, and provides subtitle callbacks.
         /// </summary>
-        public bool PlayVoiceGuidance(GuidanceDecision decision)
+        public bool PlayVoiceGuidance(GuidanceDecision decision) => PlayCue(VoiceClipMapper.MapDecisionToCue(decision));
+
+        /// <summary>
+        /// Speaks one line, if the budget allows it. The exit line is always spoken; the blocked, rerouting and
+        /// trapped warnings may cut through the gap between lines; everything else is rationed.
+        /// </summary>
+        public bool PlayCue(VoiceCueId cue)
         {
-            VoiceCueId cue = VoiceClipMapper.MapDecisionToCue(decision);
             if (cue == VoiceCueId.None) return false;
+
+            if (Application.isPlaying)
+            {
+                bool always = cue == VoiceCueId.DestinationReached;
+                bool critical = cue == VoiceCueId.RouteBlocked || cue == VoiceCueId.RouteRerouted || cue == VoiceCueId.NoRouteAvailable;
+                if (always) Budget.Register((int)cue, Time.time);
+                else if (!Budget.TryAllow((int)cue, critical, Time.time)) return false;
+            }
 
             // Priority arbitration: check if incoming line can interrupt active speech
             if (audioSource != null && audioSource.isPlaying)
@@ -215,6 +257,14 @@ namespace Alesa.Runtime
                 VoiceCueId.DestinationReached => clipDestinationReached,
                 _ => null
             };
+        }
+
+        /// <summary>Plays a non-dialogue sound from her, such as a scream. It never interrupts a line in progress.</summary>
+        public bool PlayReaction(AudioClip clip)
+        {
+            if (clip == null || audioSource == null || audioSource.isPlaying) return false;
+            audioSource.PlayOneShot(clip, voiceVolume);
+            return true;
         }
 
         /// <summary>

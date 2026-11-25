@@ -116,6 +116,18 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3354964357634788639, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2847190667338069513}
+    - targetCorrespondingSourceObject: {fileID: 3354964357634788639, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 234303083324882006}
+    - targetCorrespondingSourceObject: {fileID: 3354964357634788639, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4021027772846902103}
+    - targetCorrespondingSourceObject: {fileID: 3354964357634788639, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3994592027968596}
+    - targetCorrespondingSourceObject: {fileID: 3354964357634788639, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3869736483036555910}
   m_SourcePrefab: {fileID: 100100000, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
 --- !u!1 &151240992709685281 stripped
 GameObject:
@@ -202,8 +214,8 @@ MonoBehaviour:
   follower: {fileID: 4915759448653983891}
   navigator: {fileID: 0}
   guidanceController: {fileID: 0}
-  voiceSpeaker: {fileID: 0}
-  rescueGreetingClip: {fileID: 0}
+  voiceSpeaker: {fileID: 4021027772846902103}
+  rescueGreetingClip: {fileID: 8300000, guid: 68e8e4fc8017f0f41b2bcf02ce8c043b, type: 3}
   rescueGreetingSubtitle: Nathan! Thank God you opened the door. I know the way out,
     follow me!
   onRescueActivated:
@@ -227,7 +239,7 @@ MonoBehaviour:
   follower: {fileID: 4915759448653983891}
   navigator: {fileID: 0}
   guidanceController: {fileID: 0}
-  voiceSpeaker: {fileID: 0}
+  voiceSpeaker: {fileID: 4021027772846902103}
   currentState: 0
   isTimePaused: 0
   isInModalScreen: 0
@@ -323,6 +335,174 @@ MonoBehaviour:
   turnSeconds: 0.95
   jogThreshold: 6
   movingThreshold: 0.25
+--- !u!82 &234303083324882006
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 151240992709685281}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1.5
+  MaxDistance: 25
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &4021027772846902103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 151240992709685281}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde189c3688bc4ceaac2f39640f38cfc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alesa.Runtime.AlesaVoiceSpeaker
+  guidanceController: {fileID: 0}
+  audioSource: {fileID: 234303083324882006}
+  clipTurnLeft: {fileID: 8300000, guid: d5b9be1d70d077b45b7eed678149f9bf, type: 3}
+  clipTurnRight: {fileID: 8300000, guid: 4c776876708196e44beef0c899453036, type: 3}
+  clipContinueStraight: {fileID: 8300000, guid: 15611da44df2acd45bcdd70ba7d9952e, type: 3}
+  clipUTurn: {fileID: 8300000, guid: 276e4d0c795cc2b4083cd9f21349efdf, type: 3}
+  clipRouteBlocked: {fileID: 8300000, guid: 3af8683af364a3f4babffd30b45a0045, type: 3}
+  clipRouteRerouted: {fileID: 8300000, guid: d515369553d6b914c825ba3ec14ff6b2, type: 3}
+  clipNoRoute: {fileID: 8300000, guid: e9f73c4acd1cd094d8150f232770b4fd, type: 3}
+  clipDestinationReached: {fileID: 8300000, guid: 60dc945fe0922bb469569bcb28dd0cdd, type: 3}
+  maxGuidanceLines: 8
+  minGapSeconds: 8
+  repeatGapSeconds: 40
+  maxPerLine: 2
+  guidanceChance: 0.85
+  voiceVolume: 1
+  enable3DSpatialAudio: 1
+  min3DDistance: 4
+  max3DDistance: 40
+  activeVoiceCue: 0
+  lastSpokenSubtitle: 
+  isSpeaking: 0
+  totalVoiceLinesPlayed: 0
+--- !u!114 &3994592027968596
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 151240992709685281}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d404fe33a7b2f4d428f8c325aa1e236a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alesa.Runtime.AlesaMazeGuide
+  speaker: {fileID: 0}
+  callDistance: {x: 3, y: 10}
+  straightAngle: 30
+  wrongWaySeconds: 3
+  blockedRadius: 7
+  arriveRadius: 14
+--- !u!114 &3869736483036555910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 151240992709685281}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f09376b8feae688418d3d565e2931e73, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Alesa.Runtime.AlesaBossReaction
+  scream: {fileID: 8300000, guid: e746e0aebd587a244862b33b1f7afef8, type: 3}
+  speaker: {fileID: 0}
+  hearingDistance: 30
+  chance: 0.75
+  cooldownSeconds: 20
+  maxScreams: 3
 --- !u!95 &6895763755578011873 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 8296974352195685855, guid: 6e8233261c023414987b508a0f9c4c8b, type: 3}
