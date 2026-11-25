@@ -62,8 +62,8 @@ namespace Alesa.Editor
             { "dying",         Horror + "VO/Zombie01/Zombie001_Hurt_A_002.wav" },
             { "idleBreath",    Horror + "VO/Zombie01/Zombie001_Idle_A_003.wav" },
             { "painGrunt",     Horror + "VO/Zombie01/Zombie001_Hurt_A_003.wav" },
-            // Overrides the shared attack clip (which VariantA keeps).
-            { "attack",        Horror + "VO/Zombie03/Zombie003_Attack_A_003.wav" },
+            // The attack scream; VariantA has the same clip set on its prefab.
+            { "attack",        "Assets/Audio/SFX/Minion/zombie_attack.wav" },
         };
 
         /// <summary>Non-clip settings that differ per variant.</summary>

@@ -338,8 +338,14 @@ MonoBehaviour:
   voice: {fileID: 1847821410149152334}
   warningClip: {fileID: 8300000, guid: 3f9029ffc18f5eb4ca1a916f7e4312e9, type: 3}
   appearanceVoices:
+  - {fileID: 8300000, guid: a5ce644126d9a3d448f1f6a14c4f3fd5, type: 3}
+  - {fileID: 8300000, guid: 8432a5c0e8d05dd4fa3fac99003a33b5, type: 3}
   - {fileID: 8300000, guid: 2601484a76e5ac8429717ed51c70532e, type: 3}
   - {fileID: 8300000, guid: 72077270b0c223e49b66cf06e93a45ec, type: 3}
+  - {fileID: 8300000, guid: e584dd47f03097047a45088f8d0ebbdf, type: 3}
+  - {fileID: 8300000, guid: 993885ad28ff2414b91bcbe7ac3fde00, type: 3}
+  - {fileID: 8300000, guid: 459b49fd2109dae4997bac11a8e56e10, type: 3}
+  - {fileID: 8300000, guid: 8f2f834aee36dab46a4714f6b81adf7a, type: 3}
   appearanceVoiceVolume: 1
   appearanceVoiceSpatialBlend: 0.25
   appearanceVoiceRange: 90

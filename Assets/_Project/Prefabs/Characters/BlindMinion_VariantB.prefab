@@ -414,6 +414,7 @@ MonoBehaviour:
   sightHalfAngle: 70
   walkTowardsSeenPlayer: 1
   screamHoldSeconds: 2.2
+  requireClearReachToAttack: 1
   attackDamage: 20
   attackGap: 0.3
   biteGap: 0.2
@@ -479,7 +480,7 @@ MonoBehaviour:
   voice: {fileID: 0}
   foley: {fileID: 0}
   alert: {fileID: 8300000, guid: 2c536cff31c3a402898ac356ebd96aba, type: 3}
-  attack: {fileID: 8300000, guid: 7d76f8d46388e4a88a47beac2f2f0bc6, type: 3}
+  attack: {fileID: 8300000, guid: ad0cc69fb7ceb6848b9f0df99b3af947, type: 3}
   neckBiteVoice: {fileID: 8300000, guid: be16685415a4349d1b6616e9308ea495, type: 3}
   death: {fileID: 8300000, guid: 5b29b0de6b62747e68ebf332c8811f35, type: 3}
   dying: {fileID: 8300000, guid: 4ab62cbf20de44a4582c40ed442be13a, type: 3}
